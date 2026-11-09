@@ -102,6 +102,16 @@ dl.kv dd{margin:0;min-width:0}
 .lb .v{font-variant-numeric:tabular-nums;color:var(--muted)}
 .lb .track{grid-column:1/-1;height:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .lb .fill{height:100%;background:var(--ai)}
+.ojt{display:flex;flex-direction:column;gap:6px}
+.ojt button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;width:100%}
+.ojt button.done{background:var(--moss-soft);border-color:transparent}
+.ojt .who{display:block;font-size:.74rem;color:var(--moss);font-weight:700}
+.notice{background:var(--moss-soft);border:0}
+.notice .label{color:var(--moss)}
+.nitem{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding-top:8px}
+.nitem:first-child{border-top:0;padding-top:0}
+.nitem .btn{flex:none;white-space:nowrap}
+.tr{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .faq{display:flex;flex-direction:column;gap:6px}
 .faq div{border-top:1px solid var(--line);padding-top:6px}
 .faq div:first-child{border-top:0;padding-top:0}
@@ -398,6 +408,30 @@ const others = [
   {name:"小林 翔", type:"タイミー", job:"洗い場", day:"着任前（11月18日〜）", prog:50, score:"—", checkin:null, fig:{hair:"#2a2a2a", robe:"#4d6b8a"}},
   {name:"中村 彩", type:"おてつたび", job:"客室清掃", day:"着任7日目", prog:100, score:"3/3", checkin:{day:7, vals:[4,2,3,4,3], text:"部屋番号と棟がまだ覚えきれません。"}, fig:{hair:"#4a3328", robe:"#7a3b4a", long:true}}
 ];
+const APP_URL = "https://claude.ai/artifact/Y9erU6igwa4PkU3ZiCTscZ";
+const TODAY = (()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; })();
+const PREP = [["sheet","初日シートを送った"],["lessons","着任前の教材を案内した"],["uniform","制服と黒いスラックス、黒い靴を伝えた"],["room","寮や部屋を用意した"],["host","迎えの担当を決めた"]];
+const OJT = {
+  "朝食ホール":[["h1","会場（マロニエ）の準備ができる"],["h2","料理の台と取り皿を整えられる"],["h3","お客様を席へご案内できる"],["h4","材料を聞かれたら、確認してから答えられる"],["h5","片づけと次の準備ができる"]],
+  "客室清掃":[["s1","部屋番号で棟が分かる"],["s2","清掃を決まった順番でできる"],["s3","備品をそろえられる"],["s4","吸い殻や忘れ物をフロントに伝えられる"],["s5","1部屋を一人で仕上げられる"]],
+  "大浴場清掃":[["f1","清掃中の札を使える"],["f2","薬剤を混ぜずに使える"],["f3","湯温に触らない決まりを守れる"],["f4","備品の補充ができる"]],
+  "仲居・配膳":[["n1","夕食の会場が分かる（マロニエ、個室食事処、宴会場）"],["n2","会席3種の違いを言える"],["n3","アレルギーは必ず担当者に確認できる"],["n4","上座から順にお出しできる"],["n5","下げ膳ができる"]],
+  "フロント・ベル":[["b1","チェックインの手続きができる"],["b2","朝食と大浴場の時間を案内できる"],["b3","送迎の予約を確かめられる"],["b4","お部屋までご案内できる"],["b5","眺望をお約束しない"]],
+  "洗い場":[["w1","器を割れやすさで分けて置ける"],["w2","洗い方の決まりを守れる"],["w3","洗った器を決まった棚に戻せる"]]
+};
+const ojtFor = job => OJT[job] || OJT["客室清掃"];
+const LANGS = [["ja","やさしい日本語"],["en","English"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"],["ne","नेपाली"],["zh","中文"],["my","မြန်မာ"]];
+function parseStart(t){ const m=String(t||"").match(/(\d{1,2})月(\d{1,2})日/); if(!m) return ""; const mo=+m[1], y=mo>=TODAY.getMonth()+1-1?TODAY.getFullYear():TODAY.getFullYear()+1;
+  return `${y}-${String(mo).padStart(2,"0")}-${String(+m[2]).padStart(2,"0")}`; }
+function dayLabel(iso){ if(!iso) return "初日は未定"; const d=new Date(iso+"T00:00:00"), n=Math.round((d-TODAY)/86400000);
+  return n>0?`着任まであと${n}日`:(n===0?"今日が初日":`着任${1-n}日目`); }
+function samplePeople(){ return [
+  {id:"p-tanaka", name:"田中 美咲", type:"派遣", job:"朝食ホール", start:"11月15日（日）", startISO:"2026-11-15", host:HOST, prep:{sheet:true,lessons:true}, ojt:{}, note:"", sample:true},
+  {id:"p-kobayashi", name:"小林 翔", type:"タイミー", job:"洗い場", start:"11月18日（水）", startISO:"2026-11-18", host:"板場の責任者", prep:{}, ojt:{}, note:"", prog:50, sample:true},
+  {id:"p-nakamura", name:"中村 彩", type:"おてつたび", job:"客室清掃", start:"11月3日（火）", startISO:"2026-11-03", host:"客室係リーダー", prep:{sheet:true,lessons:true,uniform:true,room:true,host:true},
+    ojt:{s1:{done:true,by:"客室係リーダー",at:"11月4日"},s2:{done:true,by:"客室係リーダー",at:"11月5日"},s3:{done:true,by:"客室係リーダー",at:"11月6日"}}, note:"布団を運ぶときは2人で。部屋番号の覚え方を、もう一度教えると安心です。",
+    prog:100, checkin:{day:7, vals:[4,2,3,4,3], text:"部屋番号と棟がまだ覚えきれません。"}, sample:true}
+]; }
 const checkQs = ["体の調子","仕事の量","質問のしやすさ","生活のこと","このまま続けられそう"];
 const memoQs = [
   "夕食の時間とラストオーダー。個室食事処と宴会場の配膳の流れ",
@@ -427,18 +461,42 @@ function fresh(){
     gen:null,
     eff:{n:"", h:"", w:"", r:"30"},
     memo:{},
-    log:[], props:[], notified:{}, mine:{}, drafts:{}
+    log:[], props:[], notified:{}, mine:{}, drafts:{}, people:samplePeople(), notices:[], lang:"ja", tr:{}, ojtBy:HOST
   };
 }
 let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], firstQs=true;
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], firstQs=true;
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
 const props = () => live ? liveProps : state.props;
+const people = () => (live ? livePeople : state.people).slice().sort((a,b)=>String(a.startISO||"9").localeCompare(String(b.startISO||"9")));
+const notices = () => (live ? liveNotices : state.notices).slice().sort((a,b)=>(b.at||0)-(a.at||0));
+function deepMerge(a,b){ for(const k in b){ if(b[k]&&typeof b[k]==="object"&&!Array.isArray(b[k])){ a[k]=deepMerge(a[k]&&typeof a[k]==="object"?a[k]:{}, b[k]); } else a[k]=b[k]; } return a; }
+async function patchPerson(id, patch){
+  if(live){ try{ await db.doc("people/"+id).update(patch); }catch(e){ toast(dbMsg(e)); } return; }
+  const p=state.people.find(x=>x.id===id); if(p){ deepMerge(p, patch); render(); }
+}
+async function upsertPerson(rec){
+  const ex=people().find(p=>p.name===rec.name);
+  if(ex) return patchPerson(ex.id, {type:rec.type, job:rec.job, start:rec.start, startISO:rec.startISO, host:rec.host, prep:{sheet:true}});
+  const doc={...rec, prep:{sheet:true}, ojt:{}, note:"", at:Date.now()};
+  if(live){ try{ await db.collection("people").add(doc); }catch(e){ toast(dbMsg(e)); } return; }
+  state.people.push({id:"p"+Date.now(), ...doc});
+}
+const meLessonProg = () => Math.round(baseLessons.concat(state.custom).filter(l=>state.done[l.id]).length/(baseLessons.length+state.custom.length)*100);
+function personView(p){
+  const me = p.name===state.profile.name;
+  const items = ojtFor(p.job), done = items.filter(([k])=>p.ojt&&p.ojt[k]&&p.ojt[k].done).length;
+  const prepN = PREP.filter(([k])=>p.prep&&p.prep[k]).length;
+  const checkin = me ? (state.checkin.sent?{day:3, vals:state.checkin.vals, text:state.checkin.text}:null) : (p.checkin||null);
+  return {...p, me, prog: me?meLessonProg():(p.prog||0), ojtDone:done, ojtAll:items.length, prepN, checkin, day:dayLabel(p.startISO),
+    alert: !!(checkin&&checkin.vals.some(v=>v>0&&v<=2))};
+}
+const peopleAlerts = () => people().map(personView).filter(v=>v.alert);
 const norm = q => String(q||"").replace(/[\s？?。、！!「」]/g,"");
 const LESSON_WORDS = [["bango",["号室","棟","蘭亭","菊亭","梅亭","竹亭"]],["keinoyu",["渓の湯","貸切","入替","露天"]],["hall",["朝食","朝ご飯","マロニエ","バイキング","デシャップ"]],["haizen",["夕食","会席","配膳","部屋食","個室","宴会"]],["furo",["大浴場","お風呂","湯温","温度"]],["seisou",["客室","部屋","布団","清掃","備品","たばこ","吸い殻","カメムシ"]],["front",["チェック","送迎","駐車","電話","予約","フロント","トロッコ","駅"]],["ocha",["ドリンク","浴衣","お土産","喫煙","カラオケ"]]];
 function guessLesson(q){ const t=String(q||""); for(const [id,ks] of LESSON_WORDS) if(ks.some(k=>t.includes(k))) return id; return "other"; }
@@ -479,6 +537,8 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   }, fail);
   db.collection("learned").onSnapshot(snap=>{ liveLearned = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("proposals").onSnapshot(snap=>{ liveProps = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("people").onSnapshot(snap=>{ livePeople = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("notices").orderBy("at","desc").limit(20).onSnapshot(snap=>{ liveNotices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
 })();
 async function logQ(o){
   const rec={q:o.q, result:o.result, risk:!!o.risk, status:o.result==="answer"?"auto":"open", answer:o.answer||"", source:o.source||"",
@@ -544,7 +604,7 @@ const TABS = {
 function renderTabs(){
   $("#tabs").innerHTML = TABS[state.role].map(([id,ic,l]) => {
     let dot=""; if(id==="queue"&&openQueue()) dot=`<span class="dot">${openQueue()}</span>`;
-    if(id==="dash"){ const n=others.filter(o=>o.checkin&&o.checkin.vals.some(v=>v<=2)).length+(meAlert()?1:0); if(n) dot=`<span class="dot">${n}</span>`; }
+    if(id==="dash"){ const n=peopleAlerts().length; if(n) dot=`<span class="dot">${n}</span>`; }
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
 function render(){
@@ -566,7 +626,9 @@ function sheet(){
     {k:"bring", t:"持ち物をそろえる", done:state.prep.bring}
   ];
   const left = prepItems.filter(i=>!i.done).length;
+  const ns = notices().slice(0,3);
   return `
+  ${ns.length?`<section class="card notice"><span class="label">今日の連絡</span>${ns.map(n=>`<div class="nitem"><span>${esc(n.text)}</span><span class="note">${esc(n.when||"")}</span></div>`).join("")}</section>`:""}
   <section class="card hero">
     <span class="label">${esc(p.name)}さんの初日</span>
     <div class="when">${esc(p.date)} ${esc(p.time)}</div>
@@ -648,6 +710,8 @@ function learn(){
     <section class="card">
       <span class="label">${L.kind==="共通"?"どの旅館でも共通の教材":INN+"だけの手順"}</span>
       <h2>${esc(L.title)}</h2>
+      <label class="field">ことばを選ぶ（外国人スタッフ向け）<select id="lang">${LANGS.map(([v,n])=>`<option value="${v}" ${state.lang===v?"selected":""}>${n}</option>`).join("")}</select></label>
+      ${trBlock(L)}
       <button class="player" id="play" aria-label="見本の動画を再生">
         <span class="meta"><span>見本の動画</span><span id="vtime">0:00 / ${esc(L.time)}</span></span>
         <span class="play" id="playicon" aria-hidden="true">▶</span>
@@ -674,6 +738,28 @@ function learn(){
   <div class="lesson-list">${all.map(l=>`
     <button class="lesson" data-lesson="${l.id}"><div><b>${esc(l.title)}</b><span>動画 ${esc(l.time)} ・ 手順${l.steps.length}つ${l.faq&&l.faq.length?` ・ 質問から追加 ${l.faq.length}`:""}${state.scores[l.id]?` ・ テスト ${state.scores[l.id]}`:""}</span></div>
     <span class="status ${state.done[l.id]?"done":(l.kind==="共通"?"":"own")}">${state.done[l.id]?"見た":(l.kind==="共通"?"未視聴":"この宿だけ")}</span></button>`).join("")}</div>`;
+}
+function trBlock(L){
+  if(state.lang==="ja") return "";
+  const t=state.tr[L.id+":"+state.lang], name=(LANGS.find(x=>x[0]===state.lang)||[])[1];
+  if(!t) return `<div class="tr"><b>${esc(name)}</b><span class="note">${aiOK()?"翻訳を作っています…":"翻訳はAIモード（公開したページ）で使えます。"}</span></div>`;
+  return `<div class="tr" lang="${state.lang}"><b>${esc(name)} ・ ${esc(t.title||"")}</b><ol class="steps">${(t.steps||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+    ${(t.ng||[]).length?`<div class="ng">${(t.ng||[]).map(x=>`<div>✕ ${esc(x)}</div>`).join("")}</div>`:""}${t.diff?`<div class="diff">${esc(t.diff)}</div>`:""}
+    <span class="note">AIによる翻訳です。施設名はそのままにしています。大事なことは日本語の手順でも確かめてください。</span></div>`;
+}
+let trBusy=false;
+async function translateLesson(L){
+  const key=L.id+":"+state.lang; if(state.lang==="ja"||state.tr[key]||!aiOK()||trBusy) return;
+  trBusy=true; const name=(LANGS.find(x=>x[0]===state.lang)||[])[1];
+  const prompt=`旅館の新人スタッフ向け教材を「${name}」に翻訳してください。施設名や部屋の名前（マロニエ、渓の湯、蘭亭など）はカタカナのまま残し、かっこで短い説明を足してもよいです。内容を足したり削ったりしないでください。
+返事は次のJSONだけ：{"title":"…","steps":["…"],"ng":["…"],"diff":"…"}
+題名：${L.title}
+手順：${JSON.stringify(L.steps)}
+やってはいけないこと：${JSON.stringify(L.ng||[])}
+この宿では：${L.diff}`;
+  try{ const r=await sample.json(prompt,{modelTier:"quick"}); if(r&&Array.isArray(r.steps)) state.tr[key]={title:String(r.title||""), steps:r.steps.map(String), ng:(r.ng||[]).map(String), diff:String(r.diff||"")}; }
+  catch(e){ const m=aiErr(e); if(m) toast(m); state.lang="ja"; }
+  trBusy=false; render();
 }
 let vTimer=null;
 function stopVideo(){ if(vTimer){ clearInterval(vTimer); vTimer=null; } }
@@ -805,48 +891,89 @@ function checkin(){
   </section>`;
 }
 
-/* ======================= 管理：新人の状況 ======================= */
-function meRow(){ return {name:state.profile.name, type:state.profile.type, job:state.profile.job, day:"着任3日目", prog:meProg(),
-  score:Object.values(state.scores)[0]||"—", checkin:state.checkin.sent?{day:3, vals:state.checkin.vals, text:state.checkin.text}:null,
-  fig:{hair:"#3a2a22", robe:"#557532", long:true}, me:true}; }
+/* ======================= 管理：受け入れ（新人の状況） ======================= */
+function lineText(p){
+  return `${p.name}さん
+延対寺荘の${p.job}でお待ちしています。
+初日：${p.start||"決まりしだいお知らせします"}
+集合場所：決まりしだいお知らせします
+迎え：${p.host||HOST}
+持ち物：黒いスラックス、黒い靴
+着任前に、このアプリで教材を見ておいてください（1本3分ほどです）。
+${APP_URL}`;
+}
 function dash(){
-  const all=[meRow(),...others];
+  const all = people().map(personView);
   if(state.newbieView!==null){
-    const n = all[state.newbieView];
-    const low = n.checkin? n.checkin.vals.map((v,i)=>v<=2?checkQs[i]:null).filter(Boolean):[];
+    const n = all.find(x=>x.id===state.newbieView);
+    if(!n){ state.newbieView=null; return dash(); }
+    const items = ojtFor(n.job);
+    const low = n.checkin? n.checkin.vals.map((v,i)=>v>0&&v<=2?checkQs[i]:null).filter(Boolean):[];
     return `
-    <button class="back" id="nback">← 新人の一覧へ</button>
+    <button class="back" id="nback">← 受け入れの一覧へ</button>
     <section class="card">
-      <div class="row"><div class="avatar" aria-hidden="true">${face({...n.fig})}</div><div><h2>${esc(n.name)}</h2><span class="empty">${esc(n.type)} ・ ${esc(n.job)} ・ ${esc(n.day)}</span></div></div>
+      <div class="row"><div class="avatar" aria-hidden="true">${face({hair:"#3a2a22", robe:n.me?"#557532":"#4d6b8a", long:/美|彩|子/.test(n.name)})}</div>
+      <div><h2>${esc(n.name)}</h2><span class="empty">${esc(n.type)} ・ ${esc(n.job)} ・ ${esc(n.start||"")} ・ ${esc(n.day)}</span></div></div>
+      ${n.sample?`<span class="tag" style="align-self:flex-start">見本の人</span>`:""}
     </section>
-    <section class="card"><h3>教材</h3>
-      ${n.me?`<ol class="steps">${lessons().map(l=>`<li>${esc(l.title)} ${state.done[l.id]?'<span class="tag ok">見た</span>':'<span class="tag">まだ</span>'} ${state.scores[l.id]?`<span class="tag">テスト ${state.scores[l.id]}</span>`:""}</li>`).join("")}</ol>`
-      :`<p>${n.prog}% 見終わっています。</p><div class="prog"><i style="width:${n.prog}%"></i></div>`}
+    <section class="card"><h3>受け入れの準備 ${n.prepN} / ${PREP.length}</h3>
+      <div class="todo">${PREP.map(([k,t])=>{const on=n.prep&&n.prep[k]; return `<button data-pp="${k}" class="${on?"done":""}" aria-pressed="${!!on}"><span class="box" aria-hidden="true">${on?"✓":""}</span><span class="t">${t}</span></button>`;}).join("")}</div>
     </section>
+    <section class="card"><h3>一人立ちチェック ${n.ojtDone} / ${n.ojtAll}</h3>
+      <div class="prog" aria-hidden="true"><i style="width:${n.ojtAll?n.ojtDone/n.ojtAll*100:0}%"></i></div>
+      <p class="empty">教えて、できたら押します。教えた人と日付が残るので、次に教える人が同じ説明をくり返さずに済みます。</p>
+      <label class="field">教えた人<select id="ojtby">${staff.map(s=>`<option ${state.ojtBy===s.name?"selected":""}>${s.name}</option>`).join("")}</select></label>
+      <div class="ojt">${items.map(([k,t])=>{const o=n.ojt&&n.ojt[k]; const on=o&&o.done; return `<button data-oj="${k}" class="${on?"done":""}" aria-pressed="${!!on}"><span class="box ${on?"on":""}" aria-hidden="true">${on?"✓":""}</span><span>${esc(t)}${on?`<span class="who">${esc(o.at||"")} ${esc(o.by||"")}</span>`:""}</span></button>`;}).join("")}</div>
+      ${n.ojtDone===n.ojtAll?`<p class="tag ok" style="align-self:flex-start">一人立ちできます。シフトに一人で入れられます</p>`:`<p class="note">あと${n.ojtAll-n.ojtDone}つで一人立ちです。</p>`}
+    </section>
+    <section class="card"><h3>教える人どうしの引き継ぎメモ</h3>
+      <textarea id="pnote" aria-label="引き継ぎメモ" placeholder="例：布団は2人で運ぶよう伝えた。部屋番号はもう一度教える">${esc(n.note||"")}</textarea>
+      <div class="row"><button class="btn small ghost" id="pnotesave">メモを残す</button></div>
+    </section>
+    <section class="card"><h3>LINEに貼る案内文</h3>
+      <textarea id="linetext" readonly style="min-height:170px">${esc(lineText(n))}</textarea>
+      <div class="row"><button class="btn small" id="copyline">案内文をコピー</button></div>
+      <p class="note">集合場所は、決まったら書き足してから送ってください。</p>
+    </section>
+    <section class="card"><h3>教材</h3><p>${n.prog}% 見終わっています。</p><div class="prog"><i style="width:${n.prog}%"></i></div></section>
     <section class="card"><h3>ふりかえりの回答</h3>
-      ${n.checkin?`<dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${n.checkin.vals[i]} / 5 ${n.checkin.vals[i]<=2?'<span class="tag risk">低い</span>':""}</dd>`).join("")}</dl>
+      ${n.checkin?`<dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${n.checkin.vals[i]} / 5 ${n.checkin.vals[i]>0&&n.checkin.vals[i]<=2?'<span class="tag risk">低い</span>':""}</dd>`).join("")}</dl>
       ${n.checkin.text?`<p class="say">${esc(n.checkin.text)}</p>`:""}
       ${low.length?`<p class="err">「${low.join("」「")}」が低めです。今日中に一声かけるのがおすすめです。</p>`:`<p class="empty">気になる回答はありません。</p>`}`
       :`<p class="empty">まだ回答がありません。${n.me?"新人の画面の「ふりかえり」から回答できます。":""}</p>`}
     </section>`;
   }
-  const alerts = all.filter(n=>n.checkin&&n.checkin.vals.some(v=>v<=2));
+  const soon = all.filter(n=>n.startISO && (new Date(n.startISO+"T00:00:00")-TODAY)/86400000 >= 0 && (new Date(n.startISO+"T00:00:00")-TODAY)/86400000 <= 7).length;
+  const notReady = all.filter(n=>n.prepN<PREP.length && !(n.startISO && new Date(n.startISO+"T00:00:00")<TODAY)).length;
+  const alerts = all.filter(n=>n.alert);
   return `
   <section class="card">
-    <span class="label">今週着任する人・着任中の人</span>
-    <h2>新人 ${all.length}名の状況</h2>
-    <div class="nlist">${all.map((n,i)=>`<button class="nrow" data-nb="${i}">
-      <div class="avatar" aria-hidden="true">${face({...n.fig})}</div>
-      <div><b>${esc(n.name)} <span class="tag">${esc(n.type)}</span></b><span class="sub">${esc(n.job)} ・ ${esc(n.day)} ・ 教材 ${n.prog}%</span><div class="prog"><i style="width:${n.prog}%"></i></div></div>
-      <span>${n.checkin&&n.checkin.vals.some(v=>v<=2)?'<span class="tag risk">声かけを</span>':(n.prog===100?'<span class="tag ok">準備OK</span>':"")}</span></button>`).join("")}</div>
+    <span class="label">今日の連絡（新人の画面のいちばん上に出ます）</span>
+    <textarea id="ntext" aria-label="今日の連絡" placeholder="例：今日は団体40名。夕食はマロニエです"></textarea>
+    <div class="row"><button class="btn small" id="nsend">新人に知らせる</button></div>
+    ${notices().slice(0,5).map(n=>`<div class="nitem"><span>${esc(n.text)}<br><span class="note">${esc(n.when||"")}</span></span><button class="btn ghost small" data-ndel="${n.id}">消す</button></div>`).join("")}
   </section>
-  ${alerts.length?`<section class="card"><h3>ふりかえりで気になる回答</h3>${alerts.map(n=>`<p><b>${esc(n.name)}さん</b>（${n.checkin.day}日目）「${checkQs.filter((q,i)=>n.checkin.vals[i]<=2).join("」「")}」が低め。${n.checkin.text?`<br><span class="empty">${esc(n.checkin.text)}</span>`:""}</p>`).join("")}<p class="empty">辞める前のサインになりやすい回答です。今日中に一声かけるのがおすすめです。</p></section>`:""}
+  <section class="card">
+    <span class="label">受け入れ予定と、着任中の人</span>
+    <h2>新人 ${all.length}名</h2>
+    <div class="stats">
+      <div class="stat"><span class="label">7日以内に着任</span><div class="num">${soon}<small>名</small></div></div>
+      <div class="stat"><span class="label">準備が残っている</span><div class="num">${notReady}<small>名</small></div></div>
+    </div>
+    <div class="nlist">${all.map(n=>`<button class="nrow" data-nb="${n.id}">
+      <div class="avatar" aria-hidden="true">${face({hair:"#3a2a22", robe:n.me?"#557532":"#4d6b8a", long:/美|彩|子/.test(n.name)})}</div>
+      <div><b>${esc(n.name)} <span class="tag">${esc(n.type)}</span></b><span class="sub">${esc(n.job)} ・ ${esc(n.day)} ・ 準備 ${n.prepN}/${PREP.length} ・ 一人立ち ${n.ojtDone}/${n.ojtAll}</span><div class="prog"><i style="width:${n.ojtAll?n.ojtDone/n.ojtAll*100:0}%"></i></div></div>
+      <span>${n.alert?'<span class="tag risk">声かけを</span>':(n.ojtDone===n.ojtAll?'<span class="tag ok">一人立ち</span>':(n.prepN<PREP.length?'<span class="tag">準備中</span>':""))}</span></button>`).join("")}</div>
+    <p class="note">初日シートを「公開して本人に送る」と、ここに加わります。</p>
+  </section>
+  ${alerts.length?`<section class="card"><h3>ふりかえりで気になる回答</h3>${alerts.map(n=>`<p><b>${esc(n.name)}さん</b>（${n.checkin.day}日目）「${checkQs.filter((q,i)=>n.checkin.vals[i]>0&&n.checkin.vals[i]<=2).join("」「")}」が低め。${n.checkin.text?`<br><span class="empty">${esc(n.checkin.text)}</span>`:""}</p>`).join("")}<p class="empty">辞める前のサインになりやすい回答です。今日中に一声かけるのがおすすめです。</p></section>`:""}
   <section class="card">
     <h3>よく聞かれた質問</h3>
     ${topQs(3).length?`<ol class="steps">${topQs(3).map(([q,n])=>`<li>${esc(q)}（${n}回）</li>`).join("")}</ol>`:`<p class="empty">まだ質問がありません。</p>`}
     <p class="empty">溜まった質問から数えています。質問係が答えた分は、先輩が同じ説明をしなくて済んだ回数です。</p>
   </section>`;
 }
+function todayText(){ const d=new Date(); return `${d.getMonth()+1}月${d.getDate()}日`; }
 
 /* ======================= 管理：質問への回答 ======================= */
 function topQs(n){
@@ -931,8 +1058,8 @@ async function setProp(id, status){
   toast(status==="adopted"?"教材に入れました。新人の画面で見られます":"見送りました"); render();
 }
 async function wipeLive(){
-  if(!live||!confirm("溜めた質問、資料に足した回答、反映案をすべて消します。元に戻せません。消しますか？")) return;
-  for(const c of ["questions","learned","proposals"]){
+  if(!live||!confirm("溜めた質問、資料に足した回答、反映案、今日の連絡をすべて消します（受け入れの一覧は残ります）。元に戻せません。消しますか？")) return;
+  for(const c of ["questions","learned","proposals","notices"]){
     try{ const snap=await db.collection(c).get(); for(const d of snap.docs){ await db.doc(c+"/"+d.id).delete(); } }
     catch(e){ toast(dbMsg(e)); return; }
   }
@@ -979,7 +1106,7 @@ function make(){
     <div class="grid2">
       <label class="field">名前<input id="g-name" value="小林 翔"></label>
       <label class="field">雇い方<select id="g-type"><option>タイミー</option><option>派遣</option><option>おてつたび</option><option>パート</option><option>アルバイト</option><option>新卒社員</option></select></label>
-      <label class="field">職種<select id="g-job"><option>朝食ホール</option><option>客室清掃</option><option>大浴場清掃</option><option>仲居・配膳</option><option>フロント・ベル</option></select></label>
+      <label class="field">職種<select id="g-job"><option>朝食ホール</option><option>客室清掃</option><option>大浴場清掃</option><option>仲居・配膳</option><option>フロント・ベル</option><option>洗い場</option></select></label>
       <label class="field">初日<input id="g-date" value="11月18日（水）"></label>
       <label class="field">集合時間<input id="g-time" value="5:30"></label>
       <label class="field">迎えに来る人<select id="g-host">${staff.map(s=>`<option value="${s.name}">${s.name}</option>`).join("")}</select></label>
@@ -1006,10 +1133,11 @@ function templateSheet(f){
     "客室清掃":["","4つの棟と、部屋番号の決まりを覚える","","客室清掃に同行","15:00","中抜け","18:00","夜の客室の仕事に同行","20:00","終業"],
     "大浴場清掃":["","渓の湯（梅亭1階）、翠の湯と紅の湯（蘭亭地下1階）を見て回る","","清掃の道具と薬剤の置き場を確認","","大浴場清掃に同行（時間割は施設で確認）","","備品の補充、終業"],
     "仲居・配膳":["","マロニエ、個室食事処、宴会場を見て回る","15:00","チェックインのお出迎えを見学","","中抜け（時間は施設で確認）","","夕食の会席の配膳に同行（時間は施設で確認）","","夕食の片づけ","22:00","終業"],
+    "洗い場":["","板場で器の置き場所を見る","","洗い場に同行（時間は施設で確認）","","終業（時刻は施設で確認）"],
     "フロント・ベル":["","フロントの仕事を見学","14:00","送迎の流れを確認（迎えは14:00〜18:00）","15:00","チェックインの開始、お出迎えに同行","19:30","チェックインの受付終了","","終業（時刻は施設で確認）"]}[job];
   const sch=[{t:f.time,d:"集合（場所は施設で確認）、制服に着替える"}];
   for(let i=1;i<map.length;i+=2){ sch.push({t:map[i-1]||"",d:map[i]}); }
-  const L={"朝食ホール":["朝食ホール・デシャップ","チェックインとウェルカムドリンクの案内"],"客室清掃":["客室清掃・布団","部屋番号で棟を覚える"],"大浴場清掃":["大浴場清掃","渓の湯と貸切風呂の案内"],"仲居・配膳":["仲居・夕食の配膳","部屋番号で棟を覚える"],"フロント・ベル":["フロント・ベル","部屋番号で棟を覚える","渓の湯と貸切風呂の案内"]}[job];
+  const L={"朝食ホール":["朝食ホール・デシャップ","チェックインとウェルカムドリンクの案内"],"客室清掃":["客室清掃・布団","部屋番号で棟を覚える"],"大浴場清掃":["大浴場清掃","渓の湯と貸切風呂の案内"],"仲居・配膳":["仲居・夕食の配膳","部屋番号で棟を覚える"],"フロント・ベル":["フロント・ベル","部屋番号で棟を覚える","渓の湯と貸切風呂の案内"],"洗い場":["朝食ホール・デシャップ","部屋番号で棟を覚える"]}[job];
   return {...f, welcome:`${f.name}さん、延対寺荘へようこそ。初日は${f.host}が迎えに来ます。分からないことは、質問係か近くの先輩に何でも聞いてください。`,
     schedule:sch.filter(s=>s.d), bring:["黒いスラックス","黒い靴"], lessons:L};
 }
@@ -1166,6 +1294,7 @@ function bind(){
   const back=$("#back"); if(back) back.onclick=()=>{state.lesson=null;render()};
   const L = state.lesson && lessons().find(l=>l.id===state.lesson);
   const pl=$("#play"); if(pl&&L) pl.onclick=()=>playVideo(L);
+  if(L && state.lang!=="ja" && !state.tr[L.id+":"+state.lang] && aiOK() && !trBusy) translateLesson(L);
   document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const a=(state.steps[L.id] ||= []); a[+b.dataset.step]=!a[+b.dataset.step]; render()});
   const md=$("#markdone"); if(md) md.onclick=()=>{state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
   const tq=$("#toquiz"); if(tq) tq.onclick=()=>{state.quizLesson=state.lesson; go("quiz")};
@@ -1183,7 +1312,22 @@ function bind(){
   const ct=$("#ctext"); if(ct) ct.oninput=()=>{state.checkin.text=ct.value; save()};
   const cs=$("#csend"); if(cs) cs.onclick=()=>{state.checkin.sent=true; render(); toast("教育担当に送りました")};
   const rc=$("#recheck"); if(rc) rc.onclick=()=>{state.checkin.sent=false; render()};
-  document.querySelectorAll("[data-nb]").forEach(b=>b.onclick=()=>{state.newbieView=+b.dataset.nb;render();window.scrollTo(0,0)});
+  document.querySelectorAll("[data-nb]").forEach(b=>b.onclick=()=>{state.newbieView=b.dataset.nb;render();window.scrollTo(0,0)});
+  document.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ const k=b.dataset.pp, p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{prep:{[k]:!(p.prep&&p.prep[k])}}); });
+  const ob=$("#ojtby"); if(ob) ob.onchange=()=>{ state.ojtBy=ob.value; save(); };
+  document.querySelectorAll("[data-oj]").forEach(b=>b.onclick=()=>{ const k=b.dataset.oj, p=people().find(x=>x.id===state.newbieView); if(!p) return;
+    const on=!(p.ojt&&p.ojt[k]&&p.ojt[k].done);
+    patchPerson(p.id,{ojt:{[k]:on?{done:true, by:state.ojtBy, at:todayText()}:{done:false, by:"", at:""}}}); if(on) toast(`${state.ojtBy}が教えた記録を残しました`); });
+  const ps=$("#pnotesave"); if(ps) ps.onclick=()=>{ const p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{note:$("#pnote").value.trim()}); toast("引き継ぎメモを残しました"); };
+  const cl=$("#copyline"); if(cl) cl.onclick=async()=>{ const t=$("#linetext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました。LINEに貼りつけてください"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
+  const ns=$("#nsend"); if(ns) ns.onclick=async()=>{ const t=$("#ntext").value.trim(); if(!t){ toast("連絡を入力してください"); return; }
+    const rec={text:t, at:Date.now(), when:todayText()+" "+new Date().toTimeString().slice(0,5)};
+    if(live){ try{ await db.collection("notices").add(rec); toast("新人の画面に出しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    state.notices.unshift({id:"n"+Date.now(), ...rec}); toast("新人の画面に出しました"); render(); };
+  document.querySelectorAll("[data-ndel]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.ndel;
+    if(live){ try{ await db.doc("notices/"+id).delete(); }catch(e){ toast(dbMsg(e)); } return; }
+    state.notices=state.notices.filter(n=>n.id!==id); render(); });
+  const lg=$("#lang"); if(lg) lg.onchange=()=>{ state.lang=lg.value; render(); const Lx=lessons().find(l=>l.id===state.lesson); if(Lx) translateLesson(Lx); };
   const nb=$("#nback"); if(nb) nb.onclick=()=>{state.newbieView=null;render()};
   document.querySelectorAll("[data-reply]").forEach(b=>b.onclick=async()=>{
     const q=openQs().find(x=>x.id==b.dataset.reply); if(!q) return;
@@ -1219,6 +1363,7 @@ function bind(){
   const pb=$("#publish"); if(pb) pb.onclick=()=>{
     const gg=state.gen;
     state.profile={name:gg.name,type:gg.type,job:gg.job,date:gg.date,time:gg.time,meet:"施設で確認",host:gg.host,schedule:gg.schedule,bring:gg.bring,welcome:gg.welcome};
+    upsertPerson({name:gg.name, type:gg.type, job:gg.job, start:gg.date, startISO:parseStart(gg.date), host:gg.host});
     state.gen=null; setRole("new"); toast(`${gg.name}さんに初日シートを送りました`)};
   const ml=$("#mklesson"); if(ml) ml.onclick=makeLesson;
   document.querySelectorAll("[data-eff]").forEach(inp=>inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); save()});

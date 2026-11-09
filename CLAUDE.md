@@ -17,6 +17,11 @@
 8. 共有版のデータは db の3つのコレクション。questions（すべての質問。result は answer、unknown、escalate。status は auto、open、answered、handled）、learned（担当者の回答。質問係の資料に足される）、proposals（教材に足す案。status は pending、adopted、rejected）。採用した案は、その教材の「よくある質問」とテスト問題に入る。
 9. db が使えないとき（ローカルで開いたとき）は、これまでどおり端末の中（localStorage、キー yado-hajimete-entaiji-live-v1）に記録する。ヘッダーの「この端末だけ」「データ共有中」で分かる。
 10. 見本の質問を14件入れてある（doc id s01〜s14、sample:true）。回答はすべて kb の文章そのまま。質問の画面の下の「溜めた質問と案をすべて消す」で空にできる。書き込めるのは、共有メニューで Contributor 以上にした人だけ（db の初期ルール）。
+11. 共有版に、受け入れ担当者向けの機能を足した（バージョン7）。女将・管理者の「新人」画面が受け入れの画面になった。
+    1. 今日の連絡（db の notices）。新人の「初日」画面のいちばん上に出る。
+    2. 受け入れ予定の一覧（db の people）。人ごとに、受け入れの準備5項目（PREP）、職種ごとの一人立ちチェック（OJT、教えた人と日付を残す）、引き継ぎメモ、LINEに貼る案内文、教材の進み、ふりかえりを見られる。初日シートを「公開して本人に送る」と一覧に加わる。
+    3. 教材の翻訳。教材の画面で「ことば」を選ぶと、AIが英語、ベトナム語、インドネシア語、ネパール語、中国語、ミャンマー語に訳す（AIモードのときだけ。訳は端末の中に保存）。
+    4. 見本の人を3名入れてある（people の p-tanaka、p-kobayashi、p-nakamura、sample:true）。「溜めた質問と案をすべて消す」は notices も消すが、people は残す。
 
 ## 3. 延対寺荘用にやること（優先順、1〜8はバージョン4で対応済み）
 1. データの差し替え。ファイル内の `INN`、`staff`、`terms`、`baseLessons`、`kb`、`danger`、`others`、`state.profile`、`map1()`、`map2()` を延対寺荘の内容にする。事実は4章を使う。
