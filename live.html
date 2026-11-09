@@ -151,6 +151,7 @@ ol.steps li::marker{color:var(--ai);font-weight:700}
 .ng{background:var(--warn-soft);border-radius:8px;padding:8px 12px;font-size:.88rem}
 .ng b{color:var(--warn)}
 .ng ul{margin:4px 0 0;padding-left:1.2em}
+a.btn{text-decoration:none;display:inline-block}
 .btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--ai);color:var(--surface)}
 .btn.ghost{background:transparent;color:var(--ai);border:1px solid var(--ai)}
 .btn.small{padding:7px 12px;font-size:.85rem}
@@ -488,7 +489,7 @@ function fresh(){
     learned:[], custom:[], checkin:{vals:[0,0,0,0,0], text:"", sent:false},
     gen:null,
     eff:{n:"", h:"", w:"", r:"30"},
-    memo:{},
+    memo:{}, dorm:{address:"", steps:[]},
     log:[], props:[], notified:{}, mine:{}, drafts:{}, people:samplePeople(), notices:[], lang:"ja", tr:{}, ojtBy:HOST, quizMode:"test", cardCat:"all", cardIdx:0, cardShow:false, known:{}, cards:[]
   };
 }
@@ -496,7 +497,7 @@ let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], firstQs=true;
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true;
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
@@ -567,6 +568,7 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   }, fail);
   db.collection("learned").onSnapshot(snap=>{ liveLearned = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("proposals").onSnapshot(snap=>{ liveProps = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.doc("settings/dorm").onSnapshot(snap=>{ liveDorm = snap.exists ? snap.data() : null; rerender(); }, fail);
   db.collection("cards").onSnapshot(snap=>{ liveCards = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("people").onSnapshot(snap=>{ livePeople = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("notices").orderBy("at","desc").limit(20).onSnapshot(snap=>{ liveNotices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
@@ -696,6 +698,7 @@ function sheet(){
     <dl class="kv"><dt>門限</dt><dd>23時まで</dd><dt>入浴</dt><dd>23時まで</dd><dt>食事</dt><dd>出勤日の昼と夜は無料。昼はまかない（お弁当の日もある。前日12時までに注文）、夜は食事の手当</dd><dt>服装</dt><dd>制服は部署で違う（フロントと仲居は洋服）。黒いスラックスと黒い靴は自分で用意</dd><dt>寮</dt><dd>個室（男女共通の寮）。寮費はかかりません。旅館から歩いて3分ほど</dd><dt>休み</dt><dd>月に6〜8日</dd><dt>部屋</dt><dd>トイレ、ミニキッチン、冷蔵庫、テレビ、エアコン（冷房と暖房）、Wi-Fi</dd><dt>共同</dt><dd>洗濯機。お風呂は館の大浴場を使います</dd></dl>
     <p class="note">寮の情報は求人の公開情報です。寝具や電子レンジなど、部屋にないものは施設で確認します。</p>
   </section>
+  ${dormCard()}
   <section class="card">
     <h2>この宿の言葉</h2>
     <div>${terms.map(([t,d])=>`<details class="term"><summary>${t}</summary><p>${d}</p></details>`).join("")}</div>
@@ -1149,9 +1152,31 @@ function keywords(q){
 }
 
 /* ======================= 管理：初日シート作成 ======================= */
+const dormInfo = () => (live && liveDorm) ? liveDorm : state.dorm;
+const mapUrl = a => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(a);
+function dormCard(){
+  const d = dormInfo(), steps = (d.steps||[]).filter(Boolean);
+  return `<section class="card">
+    <h2>寮までの道</h2>
+    <p class="empty">旅館から歩いて3分ほどです（求人の公開情報）。</p>
+    ${steps.length?`<ol class="steps">${steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p class="note">道順は、受け入れ担当が書き込むとここに出ます。</p>`}
+    ${d.address?`<p>住所：${esc(d.address)}</p><div class="row"><a class="btn small" href="${mapUrl(d.address)}" target="_blank" rel="noopener">地図で開く</a></div>`:""}
+  </section>`;
+}
+function dormEditor(){
+  const d = dormInfo();
+  return `<section class="card">
+    <span class="label">新人の「初日」の画面に出ます</span>
+    <h2>寮までの道案内</h2>
+    <label class="field">寮の住所（任意）<input id="dorm-addr" value="${esc(d.address||"")}" placeholder="例：富山県黒部市宇奈月温泉◯◯"></label>
+    <label class="field">道順（1行に1つ）<textarea id="dorm-steps" style="min-height:120px" placeholder="例：玄関を出て右へ&#10;◯◯の角を左へ&#10;2軒目の白い建物が寮">${esc((d.steps||[]).join("\\n"))}</textarea></label>
+    <div class="row"><button class="btn small" id="dorm-save">道案内を保存</button>${d.address?`<a class="btn ghost small" href="${mapUrl(d.address)}" target="_blank" rel="noopener">地図で確かめる</a>`:""}</div>
+    <p class="note">住所を入れると「地図で開く」ボタンが出ます。スタッフの住まいなので、載せてよいか施設と決めてから入れてください。</p>
+  </section>`;
+}
 function make(){
   const g = state.gen;
-  return `
+  return `${dormEditor()}
   <section class="card">
     <span class="label">女将・担当者が答えるのは、これだけ</span>
     <h2>新しく来る人の初日シートを作る</h2>
@@ -1423,6 +1448,10 @@ function bind(){
   document.querySelectorAll("[data-adopt]").forEach(b=>b.onclick=()=>setProp(b.dataset.adopt,"adopted"));
   document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=()=>setProp(b.dataset.reject,"rejected"));
   const wp=$("#wipe"); if(wp) wp.onclick=wipeLive;
+  const ds=$("#dorm-save"); if(ds) ds.onclick=async()=>{
+    const rec={address:$("#dorm-addr").value.trim(), steps:$("#dorm-steps").value.split("\n").map(x=>x.trim()).filter(Boolean), at:Date.now()};
+    if(live){ try{ await db.doc("settings/dorm").set(rec); toast("道案内を保存しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    state.dorm=rec; toast("道案内を保存しました"); render(); };
   const g=$("#gen"); if(g) g.onclick=generate;
   const rg=$("#regen"); if(rg) rg.onclick=()=>{state.gen=null;render()};
   const pb=$("#publish"); if(pb) pb.onclick=()=>{
