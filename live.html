@@ -115,6 +115,19 @@ dl.kv dd{margin:0;min-width:0}
 .fcard{border:1px solid var(--line);border-radius:12px;background:var(--bg);min-height:150px;padding:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px}
 .fcard .front{font-family:var(--display);font-size:1.35rem;color:var(--ai)}
 .fcard .back{font-size:.95rem}
+.tour{position:sticky;top:0;z-index:6;border:2px solid var(--ai);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.nextcard{border:2px solid var(--moss)}
+details.card.fold{display:block}
+details.card.fold>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+details.card.fold>summary::-webkit-details-marker{display:none}
+details.card.fold>summary::after{content:"開く";font-size:.75rem;color:var(--ai);font-weight:700;white-space:nowrap}
+details.card.fold[open]>summary::after{content:"閉じる"}
+details.card.fold[open]>*:not(summary){margin-top:10px}
+button.stat{text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column}
+html.big{font-size:117%}
+html.big body{font-size:17.5px}
+.voice{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.voice:first-child{border-top:0;padding-top:0}
 .faq{display:flex;flex-direction:column;gap:6px}
 .faq div{border-top:1px solid var(--line);padding-top:6px}
 .faq div:first-child{border-top:0;padding-top:0}
@@ -241,7 +254,7 @@ nav.tabs .dot{position:absolute;top:4px;right:calc(50% - 18px);min-width:16px;he
 <div class="app">
   <header class="top">
     <div class="brand"><h1>宿のはじめて帳</h1><span class="row" style="gap:6px"><span class="aibadge" id="livebadge">この端末だけ</span><span class="aibadge" id="aibadge">見本モード</span></span></div>
-    <div class="demo-note"><span>延対寺荘の公開情報をもとにした見本です。内容は訪問時に確認します。</span><button class="linkbtn" id="reset">最初に戻す</button></div>
+    <div class="demo-note"><span>延対寺荘の公開情報をもとにした見本です。内容は訪問時に確認します。</span><span class="row" style="gap:14px"><button class="linkbtn" id="tourbtn">デモの案内</button><button class="linkbtn" id="bigtxt">文字を大きく</button><button class="linkbtn" id="reset">最初に戻す</button></span></div>
     <div class="role" role="group" aria-label="画面の切り替え">
       <button id="role-new" aria-pressed="true">新人スタッフの画面</button>
       <button id="role-admin" aria-pressed="false">女将・管理者の画面</button>
@@ -486,22 +499,56 @@ function fresh(){
     steps:{}, done:{}, quiz:{}, scores:{},
     chat:[{who:"bot", text:"延対寺荘の質問係です。館内のこと、仕事の手順など、先輩に聞きにくいことも気軽にどうぞ。資料にないことは、担当者に確認してからお答えします。", src:""}],
     queue:[{id:1, q:"冬にトロッコが運休しているとき、お客様にどう案内すればいいですか？", by:"田中 美咲さん", risk:false, answered:false, reply:""}],
-    learned:[], custom:[], checkin:{vals:[0,0,0,0,0], text:"", sent:false},
+    learned:[], custom:[], checkin:{vals:[0,0,0,0,0], text:"", sent:false, to:"inn", anon:false}, voices:[], relays:[], innvoices:[],
     gen:null,
     eff:{n:"", h:"", w:"", r:"30"},
     memo:{}, dorm:{address:"", steps:[]},
-    log:[], props:[], notified:{}, mine:{}, drafts:{}, people:samplePeople(), notices:[], lang:"ja", tr:{}, ojtBy:HOST, quizMode:"test", cardCat:"all", cardIdx:0, cardShow:false, known:{}, cards:[]
+    log:[], props:[], notified:{}, mine:{}, drafts:{}, people:samplePeople(), notices:[], lang:"ja", tr:{}, ojtBy:HOST, tour:null, big:false, open:{}, quizMode:"test", cardCat:"all", cardIdx:0, cardShow:false, known:{}, cards:[]
   };
 }
 let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true;
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[];
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
 const props = () => live ? liveProps : state.props;
+const voicesOut = () => (live ? liveVoices : (state.voices||[])).slice().sort((a,b)=>(b.at||0)-(a.at||0));
+const innVoices = () => live ? liveInnVoices : (state.innvoices||[]);
+const relays = () => live ? liveRelays : (state.relays||[]);
+async function sendVoice(c){
+  const text=String(c.text||"").trim(); if(!text) return true;
+  const urgent = danger.some(d=>text.includes(d)) || /いじめ|怖い|こわい|やめたい|辞めたい/.test(text);
+  const rec={text, to:c.to||"inn", anon:!!c.anon, by:c.anon?"名前なし":state.profile.name+"さん", at:Date.now(), urgent, status:"new", vals:c.vals.slice()};
+  if(!live){ if(rec.to==="outside") (state.voices ||= []).unshift({id:"v"+rec.at, ...rec}); else (state.innvoices ||= []).unshift({id:"i"+rec.at, ...rec}); return true; }
+  try{
+    if(rec.to==="inn"){ await db.collection("innvoices").add(rec); return true; }
+    if(!me){ toast("外部の窓口に送るには、サインインが必要です"); return false; }
+    const ref=db.doc("voices/"+me), snap=await ref.get(), items=(snap.exists&&(snap.data()||{}).items)||[];
+    await ref.set({items: items.concat([rec]).slice(-50)}); return true;
+  }catch(e){ toast(dbMsg(e)); return false; }
+}
+function relayCard(){
+  const iv=innVoices().slice(0,5), rl=relays().slice(0,5);
+  if(!iv.length && !rl.length) return "";
+  return `<section class="card"><h3>スタッフから届いた声</h3>
+    ${iv.map(v=>`<div class="voice">${v.urgent?'<span class="tag risk" style="align-self:flex-start">急ぎ</span>':""}<span>${esc(v.text)}</span><span class="note">${esc(v.by)} ・ 本人から施設へ</span></div>`).join("")}
+    ${rl.map(v=>`<div class="voice">${v.urgent?'<span class="tag risk" style="align-self:flex-start">急ぎ</span>':""}<span>${esc(v.text)}</span><span class="note">外部の相談窓口から（名前は伏せています） ・ ${esc(v.when||"")}</span></div>`).join("")}
+  </section>`;
+}
+function windowCard(){
+  if(live && !isOwnerV) return "";
+  const vs=voicesOut(), open=vs.filter(v=>v.status!=="relayed").length;
+  const day = t => { const d=new Date(t); return `${d.getMonth()+1}月${d.getDate()}日`; };
+  return `<section class="card"><span class="label">外部の相談窓口（持ち主だけが見られます）</span><h2>届いた声 ${open}件</h2>
+    <p class="empty">スタッフが「外部の相談窓口」に送った声です。施設には、名前を伏せ、言い方を整えてから伝えます。</p>
+    ${vs.length?vs.map((v,i)=>`<div class="voice">${v.urgent?'<span class="tag risk" style="align-self:flex-start">安全に関わる。今日中に施設へ</span>':""}<b>${esc(v.text)}</b><span class="note">${esc(v.by)} ・ ${day(v.at)}${v.status==="relayed"?" ・ 施設に伝えました":""}</span>
+      ${v.status==="relayed"?"":`<textarea id="relay-${i}" aria-label="施設に伝える文" placeholder="施設に伝える文（名前や本人が分かる言葉を外す）">${esc((state.relayDraft||{})[v.at]||"")}</textarea>
+      <div class="row"><button class="btn small" data-relay="${i}">施設に伝える</button>${aiOK()?`<button class="btn ghost small" data-rdraft="${i}">AIで伝え方を整える</button>`:""}</div>`}</div>`).join(""):`<p class="note">まだ届いていません。</p>`}
+  </section>`;
+}
 const userCards = () => (live ? liveCards : state.cards).slice().sort((a,b)=>(a.at||0)-(b.at||0));
 const allCards = () => BUILTIN_CARDS.concat(userCards());
 const people = () => (live ? livePeople : state.people).slice().sort((a,b)=>String(a.startISO||"9").localeCompare(String(b.startISO||"9")));
@@ -523,7 +570,7 @@ function personView(p){
   const me = p.name===state.profile.name;
   const items = ojtFor(p.job), done = items.filter(([k])=>p.ojt&&p.ojt[k]&&p.ojt[k].done).length;
   const prepN = PREP.filter(([k])=>p.prep&&p.prep[k]).length;
-  const checkin = me ? (state.checkin.sent?{day:3, vals:state.checkin.vals, text:state.checkin.text}:null) : (p.checkin||null);
+  const checkin = me ? (state.checkin.sent?{day:3, vals:state.checkin.vals, text:(state.checkin.text&&state.checkin.to==="outside")?"（書いた内容は、本人の希望で外部の相談窓口に送られました）":(state.checkin.anon&&state.checkin.text?"（名前を伏せた声として届いています）":state.checkin.text)}:null) : (p.checkin||null);
   return {...p, me, prog: me?meLessonProg():(p.prog||0), ojtDone:done, ojtAll:items.length, prepN, checkin, day:dayLabel(p.startISO),
     alert: !!(checkin&&checkin.vals.some(v=>v>0&&v<=2))};
 }
@@ -572,6 +619,10 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   db.collection("cards").onSnapshot(snap=>{ liveCards = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("people").onSnapshot(snap=>{ livePeople = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("notices").orderBy("at","desc").limit(20).onSnapshot(snap=>{ liveNotices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("innvoices").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveInnVoices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
+  db.collection("relays").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveRelays = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
+  try{ const u = await window.claude?.use?.("user"); if(u){ me = await u.id(); isOwnerV = !!(await u.isOwner()); } }catch(e){}
+  if(isOwnerV) db.collection("voices").onSnapshot(snap=>{ liveVoices = snap.docs.flatMap(d=>((d.data()||{}).items||[]).map(it=>({...it, uid:d.id}))); rerender(); }, ()=>{});
 })();
 async function logQ(o){
   const rec={q:o.q, result:o.result, risk:!!o.risk, status:o.result==="answer"?"auto":"open", answer:o.answer||"", source:o.source||"",
@@ -644,8 +695,48 @@ function render(){
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
-  main.innerHTML = `<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
+  main.innerHTML = `${tourBar()}<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
   bind(); save();
+}
+const TOUR = [
+  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。"],
+  ["new","learn","bango","3分の教材","共通の仕事と、延対寺荘だけの手順を短い教材にします。これは「部屋番号で棟を覚える」です。外国人スタッフ向けに、教材をAIで翻訳することもできます。"],
+  ["new","ask",null,"聞きにくいことはAIに","「中抜けは何時から？」を押すと答えます。「卵アレルギー」のような危ないことは答えず、担当者に回します。"],
+  ["new","quiz",null,"確認テスト","覚えたかを3問で確かめます。終わったら、いちばん下の「完了」を押します。「覚えるカード」に切り替えると、お品書きや館内も覚えられます。"],
+  ["new","checkin",null,"3日目のふりかえり","1分で答えます。低い点があると、担当者の画面に「声かけを」と出ます。辞める前のサインに気づけます。言いにくいことは、外部の相談窓口に名前を伏せて送ることもできます。"],
+  ["admin","dash",null,"担当者の画面","いちばん上の「今日のまとめ」で、回答待ちの質問と、声をかけたい人が分かります。受け入れ予定、準備のチェック、一人立ちチェック、LINEの案内文もここで扱います。"],
+  ["admin","queue",null,"答えられなかった質問","AIが答えられなかった質問が届きます。一度答えると、次からはAIが答えます。質問が溜まると、AIが「教材に足す案」を作ります。"],
+  ["admin","make",null,"初日シートを作る","名前と初日を入れるだけで、初日シートができます。寮までの道案内もここで書きます。"],
+  ["admin","author",null,"ベテランの技を教材に","ベテランの説明を撮って文字にすると、手順書とテストができます。湯温の調整のような技も残せます。"],
+  ["admin","effect",null,"効果をその場で計算","新人の人数と教える時間を伺って、戻ってくる時間と金額を出します。"],
+  ["admin","memo",null,"確認したいこと","最後に、このメモの項目を伺います。外部の相談窓口に届いた声も、ここで見て、言い方を整えて施設に伝えます。"]
+];
+function tourBar(){
+  if(state.tour==null || !TOUR[state.tour]) return "";
+  const i=state.tour, t=TOUR[i];
+  return `<section class="card tour" aria-live="polite"><span class="label">デモの案内 ${i+1} / ${TOUR.length}</span><b>${esc(t[3])}</b><p class="empty">${esc(t[4])}</p>
+    <div class="row"><button class="btn ghost small" data-tour="prev" ${i===0?"disabled":""}>戻る</button><button class="btn small" data-tour="next">${i===TOUR.length-1?"おわり":"次へ"}</button><button class="linkbtn" data-tour="close">案内を閉じる</button></div></section>`;
+}
+function setTour(i){
+  if(i==null || i<0 || i>=TOUR.length){ state.tour=null; render(); return; }
+  const t=TOUR[i]; state.tour=i; state.role=t[0]; state.tab=t[1]; state.lesson=t[2]; state.newbieView=null;
+  $("#role-new").setAttribute("aria-pressed",t[0]==="new"); $("#role-admin").setAttribute("aria-pressed",t[0]==="admin");
+  render(); window.scrollTo(0,0);
+}
+function applyBig(){ document.documentElement.classList.toggle("big", !!state.big); const b=$("#bigtxt"); if(b) b.textContent = state.big ? "文字を標準に" : "文字を大きく"; }
+function nextCard(items){
+  const n=items.find(i=>!i.done); if(!n) return "";
+  const lbl={sheet:"初日シートを読む ↓", lessons:"教材を見る", quiz:"テストを受ける", bring:"持ち物を見る ↓"}[n.k]||"開く";
+  return `<section class="card nextcard"><span class="label">次にやること</span><b>${esc(n.t)}</b><div class="row"><button class="btn small" data-next="${n.k}">${lbl}</button></div></section>`;
+}
+function todaySummary(alertN){
+  const d=new Date(), pend = (typeof props==="function") ? props().filter(p=>p.status==="pending").length : 0;
+  const relayN = (typeof relays==="function") ? relays().length : 0;
+  return `<section class="card"><span class="label">今日のまとめ ・ ${d.getMonth()+1}月${d.getDate()}日</span>
+    <div class="stats"><button class="stat" data-go="queue"><span class="label">回答待ちの質問</span><div class="num">${openQueue()}<small>件</small></div><span class="delta">押すと開く →</span></button>
+    <div class="stat"><span class="label">声かけが必要な人</span><div class="num">${alertN}<small>名</small></div><span class="delta" style="color:var(--muted)">下の一覧で確かめる</span></div></div>
+    ${pend?`<p class="note">教材に足す案が ${pend}件 あります。「質問」の画面で確かめてください。</p>`:""}
+    ${relayN?`<p class="note">外部の相談窓口から届いた声が ${relayN}件 あります。下に出ています。</p>`:""}</section>`;
 }
 function go(tab){ state.tab=tab; state.lesson=null; state.newbieView=null; render(); window.scrollTo(0,0); }
 
@@ -668,6 +759,7 @@ function sheet(){
     <p>集合場所：${esc(p.meet)}<br>迎え：${esc(p.host)}</p>
     <span class="count">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
   </section>
+  ${nextCard(prepItems)}
   <section class="card">
     <h2>着任までにやること</h2>
     <p class="note">初日シートは、この画面の「当日の流れ」から下の内容です。<button class="linkbtn" id="gosheet">初日シートへ ↓</button></p>
@@ -679,32 +771,33 @@ function sheet(){
     <dl class="kv">${(p.schedule||defaultSchedule()).map(x=>`<dt>${esc(x.t)}</dt><dd>${esc(x.d)}</dd>`).join("")}
     </dl>
   </section>
-  <section class="card">
+  <section class="card" id="bringcard">
     <h2>持ち物と服装</h2>
     <ol class="steps">${(p.bring||["黒いスラックス","黒い靴（男性は黒い革靴と黒ベルト、女性は黒パンプス）","着替え、洗面セット、お風呂用品、洗濯用洗剤、スリッパ"]).map(b=>`<li>${esc(b)}</li>`).join("")}</ol>
     <p class="empty">${p.welcome?esc(p.welcome):"制服は部署で違い、白衣、洋服、簡易和装があります。黒いスラックスと黒い靴は自分で用意してください。"}</p>
   </section>
-  <section class="card">
-    <h2>覚えておきたい人</h2>
+  <details class="card fold" data-fold="people" ${state.open&&state.open.people?"open":""}>
+    <summary><h2>覚えておきたい人</h2></summary>
     <p class="tap">押すと、顔と担当の内容が出ます。実際は、本人の同意を得た写真に差し替えます。</p>
     <div class="people">${staff.map((s,i)=>`<button class="person" data-person="${i}" aria-label="${s.name}の顔を見る"><div class="avatar" aria-hidden="true">${face(s)}</div><div><b>${s.name}</b><span>${s.role}</span><div class="call">${s.where}</div></div></button>`).join("")}</div>
-  </section>
-  <section class="card">
-    <div class="row" style="justify-content:space-between"><h2>館内マップ</h2>
+  </details>
+  <details class="card fold" data-fold="map" ${state.open&&state.open.map?"open":""}>
+    <summary><h2>館内マップ</h2></summary>
+    <div class="row" style="justify-content:flex-end">
       <div class="seg" role="group" aria-label="表示"><button data-floor="1" aria-pressed="${state.floor===1}">棟と階</button><button data-floor="2" aria-pressed="${state.floor===2}">施設と時間</button></div></div>
     <p class="empty">${state.floor===1?"公式の館内図をもとにした、棟と階の一覧です。部屋番号で棟が分かります。棟と棟のつながりは訪問時に確認します。":"公式サイトに出ている場所と時間です。時間は変わることがあるので、お客様に伝える前にフロントで確かめます。"}</p>
     <div>${state.floor===1?map1():map2()}</div>
-  </section>
-  <section class="card">
-    <h2>スタッフの決まり</h2>
+  </details>
+  <details class="card fold" data-fold="rules" ${state.open&&state.open.rules?"open":""}>
+    <summary><h2>スタッフの決まり</h2></summary>
     <dl class="kv"><dt>門限</dt><dd>23時まで</dd><dt>入浴</dt><dd>23時まで</dd><dt>食事</dt><dd>出勤日の昼と夜は無料。昼はまかない（お弁当の日もある。前日12時までに注文）、夜は食事の手当</dd><dt>服装</dt><dd>制服は部署で違う（フロントと仲居は洋服）。黒いスラックスと黒い靴は自分で用意</dd><dt>寮</dt><dd>個室（男女共通の寮）。寮費はかかりません。旅館から歩いて3分ほど</dd><dt>休み</dt><dd>月に6〜8日</dd><dt>部屋</dt><dd>トイレ、ミニキッチン、冷蔵庫、テレビ、エアコン（冷房と暖房）、Wi-Fi</dd><dt>共同</dt><dd>洗濯機。お風呂は館の大浴場を使います</dd></dl>
     <p class="note">寮の情報は求人の公開情報です。寝具や電子レンジなど、部屋にないものは施設で確認します。</p>
-  </section>
+  </details>
   ${dormCard()}
-  <section class="card">
-    <h2>この宿の言葉</h2>
+  <details class="card fold" data-fold="words" ${state.open&&state.open.words?"open":""}>
+    <summary><h2>この宿の言葉</h2></summary>
     <div>${terms.map(([t,d])=>`<details class="term"><summary>${t}</summary><p>${d}</p></details>`).join("")}</div>
-  </section>`;
+  </details>`;
 }
 function defaultSchedule(){
   return [{t:"5:30",d:"集合（場所は施設で確認）、制服に着替える"},{t:"",d:"蘭亭1階のマロニエで、朝食の準備に同行"},
@@ -933,23 +1026,27 @@ function checkin(){
   <section class="card">
     <span class="label">3日目のふりかえり</span>
     <h2>送りました。ありがとうございます</h2>
-    <p>回答は教育担当だけが見ます。気になる点があれば、教育担当から声をかけます。</p>
+    <p>5段階の答えは、教育担当が見ます。気になる点があれば、教育担当から声をかけます。</p>
     <dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${"●".repeat(c.vals[i])}${"○".repeat(5-c.vals[i])}</dd>`).join("")}</dl>
-    ${c.text?`<p class="say">${esc(c.text)}</p>`:""}
+    ${c.text?`<p class="say">${esc(c.text)}</p><p class="note">${c.to==="outside"?"書いた内容は、外部の相談窓口に送りました。施設には、名前を伏せて伝えます。":"書いた内容は、施設の教育担当に送りました。"}</p>`:""}
     <div class="row"><button class="btn ghost small" id="recheck">回答をやり直す</button></div>
   </section>`;
   return `
   <section class="card">
     <span class="label">3日目のふりかえり ・ 1分で終わります</span>
     <h2>ここまで、どうですか？</h2>
-    <p class="empty">回答は教育担当だけが見ます。正直に答えてもらえると、働きやすくする手がかりになります。</p>
+    <p class="empty">5段階の答えは、教育担当が見ます。書いた内容は、施設か外部の相談窓口かを選べます。正直に答えてもらえると、働きやすくする手がかりになります。</p>
   </section>
   ${checkQs.map((q,i)=>`<section class="card"><h3>${q}</h3>
     <div class="scale" role="group" aria-label="${q}">${[1,2,3,4,5].map(v=>`<button data-cv="${i}:${v}" aria-pressed="${c.vals[i]===v}"><b>${v}</b></button>`).join("")}</div>
     <div class="scale-ends"><span>よくない</span><span>とてもよい</span></div></section>`).join("")}
   <section class="card"><h3>困っていること、言いにくいこと（任意）</h3>
     <textarea id="ctext" aria-label="自由記述" placeholder="例：朝食の片づけの順番がまだ不安です">${esc(c.text)}</textarea>
-    <button class="btn" id="csend" ${c.vals.every(v=>v>0)?"":"disabled"}>教育担当に送る</button>
+    <div class="field">書いた内容の送り先
+      <div class="seg" role="group" aria-label="送り先"><button data-to="inn" aria-pressed="${(c.to||"inn")==="inn"}">施設の教育担当</button><button data-to="outside" aria-pressed="${c.to==="outside"}">外部の相談窓口</button></div></div>
+    <label class="row note" style="gap:6px"><input type="checkbox" id="canon" ${c.anon?"checked":""}> 名前を伏せて送る</label>
+    <p class="note">${c.to==="outside"?"外部の相談窓口は、施設とは別の担当です。名前を伏せ、言い方を整えてから施設に伝えます。ハラスメント、けが、体調のことは、その日のうちに施設にも伝えます。":"書いた内容は、施設の教育担当に届きます。"}5段階の答えは、いつも施設の教育担当に届きます。</p>
+    <button class="btn" id="csend" ${c.vals.every(v=>v>0)?"":"disabled"}>送る</button>
     ${c.vals.every(v=>v>0)?"":`<p class="note">5つの質問すべてに答えると送れます。</p>`}
   </section>`;
 }
@@ -1011,7 +1108,7 @@ function dash(){
   const soon = all.filter(n=>n.startISO && (new Date(n.startISO+"T00:00:00")-TODAY)/86400000 >= 0 && (new Date(n.startISO+"T00:00:00")-TODAY)/86400000 <= 7).length;
   const notReady = all.filter(n=>n.prepN<PREP.length && !(n.startISO && new Date(n.startISO+"T00:00:00")<TODAY)).length;
   const alerts = all.filter(n=>n.alert);
-  return `
+  return `${todaySummary(alerts.length)}${relayCard()}
   <section class="card">
     <span class="label">今日の連絡（新人の画面のいちばん上に出ます）</span>
     <textarea id="ntext" aria-label="今日の連絡" placeholder="例：今日は団体40名。夕食はマロニエです"></textarea>
@@ -1123,8 +1220,8 @@ async function setProp(id, status){
   toast(status==="adopted"?"教材に入れました。新人の画面で見られます":"見送りました"); render();
 }
 async function wipeLive(){
-  if(!live||!confirm("溜めた質問、資料に足した回答、反映案、今日の連絡をすべて消します（受け入れの一覧は残ります）。元に戻せません。消しますか？")) return;
-  for(const c of ["questions","learned","proposals","notices"]){
+  if(!live||!confirm("溜めた質問、資料に足した回答、反映案、今日の連絡、スタッフの声をすべて消します（受け入れの一覧は残ります）。元に戻せません。消しますか？")) return;
+  for(const c of ["questions","learned","proposals","notices","innvoices","relays","voices"]){
     try{ const snap=await db.collection(c).get(); for(const d of snap.docs){ await db.doc(c+"/"+d.id).delete(); } }
     catch(e){ toast(dbMsg(e)); return; }
   }
@@ -1164,12 +1261,12 @@ const dormInfo = () => { const d = (live && liveDorm) ? liveDorm : state.dorm ||
 const mapUrl = a => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(String(a).replace(/〒?\s*\d{3}-\d{4}\s*/,"").trim());
 function dormCard(){
   const d = dormInfo(), steps = (d.steps||[]).filter(Boolean);
-  return `<section class="card">
-    <h2>寮までの道</h2>
+  return `<details class="card fold" data-fold="dorm" ${state.open&&state.open.dorm?"open":""}>
+    <summary><h2>寮までの道</h2></summary>
     <p class="empty">旅館から歩いて3分ほどです（求人の公開情報）。</p>
     ${steps.length?`<ol class="steps">${steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p class="note">道順は、受け入れ担当が書き込むとここに出ます。</p>`}
     ${d.address?`<p>住所：${esc(d.address)}</p><div class="row"><a class="btn small" href="${mapUrl(d.address)}" target="_blank" rel="noopener">地図で開く</a></div>`:""}
-  </section>`;
+  </details>`;
 }
 function dormEditor(){
   const d = dormInfo();
@@ -1344,7 +1441,7 @@ function effect(){
 /* ======================= 管理：ヒアリングメモ ======================= */
 function memo(){
   const m=state.memo, done=memoQs.filter((_,i)=>m[i]&&m[i].ok).length;
-  return `
+  return `${windowCard()}
   <section class="card">
     <span class="label">訪問時に確認すること</span>
     <h2>ヒアリングメモ ${done} / ${memoQs.length}</h2>
@@ -1415,7 +1512,27 @@ function bind(){
   const r=$("#retry"); if(r) r.onclick=()=>{state.quiz[state.quizLesson]={};render();window.scrollTo(0,0)};
   document.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.cv.split(":").map(Number); state.checkin.text=($("#ctext")||{}).value??state.checkin.text; state.checkin.vals[i]=v; render()});
   const ct=$("#ctext"); if(ct) ct.oninput=()=>{state.checkin.text=ct.value; save()};
-  const cs=$("#csend"); if(cs) cs.onclick=()=>{state.checkin.sent=true; render(); toast("教育担当に送りました")};
+  document.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{ state.checkin.text=($("#ctext")||{}).value??state.checkin.text; state.checkin.to=b.dataset.to; render(); });
+  const ca=$("#canon"); if(ca) ca.onchange=()=>{ state.checkin.anon=ca.checked; save(); };
+  const cs=$("#csend"); if(cs) cs.onclick=async()=>{ state.checkin.text=$("#ctext").value; cs.disabled=true;
+    const ok=await sendVoice(state.checkin); if(!ok){ cs.disabled=false; return; }
+    state.checkin.sent=true; render(); toast(state.checkin.to==="outside"&&state.checkin.text.trim()?"外部の相談窓口に送りました":"教育担当に送りました"); };
+  document.querySelectorAll("[data-relay]").forEach(b=>b.onclick=async()=>{ const i=b.dataset.relay, v=voicesOut()[+i]; if(!v) return;
+    const t=document.getElementById("relay-"+i).value.trim(); if(!t){ toast("施設に伝える文を入れてください"); return; }
+    const rec={text:t, urgent:!!v.urgent, at:Date.now(), when:todayText()};
+    if(live){ try{ await db.collection("relays").add(rec); const ref=db.doc("voices/"+v.uid), snap=await ref.get();
+        const items=((snap.exists&&(snap.data()||{}).items)||[]).map(x=>x.at===v.at?{...x, status:"relayed"}:x); await ref.set({items}); toast("施設に伝えました"); }
+      catch(e){ toast(dbMsg(e)); } return; }
+    (state.relays ||= []).unshift({id:"r"+rec.at, ...rec}); const o=(state.voices||[]).find(x=>x.at===v.at); if(o) o.status="relayed"; toast("施設に伝えました"); render(); });
+  document.querySelectorAll("[data-rdraft]").forEach(b=>b.onclick=async()=>{ const v=voicesOut()[+b.dataset.rdraft]; if(!v) return; b.disabled=true; b.textContent="作っています…";
+    try{ const {text}=await sample(`旅館で働く新人スタッフから、外部の相談窓口に届いた声です。施設の担当者に伝える文に書き直してください。
+ルール：
+1. 名前、出身、勤務日など、本人が分かる言葉を外す。
+2. 施設や人を責める言い方にしない。事実と、本人が困っていることと、施設にお願いしたいことを、やさしい日本語で3文以内にする。
+3. 書き直した文だけを返す。
+届いた声：${v.text}`,{modelTier:"quick"}); (state.relayDraft ||= {})[v.at]=String(text||"").trim(); }
+    catch(e){ const m=aiErr(e); if(m) toast(m); }
+    render(); });
   const rc=$("#recheck"); if(rc) rc.onclick=()=>{state.checkin.sent=false; render()};
   document.querySelectorAll("[data-nb]").forEach(b=>b.onclick=()=>{state.newbieView=b.dataset.nb;render();window.scrollTo(0,0)});
   document.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ const k=b.dataset.pp, p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{prep:{[k]:!(p.prep&&p.prep[k])}}); });
@@ -1468,6 +1585,12 @@ function bind(){
     if(live){ try{ await db.doc("settings/dorm").set(rec); toast("道案内を保存しました"); }catch(e){ toast(dbMsg(e)); } return; }
     state.dorm=rec; toast("道案内を保存しました"); render(); };
   const gs=$("#gosheet"); if(gs) gs.onclick=()=>{ const t=$("#daysheet"); if(t) t.closest(".card").scrollIntoView({behavior:"smooth",block:"start"}); };
+  document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{ const a=b.dataset.tour; if(a==="close") setTour(null); else if(a==="prev") setTour(state.tour-1); else setTour(state.tour+1>=TOUR.length?null:state.tour+1); });
+  document.querySelectorAll("details[data-fold]").forEach(d=>d.ontoggle=()=>{ (state.open ||= {})[d.dataset.fold]=d.open; save(); });
+  document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ const k=b.dataset.next;
+    if(k==="lessons") return go("learn"); if(k==="quiz") return go("quiz");
+    const t = k==="sheet" ? ($("#daysheet")&&$("#daysheet").closest(".card")) : $("#bringcard"); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
   const g=$("#gen"); if(g) g.onclick=generate;
   const rg=$("#regen"); if(rg) rg.onclick=()=>{state.gen=null;render()};
   const pb=$("#publish"); if(pb) pb.onclick=()=>{
@@ -1497,9 +1620,12 @@ function bind(){
 }
 function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
   $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
+$("#tourbtn").onclick=()=>setTour(0);
+$("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };
 $("#role-new").onclick=()=>setRole("new");
 $("#role-admin").onclick=()=>setRole("admin");
-$("#reset").onclick=()=>{ try{localStorage.removeItem(KEY)}catch(e){} state=fresh(); staff.forEach(s=>delete s.photo); setRole("new"); toast(live?"この端末の表示を最初に戻しました。共有データは質問の画面から消せます":"デモを最初の状態に戻しました"); setLiveBadge(); };
+$("#reset").onclick=()=>{ try{localStorage.removeItem(KEY)}catch(e){} state=fresh(); staff.forEach(s=>delete s.photo); applyBig(); setRole("new"); toast(live?"この端末の表示を最初に戻しました。共有データは質問の画面から消せます":"デモを最初の状態に戻しました"); setLiveBadge(); };
 $("#role-new").setAttribute("aria-pressed",state.role==="new");$("#role-admin").setAttribute("aria-pressed",state.role==="admin");
+applyBig();
 render();
 </script>
