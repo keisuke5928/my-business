@@ -498,7 +498,7 @@ function go(tab){ state.tab=tab; state.lesson=null; state.newbieView=null; rende
 function sheet(){
   const p = state.profile;
   const prepItems = [
-    {k:"sheet", t:"初日シートを読む", done:state.prep.sheet},
+    {k:"sheet", t:"初日シート（この画面の「当日の流れ」から下）を読んだ", done:state.prep.sheet},
     {k:"lessons", t:`着任前の教材を見る（${doneCount()}/${lessons().length}本）`, done:doneCount()===lessons().length, go:"learn"},
     {k:"quiz", t:"確認テストを1つ受ける", done:Object.keys(state.scores).length>0, go:"quiz"},
     {k:"bring", t:"持ち物をそろえる", done:state.prep.bring}
@@ -506,16 +506,18 @@ function sheet(){
   const left = prepItems.filter(i=>!i.done).length;
   return `
   <section class="card hero">
-    <span class="label">${esc(p.name)}さんの初日</span>
+    <span class="label">${esc(p.name)}さんの初日シート</span>
     <div class="when">${esc(p.date)} ${esc(p.time)}</div>
     <p>集合場所：${esc(p.meet)}<br>迎え：${esc(p.host)}</p>
     <span class="count">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
   </section>
   <section class="card">
     <h2>着任までにやること</h2>
+    <p class="note">初日シートは、この画面の「当日の流れ」から下の内容です。<button class="linkbtn" id="gosheet">初日シートへ ↓</button></p>
     <div class="todo">${prepItems.map(i=>`<button data-prep="${i.k}" class="${i.done?"done":""}"><span class="box" aria-hidden="true">${i.done?"✓":""}</span><span class="t">${i.t}</span>${i.go&&!i.done?`<span class="go">開く →</span>`:""}</button>`).join("")}</div>
   </section>
   <section class="card">
+    <span class="label" id="daysheet">ここから初日シート</span>
     <h2>当日の流れ</h2>
     <dl class="kv">${(p.schedule||defaultSchedule()).map(x=>`<dt>${esc(x.t)}</dt><dd>${esc(x.d)}</dd>`).join("")}
     </dl>
@@ -1075,6 +1077,7 @@ function bind(){
   const ds=$("#dorm-save"); if(ds) ds.onclick=async()=>{
     const rec={address:$("#dorm-addr").value.trim(), steps:$("#dorm-steps").value.split("\n").map(x=>x.trim()).filter(Boolean), at:Date.now()};
     state.dorm=rec; toast("道案内を保存しました"); render(); };
+  const gs=$("#gosheet"); if(gs) gs.onclick=()=>{ const t=$("#daysheet"); if(t) t.closest(".card").scrollIntoView({behavior:"smooth",block:"start"}); };
   const g=$("#gen"); if(g) g.onclick=generate;
   const rg=$("#regen"); if(rg) rg.onclick=()=>{state.gen=null;render()};
   const pb=$("#publish"); if(pb) pb.onclick=()=>{
