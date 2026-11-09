@@ -97,7 +97,14 @@ dl.kv dd{margin:0;min-width:0}
 .fac:first-child{border-top:0;padding-top:0}
 .fac b{display:block}
 .fac span{display:block;font-size:.82rem;color:var(--muted)}
+.faq .note{display:block}
+.faq span[lang]{display:block;color:var(--muted);font-size:.88rem}
+.faq{display:flex;flex-direction:column;gap:6px}
+.faq>div{border-top:1px solid var(--line);padding-top:6px}
+.faq>div:first-child{border-top:0;padding-top:0}
+.faq b{display:block}
 .sos{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;border:0;border-radius:999px;padding:10px 16px;font-weight:700;background:var(--warn);color:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.sos.up{bottom:calc(136px + env(safe-area-inset-bottom,0px))}
 .fb{display:flex;gap:6px;margin-top:6px}
 .fb button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:2px 10px;font-size:.75rem;color:var(--muted)}
 .tour{position:sticky;top:0;z-index:6;border:2px solid var(--ai);box-shadow:0 4px 14px rgba(0,0,0,.12)}
@@ -503,7 +510,7 @@ function renderTabs(){
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
 function render(){
-  { const sb=$("#sosbtn"); if(sb) sb.hidden = state.role!=="new"; }
+  { const sb=$("#sosbtn"); if(sb){ sb.hidden = state.role!=="new"; sb.classList.toggle("up", state.tab==="ask"); } }
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
@@ -511,7 +518,7 @@ function render(){
   bind(); save();
 }
 const TOUR = [
-  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。困ったときは右下の「困ったら」を押します。"],
+  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。「すぐ探す」に言葉を入れると、その場で答えが出ます。困ったときは右下の「困ったら」を押します。"],
   ["new","learn","bango","3分の教材","共通の仕事と、延対寺荘だけの手順を短い教材にします。これは「部屋番号で棟を覚える」です。"],
   ["new","ask",null,"聞きにくいことはAIに","「中抜けは何時から？」を押すと答えます。「卵アレルギー」のような危ないことは答えず、担当者に回します。"],
   ["new","quiz",null,"確認テスト","覚えたかを3問で確かめます。終わったら、いちばん下の「完了」を押します。"],
@@ -569,6 +576,7 @@ function sheet(){
     <p>集合場所：${esc(p.meet)}<br>迎え：${esc(p.host)}</p>
     <span class="count">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
   </section>
+  ${findCard()}
   ${nextCard(prepItems)}
   <section class="card">
     <h2>着任までにやること</h2>
@@ -703,6 +711,7 @@ function ask(){
     <p class="empty">答えは延対寺荘の資料だけから返します。資料にないことは作らずに、担当者に確認します。アレルギー、けが、お金、お客様とのトラブルは、AIは答えずに担当者へつなぎます。</p>
     ${sample&&!aiBlocked?`<p class="note">AIに質問すると、最初の1回だけ利用の許可を求められます。</p>`:""}
   </section>
+  ${phraseCard()}
   <div class="suggest">${["中抜けは何時から？","朝食は何時から？","512号室はどの棟？","お部屋で夕食はできる？","卵アレルギーのお客様の料理は？","地酒のおすすめは？"].map(s=>`<button data-say="${s}">${s}</button>`).join("")}</div>
   <div class="chat" id="chatlog">${state.chat.map(m=>`<div class="msg ${m.who}${m.esc?" esc":""}">${esc(m.text)}${m.src?`<span class="src">${esc(m.src)}</span>`:""}</div>`).join("")}</div>
   <form class="composer" id="composer"><input id="askinput" placeholder="例：貸切風呂の予約はどうする？" autocomplete="off" aria-label="質問を入力"><button class="btn" type="submit" id="sendbtn">送る</button></form>`;
@@ -710,6 +719,39 @@ function ask(){
 function ruleAnswer(text){
   const t=text.toLowerCase(); const hit=knowledge().find(e=>e.k.some(k=>t.includes(String(k).toLowerCase())));
   return hit?{status:"answer",answer:hit.a,source:hit.src}:{status:"unknown"};
+}
+const PHRASES = [
+  ["答えが分からないとき","確認してまいります。少々お待ちくださいませ。","Let me check. One moment, please."],
+  ["担当者を呼ぶとき","担当の者を呼んでまいります。","I will get the person in charge."],
+  ["場所を案内するとき","ご案内いたします。こちらへどうぞ。","I will show you the way. This way, please."],
+  ["お待たせしたとき","お待たせいたしました。","Thank you for waiting."],
+  ["聞き取れなかったとき","恐れ入ります。もう一度お願いできますか。","I am sorry. Could you say that again, please?"],
+  ["おわびするとき","申し訳ございません。すぐに確認いたします。","I am very sorry. I will check right away."]
+];
+function phraseCard(){
+  return `<details class="card fold" data-fold="phr" ${state.open&&state.open.phr?"open":""}>
+    <summary><h2>とっさの一言</h2></summary>
+    <p class="empty">お客様の前で困ったときの言い方です。外国のお客様には、下の英語を見せても伝わります。</p>
+    <div class="faq">${PHRASES.map(([w,j,e])=>`<div><span class="note">${w}</span><b>${j}</b><span lang="en">${e}</span></div>`).join("")}</div>
+    <p class="note">どの旅館でも使える言い方です。施設の決まった言い方があれば、そちらに合わせます。</p>
+  </details>`;
+}
+function findHTML(q){
+  const t=String(q||"").trim().toLowerCase(); if(!t) return "";
+  if(danger.some(d=>t.includes(d.toLowerCase()))) return `<p class="err">安全やお客様に関わることは、ここでは答えません。今すぐ${esc(whoFor(q))}に確認してください。</p>`;
+  const res=[];
+  const rm=t.match(/^(\d{3})(号室)?$/);
+  if(rm){ const n=+rm[1], R=[["蘭亭",[[311,315],[411,415],[511,515],[611,615],[711,715]]],["菊亭",[[301,306],[401,406],[501,509],[601,608]]],["梅亭",[[221,225],[321,325],[421,427],[521,526]]],["竹亭",[[205,212]]]];
+    const hit=R.find(([,rs])=>rs.some(([x,y])=>n>=x&&n<=y));
+    res.push(hit?{h:"館内図", b:hit[0]==="竹亭"?`${n}号室は、竹亭です。階は館内で確かめてください。`:`${n}号室は、${hit[0]}の${Math.floor(n/100)}階です。`}:{h:"館内図", b:`${n}号室は、公式の館内図にありません。フロントで確かめてください。`}); }
+  knowledge().forEach(e=>{ if((e.k||[]).some(k=>{k=String(k).toLowerCase(); return t.includes(k)||k.includes(t);}) || String(e.a).toLowerCase().includes(t)) res.push({h:e.src, b:e.a}); });
+  terms.forEach(([n,d])=>{ if((n+d).toLowerCase().includes(t)) res.push({h:"言葉："+n, b:d}); });
+  lessons().forEach(l=>{ if((l.title+l.steps.join("")+l.diff).toLowerCase().includes(t)) res.push({h:"教材："+l.title, b:l.diff, l:l.id}); });
+  if(!res.length) return `<p class="empty">見つかりませんでした。質問係に聞くと、担当者にも届きます。</p><div class="row"><button class="btn small" data-fgo="ask">質問係を開く</button></div>`;
+  return `<div class="faq">${res.slice(0,5).map(r=>`<div><span class="note">${esc(r.h)}</span>${esc(r.b)}${r.l?`<div class="row" style="margin-top:4px"><button class="btn ghost small" data-flesson="${r.l}">教材を開く</button></div>`:""}</div>`).join("")}</div>${res.length>5?`<p class="note">ほかに${res.length-5}件あります。言葉を足すと絞れます。</p>`:""}`;
+}
+function findCard(){
+  return `<section class="card"><label class="field"><b style="color:var(--ink);font-size:.95rem">すぐ探す</b><input id="findq" type="search" autocomplete="off" placeholder="例：寮、朝食、渓の湯、512"></label><div id="findout" aria-live="polite"></div></section>`;
 }
 function whoFor(text){
   const t=String(text||"");
@@ -1179,6 +1221,9 @@ function bind(){
     const rec={address:$("#dorm-addr").value.trim(), steps:$("#dorm-steps").value.split("\n").map(x=>x.trim()).filter(Boolean), at:Date.now()};
     state.dorm=rec; toast("道案内を保存しました"); render(); };
   const gs=$("#gosheet"); if(gs) gs.onclick=()=>{ const t=$("#daysheet"); if(t) t.closest(".card").scrollIntoView({behavior:"smooth",block:"start"}); };
+  const fq=$("#findq"); if(fq) fq.oninput=()=>{ const o=$("#findout"); o.innerHTML=findHTML(fq.value);
+    o.querySelectorAll("[data-flesson]").forEach(b=>b.onclick=()=>{ state.tab="learn"; state.lesson=b.dataset.flesson; render(); window.scrollTo(0,0); });
+    o.querySelectorAll("[data-fgo]").forEach(b=>b.onclick=()=>go(b.dataset.fgo)); };
   document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{ const a=b.dataset.tour; if(a==="close") setTour(null); else if(a==="prev") setTour(state.tour-1); else setTour(state.tour+1>=TOUR.length?null:state.tour+1); });
   document.querySelectorAll("details[data-fold]").forEach(d=>d.ontoggle=()=>{ (state.open ||= {})[d.dataset.fold]=d.open; save(); });
   document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ const k=b.dataset.next;
