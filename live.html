@@ -255,6 +255,86 @@ nav.tabs .dot{position:absolute;top:4px;right:calc(50% - 18px);min-width:16px;he
 .upload input{font-size:.8rem;max-width:100%}
 @media (prefers-reduced-motion:no-preference){.view{animation:fade .2s ease}}
 @keyframes fade{from{opacity:.4}to{opacity:1}}
+
+/* ---- UI polish (v13): same palette and roles; adds depth, touch targets, and a calmer hero ---- */
+:root{--hero:#24426a;--hero-ink:#ffffff;--hero-soft:#c9d6ea;--hero-line:rgba(255,255,255,.22);--shadow:0 1px 2px rgba(27,36,48,.05),0 6px 18px rgba(27,36,48,.05);--press:rgba(27,36,48,.06)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--hero:#1c3152;--hero-ink:#eef3fa;--hero-soft:#a9bcd8;--hero-line:rgba(255,255,255,.16);--shadow:0 1px 2px rgba(0,0,0,.35);--press:rgba(255,255,255,.06)}}
+:root[data-theme="dark"]{--hero:#1c3152;--hero-ink:#eef3fa;--hero-soft:#a9bcd8;--hero-line:rgba(255,255,255,.16);--shadow:0 1px 2px rgba(0,0,0,.35);--press:rgba(255,255,255,.06)}
+.brand h1{display:flex;align-items:center;gap:10px;letter-spacing:.02em}
+.brand h1::before{content:"帳";display:grid;place-items:center;width:1.5em;height:1.5em;border-radius:7px;background:var(--hero);color:var(--hero-ink);font-size:.78em;line-height:1;flex:none}
+.demo-note{border-style:solid;border-radius:12px;padding:8px 12px}
+.demo-note .linkbtn{text-decoration:none;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 11px;font-weight:500;color:var(--ink);min-height:28px}
+.demo-note .row{gap:6px!important}
+.role{box-shadow:var(--shadow)}
+.role button{min-height:40px;transition:background .15s,color .15s}
+.card{border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.card h2{font-size:1.18rem}
+.hero{background:var(--hero);color:var(--hero-ink);position:relative;overflow:hidden;padding:18px;gap:12px;box-shadow:none}
+.hero .label{color:var(--hero-soft)}
+.hero .when{font-size:clamp(1.7rem,8vw,2.1rem);letter-spacing:.01em;position:relative}
+.hero .count{background:var(--hero-ink);color:var(--hero)}
+.hero-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;position:relative;z-index:1}
+.hero-meta{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.92rem;border-top:1px solid var(--hero-line);padding-top:10px;position:relative;z-index:1}
+.hero-meta dt{color:var(--hero-soft);font-size:.8rem;align-self:center}
+.hero-meta dd{margin:0;min-width:0}
+.ring{width:58px;height:58px;flex:none;position:relative}
+.ring svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+.ring .tr{fill:none;stroke:var(--hero-line);stroke-width:5}
+.ring .pg{fill:none;stroke:var(--hero-ink);stroke-width:5;stroke-linecap:round}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:.82rem;font-variant-numeric:tabular-nums}
+.nextcard{border-width:1px;border-color:var(--moss);background:var(--moss-soft);box-shadow:none}
+.nextcard .label{color:var(--moss)}
+.btn{min-height:44px;transition:transform .08s,filter .15s}
+.btn.small{min-height:36px}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.ghost{background:var(--surface)}
+.todo button,.stepchk button,.opt,.lesson,.ojt button{min-height:48px;transition:background .15s,border-color .15s}
+.todo button:active,.stepchk button:active,.opt:active:not(:disabled),.lesson:active,.nrow:active,.person:active{background:var(--press)}
+.lesson{box-shadow:var(--shadow);border-radius:14px;padding:14px 16px}
+.stepchk .n{display:grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--ai-soft);min-width:1.7em;font-size:.9rem;font-family:var(--body)}
+.stepchk button.on .n{background:var(--moss);color:var(--surface)}
+.stat .num{color:var(--ai)}
+.stat{box-shadow:none;background:var(--bg)}
+button.stat{border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:background .15s}
+button.stat:active{background:var(--press)}
+details.card.fold>summary{min-height:32px}
+details.card.fold>summary::after{border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--bg)}
+details.card.fold>summary h2{font-size:1.08rem}
+.suggest,.picker{scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.suggest::-webkit-scrollbar,.picker::-webkit-scrollbar{display:none}
+.suggest button,.picker button{min-height:36px;padding:6px 14px;box-shadow:var(--shadow)}
+.msg{line-height:1.65;padding:10px 14px;border-radius:16px}
+.msg.bot{box-shadow:var(--shadow)}
+.msg.bot.esc{border-left:3px solid var(--warn);box-shadow:none}
+.composer{gap:8px;padding:8px;margin-inline:-8px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.10)}
+.composer input{border:0;background:transparent;min-height:40px}
+.composer input:focus-visible{outline:0}
+.composer:focus-within{border-color:var(--ai)}
+.fb button{min-height:30px}
+nav.tabs{box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+nav.tabs button{padding:6px 2px 8px;gap:3px;min-height:54px}
+nav.tabs button .ic{padding:3px 14px;border-radius:999px;transition:background .15s}
+nav.tabs button[aria-current="page"] .ic{background:var(--ai-soft)}
+nav.tabs .dot{top:2px;right:calc(50% - 26px)}
+.toast{box-shadow:0 6px 20px rgba(0,0,0,.2);padding:10px 18px}
+.sos{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 10px}
+.sos[hidden]{display:none}
+.sosin{background:var(--warn);color:var(--surface);border:0;border-radius:999px;padding:6px 14px;font-weight:700;font-size:.85rem;min-height:36px}
+.player{background:linear-gradient(135deg,var(--hero),var(--hero) 40%,#14233b);color:var(--hero-ink)}
+.player .play{border-color:var(--hero-ink)}
+.sos::before{content:"?";display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--surface);color:var(--warn);font-weight:700;font-size:.9rem}
+.sheet-card{border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.sheet-card::before{content:"";width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center;flex:none}
+.tour{top:calc(env(safe-area-inset-top,0px) + 6px);background:var(--surface)}
+.floors .c{border-radius:8px}
+.fcard{box-shadow:var(--shadow);background:var(--surface)}
+textarea,.field input,.field select{min-height:42px;border-radius:10px}
+textarea:focus-visible,.field input:focus-visible,.field select:focus-visible{outline:2px solid var(--ai);outline-offset:1px}
+.tag{padding:2px 9px}
+.score{color:var(--moss)}
+@media (prefers-reduced-motion:no-preference){.sheet-card{animation:rise .22s ease}.toast{animation:rise .2s ease}}
+@keyframes rise{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
+html.big .ring{width:66px;height:66px}
 </style>
 
 <div class="app">
@@ -699,7 +779,7 @@ function renderTabs(){
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
 function render(){
-  { const sb=$("#sosbtn"); if(sb){ sb.hidden = state.role!=="new"; sb.classList.toggle("up", state.tab==="ask"); } }
+  { const sb=$("#sosbtn"); if(sb){ sb.hidden = state.role!=="new" || state.tab==="ask"; } }
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
@@ -762,10 +842,11 @@ function sheet(){
   return `
   ${ns.length?`<section class="card notice"><span class="label">今日の連絡</span>${ns.map(n=>`<div class="nitem"><span>${esc(n.text)}</span><span class="note">${esc(n.when||"")}</span></div>`).join("")}</section>`:""}
   <section class="card hero">
-    <span class="label">${esc(p.name)}さんの初日シート</span>
-    <div class="when">${esc(p.date)} ${esc(p.time)}</div>
-    <p>集合場所：${esc(p.meet)}<br>迎え：${esc(p.host)}</p>
-    <span class="count">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
+    <div class="hero-top"><div><span class="label">${esc(p.name)}さんの初日シート</span>
+      <div class="when">${esc(p.date)} ${esc(p.time)}</div></div>
+      <div class="ring" role="img" aria-label="準備 ${prepItems.length-left} / ${prepItems.length}"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pg" cx="30" cy="30" r="25" stroke-dasharray="${(prepItems.length-left)/prepItems.length*157} 157"/></svg><b>${prepItems.length-left}/${prepItems.length}</b></div></div>
+    <dl class="hero-meta"><dt>集合場所</dt><dd>${esc(p.meet)}</dd><dt>迎え</dt><dd>${esc(p.host)}</dd></dl>
+    <span class="count" style="position:relative;z-index:1">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
   </section>
   ${findCard()}
   ${nextCard(prepItems)}
@@ -924,7 +1005,7 @@ function ask(){
   return `
   <section class="card">
     <span class="label">LINEでも同じように使えます</span>
-    <h2>聞きにくいことも、ここで</h2>
+    <div class="row" style="justify-content:space-between"><h2>聞きにくいことも、ここで</h2><button class="sosin" id="sosinline">困ったら</button></div>
     <p class="empty">答えは延対寺荘の資料だけから返します。資料にないことは作らずに、担当者に確認します。アレルギー、けが、お金、お客様とのトラブルは、AIは答えずに担当者へつなぎます。</p>
     ${sample&&!aiBlocked?`<p class="note">AIに質問すると、最初の1回だけ利用の許可を求められます。</p>`:""}
     <p class="note">${live?"質問はすべて共有データとして溜まり、女将・管理者の画面に届きます。":"いまは、この端末の中だけに記録しています。"}</p>
@@ -1725,6 +1806,7 @@ function bind(){
   const fq=$("#findq"); if(fq) fq.oninput=()=>{ const o=$("#findout"); o.innerHTML=findHTML(fq.value);
     o.querySelectorAll("[data-flesson]").forEach(b=>b.onclick=()=>{ state.tab="learn"; state.lesson=b.dataset.flesson; render(); window.scrollTo(0,0); });
     o.querySelectorAll("[data-fgo]").forEach(b=>b.onclick=()=>go(b.dataset.fgo)); };
+  const si=$("#sosinline"); if(si) si.onclick=()=>openSOS();
   document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{ const a=b.dataset.tour; if(a==="close") setTour(null); else if(a==="prev") setTour(state.tour-1); else setTour(state.tour+1>=TOUR.length?null:state.tour+1); });
   document.querySelectorAll("details[data-fold]").forEach(d=>d.ontoggle=()=>{ (state.open ||= {})[d.dataset.fold]=d.open; save(); });
   document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ const k=b.dataset.next;
