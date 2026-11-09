@@ -13,6 +13,10 @@
 4. 質問と、管理画面の初日シート作成・教材づくり・回答案は、Claudeの `sample` 機能（`window.claude.use("sample")`）でAIが動く。Claudeのアーティファクトの外（ローカルで開いたとき）では `null` になり、決まった答えを返す見本モードに自動で切り替わる。この切り替えは壊さないこと。
 5. 状態は localStorage（キー `yado-hajimete-entaiji-v1`）に保存する。みずなら亭の古い状態を読まないようキーを変えた。ヘッダーの「最初に戻す」で初期化できる。
 6. デザインの決まり。幅480pxの1カラム、藍色が主役で苔色がアクセント、危険や担当者に回す表示だけ赤茶。色はすべて `:root` のトークン経由で、ライト・ダークの両方に対応している。この設計は変えない。
+7. 共有版 live.html（バージョン6）を別に作った。公開先は https://claude.ai/artifact/Y9erU6igwa4PkU3ZiCTscZ（capabilities は sample と db）。index.html は明日の訪問用にそのまま残す（公開先 https://claude.ai/artifact/Gv9dGRxnMibxokMHud3Ryy）。
+8. 共有版のデータは db の3つのコレクション。questions（すべての質問。result は answer、unknown、escalate。status は auto、open、answered、handled）、learned（担当者の回答。質問係の資料に足される）、proposals（教材に足す案。status は pending、adopted、rejected）。採用した案は、その教材の「よくある質問」とテスト問題に入る。
+9. db が使えないとき（ローカルで開いたとき）は、これまでどおり端末の中（localStorage、キー yado-hajimete-entaiji-live-v1）に記録する。ヘッダーの「この端末だけ」「データ共有中」で分かる。
+10. 見本の質問を14件入れてある（doc id s01〜s14、sample:true）。回答はすべて kb の文章そのまま。質問の画面の下の「溜めた質問と案をすべて消す」で空にできる。書き込めるのは、共有メニューで Contributor 以上にした人だけ（db の初期ルール）。
 
 ## 3. 延対寺荘用にやること（優先順、1〜8はバージョン4で対応済み）
 1. データの差し替え。ファイル内の `INN`、`staff`、`terms`、`baseLessons`、`kb`、`danger`、`others`、`state.profile`、`map1()`、`map2()` を延対寺荘の内容にする。事実は4章を使う。
