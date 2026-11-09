@@ -1,0 +1,988 @@
+<title>宿のはじめて帳</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: phone-width app column, role switch on top, tab bar at the bottom (five for staff, six for admin).
+   Indigo (藍) ink on a pale washi grey; moss green is the one accent; rust is reserved for "ask a person". */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#1b2430; --muted:#5d6670; --line:#dde2dc;
+  --ai:#24426a; --ai-soft:#e4eaf3; --moss:#557532; --moss-soft:#e7eedc;
+  --warn:#a5461f; --warn-soft:#f7e6dc; --scrim:rgba(10,14,20,.55); --skin:#f0cfb4; --skin2:#e3bb9c; --collar:#f4f2ec;
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171e; --surface:#1a212b; --ink:#e6eaee; --muted:#9aa4ae; --line:#2b3440;
+  --ai:#9fb8dc; --ai-soft:#22304a; --moss:#a6c47c; --moss-soft:#26321c;
+  --warn:#f0a07b; --warn-soft:#3a2418; --scrim:rgba(0,0,0,.65); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171e; --surface:#1a212b; --ink:#e6eaee; --muted:#9aa4ae; --line:#2b3440;
+  --ai:#9fb8dc; --ai-soft:#22304a; --moss:#a6c47c; --moss-soft:#26321c;
+  --warn:#f0a07b; --warn-soft:#3a2418; --scrim:rgba(0,0,0,.65); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 104px}
+.app{max-width:480px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.35}
+h2{font-size:1.25rem} h3{font-size:1.05rem}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+
+header.top{padding-block:16px 8px;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.brand h1{font-size:1.45rem;color:var(--ai)}
+.aibadge{font-size:.72rem;padding:2px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.aibadge.on{background:var(--moss-soft);color:var(--moss);border-color:transparent;font-weight:700}
+.demo-note{font-size:.78rem;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.linkbtn{border:0;background:none;color:var(--ai);font-size:.78rem;font-weight:700;padding:0;text-decoration:underline}
+.role{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.role button{border:0;background:transparent;border-radius:999px;padding:7px 8px;font-size:.88rem;color:var(--muted)}
+.role button[aria-pressed="true"]{background:var(--ai);color:var(--surface);font-weight:700}
+
+main{padding-top:8px}
+.view{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.label{font-size:.72rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.empty{color:var(--muted);font-size:.88rem}
+.tap{font-size:.75rem;color:var(--muted)}
+.hero{background:var(--ai);color:var(--surface);border:0}
+.hero .label{color:var(--ai-soft)}
+.hero .when{font-size:2rem;font-family:var(--display);font-variant-numeric:tabular-nums;line-height:1.2}
+.hero .count{display:inline-block;background:var(--surface);color:var(--ai);border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:700;align-self:flex-start}
+dl.kv{display:grid;grid-template-columns:5.5em 1fr;gap:6px 12px;margin:0}
+dl.kv dt{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+dl.kv dd{margin:0;min-width:0}
+
+.todo{display:flex;flex-direction:column;gap:6px}
+.todo button{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;width:100%}
+.box{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-size:.8rem;color:var(--surface)}
+.done .box,.box.on{background:var(--moss);border-color:var(--moss)}
+.todo button.done span.t{color:var(--muted);text-decoration:line-through}
+.todo .go{margin-left:auto;font-size:.75rem;color:var(--ai);font-weight:700;white-space:nowrap}
+
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.person{display:flex;gap:10px;align-items:center;border:0;background:none;padding:6px;margin:-6px;border-radius:10px;text-align:left;width:100%}
+.person:hover{background:var(--bg)}
+.avatar{width:44px;height:44px;border-radius:50%;overflow:hidden;flex:none;background:var(--ai-soft)}
+.avatar svg,.avatar img,.portrait svg,.portrait img{width:100%;height:100%;display:block;object-fit:cover}
+.person b{display:block;font-size:.92rem}
+.person span{font-size:.78rem;color:var(--muted)}
+.call{font-size:.78rem;color:var(--moss);font-weight:700}
+
+.seg{display:inline-grid;grid-auto-flow:column;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px;align-self:flex-start}
+.seg button{border:0;background:none;border-radius:999px;padding:3px 14px;font-size:.82rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ai);font-weight:700;box-shadow:0 0 0 1px var(--line)}
+.map{overflow-x:auto}
+.map svg{width:100%;min-width:0;height:auto;display:block}
+.room{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+.room.key{fill:var(--moss-soft);stroke:var(--moss)}
+.room.guest{fill:var(--surface)}
+.maptext{fill:var(--ink);font-size:12px;font-family:var(--body)}
+.maptext.small{fill:var(--muted);font-size:10px}
+.route{stroke:var(--moss);stroke-width:2.5;fill:none;stroke-dasharray:6 5}
+.pin{fill:var(--moss)}
+details.term{border-top:1px solid var(--line);padding-block:8px}
+details.term:first-of-type{border-top:0}
+details.term summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:8px}
+details.term summary::-webkit-details-marker{display:none}
+details.term summary::after{content:"＋";color:var(--muted)}
+details.term[open] summary::after{content:"－"}
+details.term p{color:var(--muted);font-size:.9rem;padding-top:4px}
+
+.lesson-list{display:flex;flex-direction:column;gap:8px}
+.lesson{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+.lesson b{display:block}
+.lesson span{font-size:.8rem;color:var(--muted)}
+.status{font-size:.75rem;padding:2px 10px;border-radius:999px;white-space:nowrap;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.status.done{background:var(--moss-soft);color:var(--moss);border-color:transparent;font-weight:700}
+.status.own{background:var(--ai-soft);color:var(--ai);border-color:transparent}
+.player{aspect-ratio:16/9;max-width:100%;border-radius:10px;background:linear-gradient(135deg,var(--ai),var(--ink));color:var(--surface);position:relative;overflow:hidden;border:0;width:100%;padding:0;display:block}
+.player .play{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;border:2px solid var(--surface);display:grid;place-items:center;font-size:1.2rem}
+.player .sub{position:absolute;left:12px;right:12px;bottom:24px;font-size:.88rem;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.6);min-height:1.4em}
+.player .meta{position:absolute;left:10px;right:10px;top:8px;display:flex;justify-content:space-between;font-size:.75rem;font-variant-numeric:tabular-nums}
+.player .pbar{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.25)}
+.player .pbar i{display:block;height:100%;width:0;background:var(--moss)}
+ol.steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px}
+ol.steps li::marker{color:var(--ai);font-weight:700}
+.stepchk{display:flex;flex-direction:column;gap:6px}
+.stepchk button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;width:100%}
+.stepchk .n{font-family:var(--display);color:var(--ai);font-weight:700;min-width:1.2em}
+.stepchk button.on{background:var(--moss-soft);border-color:transparent}
+.diff{background:var(--ai-soft);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.diff b{color:var(--ai)}
+.ng{background:var(--warn-soft);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.ng b{color:var(--warn)}
+.ng ul{margin:4px 0 0;padding-left:1.2em}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--ai);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--ai);border:1px solid var(--ai)}
+.btn.small{padding:7px 12px;font-size:.85rem}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.back{border:0;background:none;color:var(--ai);padding:0;font-weight:700;align-self:flex-start}
+
+.chat{display:flex;flex-direction:column;gap:10px;min-height:240px}
+.msg{max-width:86%;padding:9px 13px;border-radius:14px;font-size:.92rem;white-space:pre-line;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--ai);color:var(--surface);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot.esc{background:var(--warn-soft);border-color:transparent}
+.msg.bot.wait{color:var(--muted)}
+.msg .src{display:block;margin-top:4px;font-size:.72rem;color:var(--muted)}
+.composer{display:flex;gap:8px;position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:8px}
+.composer input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--ink);font:inherit}
+.suggest{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.suggest button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.82rem}
+
+.q{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px}
+.opt.right{border-color:var(--moss);background:var(--moss-soft)}
+.opt.wrong{border-color:var(--warn);background:var(--warn-soft)}
+.why{font-size:.86rem;color:var(--muted);border-left:3px solid var(--moss);padding-left:10px}
+.score{font-family:var(--display);font-size:2.2rem;color:var(--moss);font-variant-numeric:tabular-nums;line-height:1.2}
+.picker{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.picker button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.82rem}
+.picker button[aria-pressed="true"]{background:var(--ai);color:var(--surface);border-color:var(--ai);font-weight:700}
+
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 0;font-size:.82rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+.scale button b{font-family:var(--display);font-size:1.1rem}
+.scale button[aria-pressed="true"]{background:var(--ai);color:var(--surface);border-color:var(--ai)}
+.scale-ends{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+textarea,.field input,.field select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:.92rem}
+textarea{min-height:72px;resize:vertical}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:380px){.grid2{grid-template-columns:1fr}}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .num{font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .num small{font-size:.8rem;font-family:var(--body);color:var(--muted)}
+.stat .delta{font-size:.78rem;color:var(--moss);font-weight:700}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:4.5em 1fr 3.5em;gap:8px;align-items:center;font-size:.85rem}
+.bar .track{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.bar .fill{height:100%;background:var(--ai)}
+.bar .fill.after{background:var(--moss)}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums}
+.nlist{display:flex;flex-direction:column}
+.nrow{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;border:0;border-top:1px solid var(--line);background:none;padding:10px 0;text-align:left;width:100%}
+.nrow:first-child{border-top:0}
+.nrow b{display:block}
+.nrow .sub{font-size:.78rem;color:var(--muted)}
+.prog{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px;border:1px solid var(--line)}
+.prog i{display:block;height:100%;background:var(--moss)}
+.tag{font-size:.7rem;padding:1px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.risk{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:700}
+.tag.ok{background:var(--moss-soft);color:var(--moss);border-color:transparent;font-weight:700}
+.qitem{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.qitem:first-child{border-top:0;padding-top:0}
+.out{background:var(--moss-soft);border-radius:10px;padding:12px;font-size:.9rem;display:flex;flex-direction:column;gap:6px}
+.note{font-size:.78rem;color:var(--muted)}
+.err{font-size:.82rem;color:var(--warn)}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px));z-index:5}
+nav.tabs .inner{max-width:480px;margin:0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:1fr}
+nav.tabs button{border:0;background:none;padding:8px 2px 9px;font-size:.7rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+nav.tabs button .ic{font-family:var(--display);font-size:1.05rem;line-height:1}
+nav.tabs button[aria-current="page"]{color:var(--ai);font-weight:700}
+nav.tabs .dot{position:absolute;top:4px;right:calc(50% - 18px);min-width:16px;height:16px;border-radius:8px;background:var(--warn);color:var(--surface);font-size:.62rem;display:grid;place-items:center;padding:0 4px;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.85rem;z-index:30;max-width:calc(100% - 32px);text-align:center}
+.sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:end center;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-card{background:var(--surface);color:var(--ink);border-radius:16px;width:100%;max-width:420px;max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.portrait{width:180px;height:180px;max-width:100%;border-radius:50%;background:var(--ai-soft);overflow:hidden}
+.say{background:var(--bg);border-radius:10px;padding:8px 12px;font-size:.9rem;width:100%}
+.upload{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center}
+.upload input{font-size:.8rem;max-width:100%}
+@media (prefers-reduced-motion:no-preference){.view{animation:fade .2s ease}}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>宿のはじめて帳</h1><span class="aibadge" id="aibadge">見本モード</span></div>
+    <div class="demo-note"><span>延対寺荘の公開情報をもとにした見本です。内容は訪問時に確認します。</span><button class="linkbtn" id="reset">最初に戻す</button></div>
+    <div class="role" role="group" aria-label="画面の切り替え">
+      <button id="role-new" aria-pressed="true">新人スタッフの画面</button>
+      <button id="role-admin" aria-pressed="false">女将・管理者の画面</button>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+<nav class="tabs" aria-label="メニュー"><div class="inner" id="tabs"></div></nav>
+<div class="toast" id="toast" hidden></div>
+<div id="modal" hidden></div>
+
+<script>
+/* ======================= データ（宿の資料） ======================= */
+/* 延対寺荘の公開情報（2026年11月9日時点、公式サイト英語版が基準）だけで作った見本。
+   確認できていないことは書かない。質問係は「担当者に確認」に回す。 */
+const INN = "延対寺荘";
+const HOST = "フロントの教育担当";
+const staff = [
+  {id:"front", name:"フロントの教育担当", role:"フロント・ベル", hair:"#3a2a22", robe:"#2f4f78", long:true, where:"1階のフロント", msg:"初日の案内とシフトの相談を受けます。分からないことは何回聞いても大丈夫です。"},
+  {id:"nakai", name:"仲居リーダー", role:"サービス（仲居・配膳）", hair:"#6a635b", robe:"#7a3b4a", long:true, where:"夕方からは客室と宴会場", msg:"夕食の会席の配膳を教えます。アレルギーやお客様のことで迷ったら、自分で決めずにすぐ相談してください。"},
+  {id:"room", name:"客室係リーダー", role:"客室清掃・布団", hair:"#4a3328", robe:"#3d5a3a", long:false, where:"日中は客室まわり", msg:"客室は73室あります。清掃の順番と、棟ごとの決まりを一緒に覚えましょう。"},
+  {id:"hall", name:"朝食ホールの責任者", role:"朝食ホール・デシャップ", hair:"#222", robe:"#557532", long:false, where:"朝はレストラン「マロニエ」", msg:"朝食は和洋バイキングです。朝は早いですが、流れはすぐ覚えられます。"},
+  {id:"itaba", name:"板場の責任者", role:"調理", hair:"#1d1d1d", robe:"#e9e6df", long:false, cap:true, where:"板場（調理場）", msg:"料理は富山湾の魚介が中心です。器と料理は大切に扱ってください。"}
+];
+const terms = [
+  ["帳場（ちょうば）","フロントのこと。困ったら、まずフロントに相談します。"],
+  ["板場（いたば）","調理場のこと。"],
+  ["デシャップ","板場と配膳の間に立ち、料理がそろっているか確かめて送り出す役目です。"],
+  ["中抜け","勤務の途中の長い休み時間。時間は部署で違います。"],
+  ["蘭亭・菊亭・梅亭","客室の棟の名前。蘭亭は特別室で、1フロア4室、専用ホールから入ります。"],
+  ["渓の湯（けいのゆ）","露天風呂付きの大浴場。男性と女性の時間が入れ替わる「男女入替制」です。"],
+  ["マロニエ","1階のレストラン。朝食の会場です。"],
+  ["花鳥の間","200畳の大宴会場です。"],
+  ["上げ膳・下げ膳","料理をお出しすること、下げること。"]
+];
+const baseLessons = [
+  {id:"hall", title:"朝食ホール・デシャップ", time:"3:30", kind:"共通",
+    steps:["身だしなみと手洗いを済ませ、会場に入る","料理の台、取り皿、はし、グラスをそろえる","お客様をお迎えし、席へご案内する","空いた皿を下げ、料理の残りを見てデシャップに伝える","終わったら台を片づけ、次の準備をする"],
+    ng:["料理の中身や材料を、確かめずに答える","取り分け用のトングを混ぜて使う"],
+    diff:"朝食はレストラン「マロニエ」（1階）。和洋バイキングで、7:00〜9:00、ラストオーダーは8:30です。朝食ホールの勤務は5:30〜10:30の間です。",
+    quiz:[
+      {q:"延対寺荘の朝食会場は？", o:["花鳥の間","レストラン「マロニエ」","各お部屋"], a:1, why:"朝食は1階のレストラン「マロニエ」です。"},
+      {q:"朝食のラストオーダーは？", o:["8:00","8:30","9:00"], a:1, why:"朝食は7:00〜9:00で、ラストオーダーは8:30です。"},
+      {q:"料理の材料をお客様に聞かれ、分からないときは？", o:["たぶん大丈夫と答える","確認してから答える","知らないと伝えて終わる"], a:1, why:"アレルギーに関わることがあります。必ず確認してから答えます。"}
+    ]},
+  {id:"seisou", title:"客室清掃・布団", time:"3:40", kind:"共通",
+    steps:["入室前にノックし、「失礼いたします」と声をかける","窓を開けて換気し、忘れ物がないか確認する","浴室、洗面、トイレの順に清掃する","座卓と床の間を拭き、座布団を整える","布団を敷くときは2人で運び、シーツの角を整える"],
+    ng:["お客様の荷物に触れる、動かす","同じ雑巾で浴室とお部屋を拭く"],
+    diff:"客室は73室で、全室禁煙です。棟は蘭亭、菊亭、梅亭に分かれます。客室清掃の勤務は9:00〜15:00と18:00〜20:00の間です。",
+    quiz:[
+      {q:"入室後に最初にすることは？", o:["布団を敷く","窓を開けて換気し、忘れ物を確認","浴室の清掃"], a:1, why:"換気しながら先に忘れ物を確認すると、片づけで紛れるのを防げます。"},
+      {q:"延対寺荘の客室で、たばこは？", o:["全室禁煙","灰皿を置く部屋がある","窓を開ければよい"], a:0, why:"延対寺荘は全室禁煙です。"},
+      {q:"清掃中にお客様がお部屋に戻られたら？", o:["急いで終わらせる","一言お詫びして退室し、フロントに連絡する","何も言わずに続ける"], a:1, why:"お客様の時間を優先します。続きの時間はフロントと相談します。"}
+    ]},
+  {id:"furo", title:"大浴場清掃", time:"3:05", kind:"共通",
+    steps:["清掃中の札を入口に掛ける","滑りにくい長靴と手袋を着ける","洗い場の椅子と桶を集めて洗う","床を洗い流し、排水口の髪の毛を取る","備品を補充し、札を外す"],
+    ng:["薬剤を混ぜる","長靴を履かずに床を洗う"],
+    diff:"大浴場は渓の湯（露天風呂付き、男女入替制）、翠の湯（男性）、紅の湯（女性）です。お湯はアルカリ性単純温泉で、加水も加温もしていません。清掃の時間割は施設で確認します。",
+    quiz:[
+      {q:"清掃を始める前に必ずすることは？", o:["窓を開ける","清掃中の札を掛ける","お湯を抜く"], a:1, why:"お客様が入ってこないよう、最初に札を掛けます。"},
+      {q:"薬剤の扱いで正しいのは？", o:["よく落ちるよう混ぜる","混ぜずに1種類ずつ使う","お湯で薄めて混ぜる"], a:1, why:"混ぜると有毒なガスが出ることがあります。"},
+      {q:"男性と女性の時間が入れ替わる大浴場は？", o:["翠の湯","紅の湯","渓の湯"], a:2, why:"渓の湯は男女入替制です。"}
+    ]},
+  {id:"haizen", title:"仲居・夕食の配膳", time:"4:15", kind:"共通",
+    steps:["献立表で、お部屋ごとの会席の種類とアレルギーの欄を確認する","襖の前で膝をつき、声をかけてから開ける","上座のお客様から順にお出しする","料理名を一言添える（例：「富山湾の白えびでございます」）","食べ終わったお皿から下げ膳する"],
+    ng:["アレルギーの確認を自分の判断で済ませる","立ったまま襖を開ける"],
+    diff:"夕食は会席料理で、四季彩り会席、四季葵会席、四季華やぎ会席の3種類。時間は18:00〜20:00です。アレルギーや苦手な食材は、事前に連絡があれば変更しています。",
+    quiz:[
+      {q:"延対寺荘の夕食の会席は何種類？", o:["1種類","3種類","5種類"], a:1, why:"四季彩り、四季葵、四季華やぎの3種類です。"},
+      {q:"料理はどのお客様から出す？", o:["近くの席から","お子様から","上座のお客様から"], a:2, why:"床の間に近い上座のお客様から順にお出しします。"},
+      {q:"アレルギーのお客様の料理で迷ったら？", o:["自分で判断する","すぐ担当者に確認する","お客様に任せる"], a:1, why:"アレルギーは命に関わります。必ず担当者に確認します。"}
+    ]},
+  {id:"front", title:"フロント・ベル", time:"3:20", kind:"共通",
+    steps:["玄関でお出迎えし、お荷物をお預かりする","お名前を伺い、チェックインの手続きをする","夕食、朝食、大浴場の時間をご案内する","お部屋までご案内し、館内の説明をする","お帰りの日は、送迎の時間を確かめてお見送りする"],
+    ng:["お部屋の眺望をお約束する","送迎の予約を確かめずに受ける"],
+    diff:"チェックインは15:00〜19:30、チェックアウトは10:00。駐車場は無料で50台。送迎は無料の予約制で、新幹線の黒部宇奈月温泉駅は前日までの予約です。お部屋の眺望は指定できません。",
+    quiz:[
+      {q:"チェックアウトの時間は？", o:["10:00","11:00","12:00"], a:0, why:"チェックアウトは10:00です。"},
+      {q:"「川が見える部屋にして」と言われたら？", o:["必ずご用意しますと答える","眺望は指定できないとお伝えする","無言でうなずく"], a:1, why:"延対寺荘はお部屋の眺望を指定できません。"},
+      {q:"黒部宇奈月温泉駅（新幹線）の送迎の予約は？", o:["当日でよい","前日までに予約","予約はいらない"], a:1, why:"新幹線の駅は迎え15:00、送り10:30の1便で、前日までの予約です。"}
+    ]},
+  {id:"keinoyu", title:"渓の湯と貸切風呂の案内", time:"1:55", kind:"この宿だけ",
+    steps:["渓の湯は露天風呂付きで、男女入替制だとお伝えする","入替の時刻は、館内の掲示かフロントで確かめてからお伝えする","翠の湯（男性）と紅の湯（女性）は、15:00〜23:00と翌朝5:00〜10:00","貸切風呂「歳寒三友乃湯」は15:00〜22:00、1時間3,300円","貸切風呂は、利用する当日にフロントで予約とお伝えする"],
+    ng:["入替の時刻を、確かめずに覚えている時刻で伝える"],
+    diff:"公開情報をもとにした見本です。実際は、ベテランの実演を撮影し、AIで手順書にします。",
+    quiz:[
+      {q:"貸切風呂の予約はどうする？", o:["前日までに電話","利用する当日にフロントで","予約はいらない"], a:1, why:"歳寒三友乃湯は、利用当日にフロントで予約します。"},
+      {q:"渓の湯の入替の時刻を聞かれたら？", o:["覚えている時刻で答える","掲示かフロントで確かめてから答える","分からないと答える"], a:1, why:"時刻が変わることがあります。確かめてからお伝えします。"}
+    ]},
+  {id:"ocha", title:"チェックイン時のお茶出しと館内案内", time:"2:10", kind:"この宿だけ",
+    steps:["到着されたお客様に、お茶をお出しする（場所と作法は施設で確認）","夕食は18:00〜20:00の会席とお伝えする","朝食は1階「マロニエ」で7:00〜9:00、ラストオーダー8:30","全館でWi-Fiが使え、全室禁煙だとお伝えする","黒部峡谷トロッコの宇奈月駅は、歩いて7分とご案内する"],
+    ng:["トロッコの運行を、確かめずにお約束する"],
+    diff:"延対寺荘は1900年創業。竹久夢二、与謝野晶子、川端康成も愛用した宿です。お客様に聞かれたらお伝えできます。",
+    quiz:[
+      {q:"夕食の時間は？", o:["17:00〜19:00","18:00〜20:00","19:00〜21:00"], a:1, why:"夕食は18:00〜20:00です。"},
+      {q:"トロッコの宇奈月駅までは？", o:["歩いて7分","歩いて20分","車で15分"], a:0, why:"黒部峡谷鉄道の宇奈月駅は、徒歩7分です。"}
+    ]}
+];
+const kb = [
+  {k:["中抜け","空き時間","昼休み","勤務時間","シフト"], a:"中抜けの時間は部署で違います。求人の記載では、朝食ホールは5:30〜10:30、客室清掃は9:00〜15:00と18:00〜20:00、サービスは13:00〜22:00の間で、途中に中抜けがあります。自分の時間は教育担当に確認してください。", src:"求人の勤務時間"},
+  {k:["門限","入浴","スタッフのお風呂"], a:"スタッフの門限と入浴は23時までです。", src:"スタッフの決まり"},
+  {k:["弁当","昼ご飯","昼食","まかない"], a:"昼のお弁当は、前日の12時までに注文します。", src:"スタッフの決まり"},
+  {k:["制服","服装","着物","白衣","スラックス","靴","着る"], a:"制服は部署で違い、白衣、洋服、簡易和装があります。黒いスラックスと黒い靴は自分で用意してください。", src:"スタッフの決まり"},
+  {k:["研修"], a:"新入社員の研修は約1か月です。派遣やアルバイトの方の研修は、教育担当に確認してください。", src:"スタッフの決まり"},
+  {k:["チェックイン","チェックアウト"], a:"チェックインは15:00〜19:30、チェックアウトは10:00です。", src:"館内案内：基本"},
+  {k:["夕食","晩ご飯","会席","夕ご飯"], a:"夕食は会席料理で、四季彩り会席、四季葵会席、四季華やぎ会席の3種類です。時間は18:00〜20:00です。", src:"館内案内：食事"},
+  {k:["朝食","朝ご飯","バイキング","マロニエ"], a:"朝食は1階のレストラン「マロニエ」で、和洋バイキングです。7:00〜9:00で、ラストオーダーは8:30です。", src:"館内案内：食事"},
+  {k:["料理","名物","魚","食材"], a:"料理は富山湾の魚介が特徴です。白えび、ほたるいか、バイ貝、鰤、甘海老などを使います。", src:"館内案内：食事"},
+  {k:["渓の湯","入替","入れ替"], a:"渓の湯は露天風呂付きの大浴場で、男女入替制です。入替の時刻は変わることがあるので、館内の掲示かフロントで確かめてからお伝えしてください。", src:"館内案内：温泉"},
+  {k:["大浴場","お風呂","翠の湯","紅の湯","温泉の時間"], a:"翠の湯（男性）と紅の湯（女性）は、15:00〜23:00と翌朝5:00〜10:00です。渓の湯は男女入替制なので、時刻は掲示かフロントで確かめてください。", src:"館内案内：温泉"},
+  {k:["貸切","家族風呂","歳寒"], a:"貸切風呂「歳寒三友乃湯」は15:00〜22:00、1時間3,300円です。利用する当日にフロントで予約します。", src:"館内案内：温泉"},
+  {k:["泉質","源泉","効能"], a:"お湯はアルカリ性単純温泉です。源泉は黒部川上流の黒薙で、加水も加温もしていません。", src:"館内案内：温泉"},
+  {k:["トロッコ","黒部峡谷","欅平","峡谷鉄道"], a:"黒部峡谷鉄道の宇奈月駅は歩いて7分です。2026年10月1日に全線で再開しました。欅平行きの予約は電話のみです。通常の営業は11月30日まで、12月1日〜6日は宇奈月〜笹平間だけの延長運転です（天気で変わることがあります）。", src:"周辺案内"},
+  {k:["送迎","駅","迎え","送り"], a:"送迎は無料の予約制です。迎えは14:00〜18:00（宇奈月温泉駅、宇奈月駅）。送りは8:00、8:30、9:00です。新幹線の黒部宇奈月温泉駅は迎え15:00、送り10:30の1便で、前日までの予約です。", src:"館内案内：送迎"},
+  {k:["駐車場","車"], a:"駐車場は無料で、50台とめられます。", src:"館内案内：基本"},
+  {k:["客室","部屋","何室","眺望","景色","禁煙","たばこ"], a:"客室は73室で、全室禁煙です。棟は蘭亭、菊亭、梅亭に分かれます。お部屋の眺望は指定できません。", src:"館内案内：客室"},
+  {k:["蘭亭","菊亭","梅亭","棟"], a:"蘭亭は特別室で、1フロア4室、専用ホールから入ります。菊亭は和室と洋室、梅亭は和室です。棟の位置は館内で確かめてください。", src:"館内案内：客室"},
+  {k:["wifi","wi-fi","ワイファイ","ネット"], a:"全館でWi-Fiが使えます。", src:"館内案内：基本"},
+  {k:["キャニオンルート"], a:"黒部宇奈月キャニオンルートは10〜11月だけで、旅行会社の商品です。当日の参加はできません。", src:"周辺案内"},
+  {k:["散歩","観光","近く","周辺","遊歩道","つぼや","案内所"], a:"歩いて行けるのは、やまびこ遊歩道（12分）、黒部川電気記念館（8分）、つぼや（4分）、観光案内所「湯めどころ宇奈月」（4分）です。", src:"周辺案内"},
+  {k:["カメムシ","虫"], a:"10月以降はカメムシがたくさん出ます。お客様に言われたときの対応の仕方は、教育担当に確認してください。", src:"季節の注意"},
+  {k:["歴史","創業","夢二","川端","与謝野"], a:"延対寺荘は1900年に高岡の料理旅館として始まりました。竹久夢二、与謝野晶子、川端康成も愛用した宿です。", src:"館内案内：基本"},
+  {k:["宴会","花鳥","茶室","ラウンジ","蜃気楼","越路","碧層軒","ローズルーム"], a:"館内には、大宴会場「花鳥の間」（200畳）、茶室「碧層軒」、クラブ「蜃気楼」、ラウンジ「ローズルーム」、お好みコーナー「越路」があります。営業時間は施設で確認してください。", src:"館内案内：施設"}
+];
+const danger = ["アレルギー","卵","そば","えび","エビ","小麦","乳","落花生","ピーナッツ","けが","怪我","やけど","火傷","倒れ","救急","具合","体調","熱が","お金","会計","支払","返金","クレーム","怒","酔っ","酔い","セクハラ","パワハラ","ハラスメント","触られ","地震","火事","災害","避難"];
+const others = [
+  {name:"小林 翔", type:"タイミー", job:"洗い場", day:"着任前（11月18日〜）", prog:50, score:"—", checkin:null, fig:{hair:"#2a2a2a", robe:"#4d6b8a"}},
+  {name:"中村 彩", type:"おてつたび", job:"客室清掃", day:"着任7日目", prog:100, score:"3/3", checkin:{day:7, vals:[4,2,3,4,3], text:"布団を運ぶのがまだ大変です。"}, fig:{hair:"#4a3328", robe:"#7a3b4a", long:true}}
+];
+const checkQs = ["体の調子","仕事の量","質問のしやすさ","生活のこと","このまま続けられそう"];
+const memoQs = [
+  "渓の湯の男女入替の正確な時刻",
+  "ラウンジ、売店、蜃気楼の営業時間と定休日",
+  "部屋食、個室食を今も出しているか",
+  "館内図。棟と階の位置関係、パントリーの場所",
+  "職種ごとの制服。着付けの研修はあるか",
+  "派遣、おてつたび、タイミー、外国人スタッフの割合。部署ごとのマニュアルはあるか",
+  "冬のトロッコ運休中、お客様への案内の仕方",
+  "教育にかかる時間。一人立ちまでの日数と、教える人の時間",
+  "客室に置いている案内書。アレルギー受付の社内の手順"
+];
+
+/* ======================= 状態 ======================= */
+const KEY = "yado-hajimete-entaiji-v1";
+function fresh(){
+  return {
+    role:"new", tab:"sheet", lesson:null, quizLesson:"seisou", floor:1, newbieView:null,
+    profile:{name:"田中 美咲", type:"派遣", job:"朝食ホール", date:"11月15日（日）", time:"5:30", meet:"施設で確認", host:HOST},
+    prep:{sheet:false, bring:false},
+    steps:{}, done:{}, quiz:{}, scores:{},
+    chat:[{who:"bot", text:"延対寺荘の質問係です。館内のこと、仕事の手順など、先輩に聞きにくいことも気軽にどうぞ。資料にないことは、担当者に確認してからお答えします。", src:""}],
+    queue:[{id:1, q:"冬にトロッコが運休しているとき、お客様にどう案内すればいいですか？", by:"田中 美咲さん", risk:false, answered:false, reply:""}],
+    learned:[], custom:[], checkin:{vals:[0,0,0,0,0], text:"", sent:false},
+    gen:null,
+    eff:{n:"", h:"", w:"", r:"30"},
+    memo:{}
+  };
+}
+let state = fresh();
+try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+const lessons = () => baseLessons.concat(state.custom);
+const knowledge = () => kb.concat(state.learned);
+
+/* ======================= AI（Claude） ======================= */
+let sample = null;
+(async()=>{ try{ sample = await window.claude?.use?.("sample") ?? null; }catch(e){ sample = null; }
+  const b=$("#aibadge"); if(sample){ b.textContent="AI接続中"; b.classList.add("on"); } })();
+let aiBlocked = false;
+function aiOK(){ return !!sample && !aiBlocked; }
+function aiErr(e){
+  const c = e?.code;
+  if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c)){ aiBlocked = true; const b=$("#aibadge"); b.textContent="見本モード"; b.classList.remove("on"); return "AIが使えないため、見本の答え方に切り替えました。"; }
+  if(c==="rate_limited") return "AIが混み合っています。少し時間をおいてもう一度試してください。";
+  if(c==="cancelled") return "";
+  return "AIにつながりませんでした。見本の答え方で表示します。";
+}
+const kbText = () => knowledge().map((e,i)=>`[${i+1}] ${e.src}：${e.a}`).join("\n")
+  + "\n" + lessons().map(l=>`[教材 ${l.title}] 手順：${l.steps.join(" / ")}。宿のルール：${l.diff}`).join("\n");
+
+/* ======================= 共通 ======================= */
+const $ = s => document.querySelector(s);
+const main = $("#main");
+const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+function face(s){
+  if(s.photo) return `<img src="${s.photo}" alt="">`;
+  const hb = s.long?`<path d="M28 52 Q26 22 50 20 Q74 22 72 52 L72 70 L28 70 Z" fill="${s.hair}"/>`:"";
+  const ht = s.cap?`<rect x="30" y="15" width="40" height="19" rx="6" style="fill:var(--collar)" stroke="#c9c4b8"/>`
+    :`<path d="M31 44 Q30 22 50 22 Q70 22 69 44 Q62 32 50 32 Q38 32 31 44 Z" fill="${s.hair}"/>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" style="fill:var(--ai-soft)"/>${hb}
+    <path d="M18 100 Q20 74 50 72 Q80 74 82 100 Z" fill="${s.robe}"/>
+    <path d="M40 74 L50 90 L60 74" fill="none" style="stroke:var(--collar)" stroke-width="4"/>
+    <rect x="44" y="60" width="12" height="14" style="fill:var(--skin2)"/>
+    <ellipse cx="50" cy="46" rx="18" ry="21" style="fill:var(--skin)"/>${ht}
+    <circle cx="43" cy="48" r="2" fill="#2a2a2a"/><circle cx="57" cy="48" r="2" fill="#2a2a2a"/>
+    <path d="M44 57 Q50 61 56 57" fill="none" stroke="#a0614a" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+}
+const doneCount = () => lessons().filter(l=>state.done[l.id]).length;
+const meProg = () => Math.round(doneCount()/lessons().length*100);
+const openQueue = () => state.queue.filter(q=>!q.answered).length;
+const meAlert = () => state.checkin.sent && state.checkin.vals.some(v=>v>0&&v<=2);
+
+const TABS = {
+  new:[["sheet","初","初日"],["learn","学","教材"],["ask","問","質問"],["quiz","試","テスト"],["checkin","心","ふりかえり"]],
+  admin:[["dash","状","新人"],["queue","答","質問"],["make","作","初日シート"],["author","撮","教材づくり"],["effect","効","効果"],["memo","聞","メモ"]]
+};
+function renderTabs(){
+  $("#tabs").innerHTML = TABS[state.role].map(([id,ic,l]) => {
+    let dot=""; if(id==="queue"&&openQueue()) dot=`<span class="dot">${openQueue()}</span>`;
+    if(id==="dash"){ const n=others.filter(o=>o.checkin&&o.checkin.vals.some(v=>v<=2)).length+(meAlert()?1:0); if(n) dot=`<span class="dot">${n}</span>`; }
+    return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
+}
+function render(){
+  stopVideo();
+  renderTabs();
+  const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
+  main.innerHTML = `<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
+  bind(); save();
+}
+function go(tab){ state.tab=tab; state.lesson=null; state.newbieView=null; render(); window.scrollTo(0,0); }
+
+/* ======================= 新人：初日 ======================= */
+function sheet(){
+  const p = state.profile;
+  const prepItems = [
+    {k:"sheet", t:"初日シートを読む", done:state.prep.sheet},
+    {k:"lessons", t:`着任前の教材を見る（${doneCount()}/${lessons().length}本）`, done:doneCount()===lessons().length, go:"learn"},
+    {k:"quiz", t:"確認テストを1つ受ける", done:Object.keys(state.scores).length>0, go:"quiz"},
+    {k:"bring", t:"持ち物をそろえる", done:state.prep.bring}
+  ];
+  const left = prepItems.filter(i=>!i.done).length;
+  return `
+  <section class="card hero">
+    <span class="label">${esc(p.name)}さんの初日</span>
+    <div class="when">${esc(p.date)} ${esc(p.time)}</div>
+    <p>集合場所：${esc(p.meet)}<br>迎え：${esc(p.host)}</p>
+    <span class="count">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
+  </section>
+  <section class="card">
+    <h2>着任までにやること</h2>
+    <div class="todo">${prepItems.map(i=>`<button data-prep="${i.k}" class="${i.done?"done":""}"><span class="box" aria-hidden="true">${i.done?"✓":""}</span><span class="t">${i.t}</span>${i.go&&!i.done?`<span class="go">開く →</span>`:""}</button>`).join("")}</div>
+  </section>
+  <section class="card">
+    <h2>当日の流れ</h2>
+    <dl class="kv">${(p.schedule||defaultSchedule()).map(x=>`<dt>${esc(x.t)}</dt><dd>${esc(x.d)}</dd>`).join("")}
+    </dl>
+  </section>
+  <section class="card">
+    <h2>持ち物と服装</h2>
+    <ol class="steps">${(p.bring||["黒いスラックス","黒い靴"]).map(b=>`<li>${esc(b)}</li>`).join("")}</ol>
+    <p class="empty">${p.welcome?esc(p.welcome):"制服は部署で違い、白衣、洋服、簡易和装があります。黒いスラックスと黒い靴は自分で用意してください。"}</p>
+  </section>
+  <section class="card">
+    <h2>覚えておきたい人</h2>
+    <p class="tap">押すと、顔と担当の内容が出ます。実際は、本人の同意を得た写真に差し替えます。</p>
+    <div class="people">${staff.map((s,i)=>`<button class="person" data-person="${i}" aria-label="${s.name}の顔を見る"><div class="avatar" aria-hidden="true">${face(s)}</div><div><b>${s.name}</b><span>${s.role}</span><div class="call">${s.where}</div></div></button>`).join("")}</div>
+  </section>
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>館内マップ</h2>
+      <div class="seg" role="group" aria-label="表示"><button data-floor="1" aria-pressed="${state.floor===1}">客室の棟</button><button data-floor="2" aria-pressed="${state.floor===2}">館内の施設</button></div></div>
+    <p class="empty">名前を並べた簡易図です。位置は訪問時に確認して、実際の館内図に作り替えます。</p>
+    <div class="map">${state.floor===1?map1():map2()}</div>
+  </section>
+  <section class="card">
+    <h2>スタッフの決まり</h2>
+    <dl class="kv"><dt>門限</dt><dd>23時まで</dd><dt>入浴</dt><dd>23時まで</dd><dt>昼の弁当</dt><dd>前日の12時までに注文</dd><dt>服装</dt><dd>制服は部署で違う。黒いスラックスと黒い靴は自分で用意</dd><dt>寮</dt><dd>施設で確認</dd></dl>
+  </section>
+  <section class="card">
+    <h2>この宿の言葉</h2>
+    <div>${terms.map(([t,d])=>`<details class="term"><summary>${t}</summary><p>${d}</p></details>`).join("")}</div>
+  </section>`;
+}
+function defaultSchedule(){
+  return [{t:"5:30",d:"集合（場所は施設で確認）、制服に着替える"},{t:"",d:"レストラン「マロニエ」で朝食の準備に同行"},
+    {t:"7:00",d:"朝食の開始（和洋バイキング）、お迎えに同行"},{t:"8:30",d:"ラストオーダー"},{t:"9:00",d:"朝食の終了、片づけ"},{t:"10:30",d:"終業"}];
+}
+function tiles(list,cols,top){
+  const w=(340-(cols-1)*10)/cols, h=64;
+  return list.map((t,i)=>{const x=10+(i%cols)*(w+10), y=top+Math.floor(i/cols)*(h+10);
+    return `<rect class="room${t.key?" key":""}" x="${x}" y="${y}" width="${w}" height="${h}" rx="4" stroke-dasharray="${t.key?"":"4 3"}"/>
+    <text class="maptext" x="${x+w/2}" y="${y+28}" text-anchor="middle">${esc(t.n)}</text>
+    <text class="maptext small" x="${x+w/2}" y="${y+46}" text-anchor="middle">${esc(t.s)}</text>`}).join("");
+}
+function map1(){
+  return `<svg viewBox="0 0 360 240" role="img" aria-label="客室の棟の一覧。位置は訪問時に確認">
+    ${tiles([{n:"蘭亭",s:"特別室・1フロア4室",key:true},{n:"菊亭",s:"和室・洋室",key:true},{n:"梅亭",s:"和室",key:true}],3,10)}
+    ${tiles([{n:"特別室",s:"眺望の指定はできません"},{n:"フロント",s:"チェックイン 15:00〜19:30"}],2,90)}
+    <text class="maptext small" x="180" y="196" text-anchor="middle">客室は73室、全室禁煙、全館Wi-Fi</text>
+    <text class="maptext small" x="180" y="216" text-anchor="middle">棟と階の位置関係は訪問時に確認</text>
+  </svg>`;
+}
+function map2(){
+  return `<svg viewBox="0 0 360 330" role="img" aria-label="館内の施設の一覧。位置は訪問時に確認">
+    ${tiles([{n:"マロニエ",s:"1階・朝食会場",key:true},{n:"花鳥の間",s:"大宴会場・200畳"},{n:"渓の湯",s:"露天付き・男女入替",key:true},{n:"翠の湯",s:"男性"},{n:"紅の湯",s:"女性"},{n:"歳寒三友乃湯",s:"貸切風呂"},{n:"碧層軒",s:"茶室"},{n:"蜃気楼",s:"クラブ"},{n:"ローズルーム",s:"ラウンジ"}],3,10)}
+    ${tiles([{n:"越路",s:"お好みコーナー"}],3,232)}
+    <text class="maptext small" x="250" y="262" text-anchor="middle">位置と営業時間は</text>
+    <text class="maptext small" x="250" y="278" text-anchor="middle">訪問時に確認</text>
+  </svg>`;
+}
+
+/* ======================= 新人：教材 ======================= */
+function learn(){
+  const L = state.lesson && lessons().find(l=>l.id===state.lesson);
+  if(L){
+    const st = state.steps[L.id]||[];
+    const allChecked = L.steps.every((_,i)=>st[i]);
+    return `
+    <button class="back" id="back">← 教材の一覧へ</button>
+    <section class="card">
+      <span class="label">${L.kind==="共通"?"どの旅館でも共通の教材":INN+"だけの手順"}</span>
+      <h2>${esc(L.title)}</h2>
+      <button class="player" id="play" aria-label="見本の動画を再生">
+        <span class="meta"><span>見本の動画</span><span id="vtime">0:00 / ${esc(L.time)}</span></span>
+        <span class="play" id="playicon" aria-hidden="true">▶</span>
+        <span class="sub" id="vsub">字幕つき。押すと再生します</span>
+        <span class="pbar"><i id="vbar"></i></span>
+      </button>
+      <h3>手順（できたら押して確認）</h3>
+      <div class="stepchk">${L.steps.map((s,i)=>`<button data-step="${i}" class="${st[i]?"on":""}" aria-pressed="${!!st[i]}"><span class="n">${i+1}</span><span>${esc(s)}</span></button>`).join("")}</div>
+      ${L.ng&&L.ng.length?`<div class="ng"><b>やってはいけないこと</b><ul>${L.ng.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`:""}
+      <div class="diff"><b>${INN}では</b><br>${esc(L.diff)}</div>
+      <div class="row"><button class="btn" id="markdone" ${state.done[L.id]?"disabled":""}>${state.done[L.id]?"見終わりました":(allChecked?"見終わった":"手順を確認して見終わる")}</button>
+      ${L.quiz&&L.quiz.length?`<button class="btn ghost" id="toquiz">確認テストへ</button>`:""}</div>
+    </section>`;
+  }
+  const n = doneCount(), all = lessons();
+  return `
+  <section class="card">
+    <span class="label">着任前に見ておく教材</span>
+    <h2>${n} / ${all.length} 本 見終わりました</h2>
+    <div class="prog" aria-hidden="true"><i style="width:${n/all.length*100}%"></i></div>
+    <p class="empty">1本3分前後です。スマホで、通勤中や前日の夜に見られます。</p>
+  </section>
+  <div class="lesson-list">${all.map(l=>`
+    <button class="lesson" data-lesson="${l.id}"><div><b>${esc(l.title)}</b><span>動画 ${esc(l.time)} ・ 手順${l.steps.length}つ${state.scores[l.id]?` ・ テスト ${state.scores[l.id]}`:""}</span></div>
+    <span class="status ${state.done[l.id]?"done":(l.kind==="共通"?"":"own")}">${state.done[l.id]?"見た":(l.kind==="共通"?"未視聴":"この宿だけ")}</span></button>`).join("")}</div>`;
+}
+let vTimer=null;
+function stopVideo(){ if(vTimer){ clearInterval(vTimer); vTimer=null; } }
+function playVideo(L){
+  if(vTimer){ stopVideo(); $("#playicon").textContent="▶"; return; }
+  const [m,s] = L.time.split(":").map(Number), total=m*60+s;
+  let t = 0; const dur = 9000; $("#playicon").textContent="❚❚";
+  vTimer = setInterval(()=>{
+    t += 100; const r = Math.min(1,t/dur), sec = Math.round(total*r);
+    const bar=$("#vbar"); if(!bar){ stopVideo(); return; }
+    bar.style.width = (r*100)+"%";
+    $("#vtime").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")} / ${L.time}`;
+    $("#vsub").textContent = L.steps[Math.min(L.steps.length-1, Math.floor(r*L.steps.length))];
+    if(r>=1){ stopVideo(); $("#playicon").textContent="↻"; $("#vsub").textContent="見終わりました。手順を押して確認しましょう";
+      if(!state.done[L.id]){ state.done[L.id]=true; save(); toast("見終わった記録を残しました"); const b=$("#markdone"); if(b){b.disabled=true;b.textContent="見終わりました";} } }
+  },100);
+}
+
+/* ======================= 新人：質問 ======================= */
+let askCtl=null;
+function ask(){
+  return `
+  <section class="card">
+    <span class="label">LINEでも同じように使えます</span>
+    <h2>聞きにくいことも、ここで</h2>
+    <p class="empty">答えは延対寺荘の資料だけから返します。資料にないことは作らずに、担当者に確認します。アレルギー、けが、お金、お客様とのトラブルは、AIは答えずに担当者へつなぎます。</p>
+    ${sample&&!aiBlocked?`<p class="note">AIに質問すると、最初の1回だけ利用の許可を求められます。</p>`:""}
+  </section>
+  <div class="suggest">${["中抜けは何時から？","朝食の会場はどこ？","渓の湯の入替は？","卵アレルギーのお客様の料理は？","門限は何時？","地酒のおすすめは？"].map(s=>`<button data-say="${s}">${s}</button>`).join("")}</div>
+  <div class="chat" id="chatlog">${state.chat.map(m=>`<div class="msg ${m.who}${m.esc?" esc":""}">${esc(m.text)}${m.src?`<span class="src">${esc(m.src)}</span>`:""}</div>`).join("")}</div>
+  <form class="composer" id="composer"><input id="askinput" placeholder="例：貸切風呂の予約はどうする？" autocomplete="off" aria-label="質問を入力"><button class="btn" type="submit" id="sendbtn">送る</button></form>`;
+}
+function ruleAnswer(text){
+  const t=text.toLowerCase(); const hit=knowledge().find(e=>e.k.some(k=>t.includes(String(k).toLowerCase())));
+  return hit?{status:"answer",answer:hit.a,source:hit.src}:{status:"unknown"};
+}
+function enqueue(text,risk){ state.queue.unshift({id:Date.now(), q:text, by:state.profile.name+"さん", risk, answered:false, reply:""}); }
+async function say(text){
+  if(askCtl) return;
+  state.chat.push({who:"me",text});
+  if(danger.some(d=>text.includes(d))){
+    enqueue(text,true);
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ近くの先輩か、"+HOST+"に確認してください。\n同じ内容を担当者にも通知しました。",src:"担当者へ通知済み"});
+    render(); scrollChat(); return;
+  }
+  state.chat.push({who:"bot",wait:true,text:"考えています…"}); render(); scrollChat();
+  let r = null, note="";
+  if(aiOK()){
+    askCtl = new AbortController();
+    const prompt = `あなたは旅館「${INN}」の新人スタッフ向け質問係です。下の「宿の資料」に書かれていることだけを根拠に、やさしい日本語で2〜3文で答えてください。
+ルール：
+1. 資料に答えがないことは推測せず status を "unknown" にする。一般常識や他の旅館の例で補わない。
+2. アレルギー、けが、体調、お金、お客様とのトラブル、ハラスメント、災害に関わる質問は status を "escalate" にする。
+3. 答えるときは、根拠にした資料の見出し（例：初日シート：集合）を source に入れる。
+返事は次のJSONだけ：{"status":"answer"|"unknown"|"escalate","answer":"…","source":"…"}
+
+宿の資料：
+${kbText()}
+
+新人の質問：${text}`;
+    try{ r = await sample.json(prompt,{modelTier:"quick",signal:askCtl.signal}); }
+    catch(e){ note = aiErr(e); r = null; }
+    askCtl = null;
+  }
+  if(!r || !r.status) r = ruleAnswer(text);
+  state.chat.pop();
+  if(r.status==="escalate"){
+    enqueue(text,true);
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ近くの先輩か、"+HOST+"に確認してください。",src:"担当者へ通知済み"});
+  }else if(r.status==="answer" && r.answer){
+    state.chat.push({who:"bot",text:String(r.answer),src:(r.source?"出典："+r.source:"")+(aiOK()?"（AIが宿の資料から回答）":"")});
+  }else{
+    enqueue(text,false);
+    state.chat.push({who:"bot",text:"まだ宿の資料にない質問でした。"+HOST+"に回答をお願いしたので、届いたらここにお知らせします。",src:"担当者へ質問を転送"});
+  }
+  if(note) state.chat.push({who:"bot",text:note,src:""});
+  render(); scrollChat();
+}
+function scrollChat(){ const c=$("#chatlog"); if(c&&c.lastElementChild) c.lastElementChild.scrollIntoView({block:"center"}); }
+
+/* ======================= 新人：テスト ======================= */
+function quizView(){
+  const withQuiz = lessons().filter(l=>l.quiz&&l.quiz.length);
+  if(!withQuiz.find(l=>l.id===state.quizLesson)) state.quizLesson = withQuiz[0].id;
+  const L = withQuiz.find(l=>l.id===state.quizLesson);
+  const ans = (state.quiz[L.id] ||= {}), total = Object.keys(ans).length, qs = L.quiz;
+  const correct = qs.filter((q,i)=>ans[i]===q.a).length;
+  return `
+  <div class="picker" role="group" aria-label="テストを選ぶ">${withQuiz.map(l=>`<button data-ql="${l.id}" aria-pressed="${l.id===L.id}">${esc(l.title)}${state.scores[l.id]?" ✓":""}</button>`).join("")}</div>
+  <section class="card">
+    <span class="label">${esc(L.title)} ・ 確認テスト</span>
+    <h2>${qs.length}問。間違えても何度でも</h2>
+    ${total===qs.length?`<div class="score">${correct} / ${qs.length}</div><p>${correct===qs.length?"全問正解です。結果は教育担当の画面に記録されました。":"解説を読んで、もう一度挑戦してみましょう。結果は教育担当の画面に記録されました。"}</p><div class="row"><button class="btn ghost" id="retry">もう一度</button></div>`:`<p class="empty">${total} / ${qs.length} 問 回答済み</p>`}
+  </section>
+  ${qs.map((q,i)=>`<section class="card q"><h3>${i+1}. ${esc(q.q)}</h3>
+    ${q.o.map((o,j)=>{let c=""; if(ans[i]!==undefined){ if(j===q.a)c="right"; else if(j===ans[i])c="wrong";}
+      return `<button class="opt ${c}" data-q="${i}" data-o="${j}" ${ans[i]!==undefined?"disabled":""}>${esc(o)}</button>`}).join("")}
+    ${ans[i]!==undefined&&q.why?`<p class="why">${ans[i]===q.a?"正解。":"正しくは「"+esc(q.o[q.a])+"」。"}${esc(q.why)}</p>`:""}
+  </section>`).join("")}`;
+}
+
+/* ======================= 新人：ふりかえり ======================= */
+function checkin(){
+  const c = state.checkin;
+  if(c.sent) return `
+  <section class="card">
+    <span class="label">3日目のふりかえり</span>
+    <h2>送りました。ありがとうございます</h2>
+    <p>回答は教育担当だけが見ます。気になる点があれば、教育担当から声をかけます。</p>
+    <dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${"●".repeat(c.vals[i])}${"○".repeat(5-c.vals[i])}</dd>`).join("")}</dl>
+    ${c.text?`<p class="say">${esc(c.text)}</p>`:""}
+    <div class="row"><button class="btn ghost small" id="recheck">回答をやり直す</button></div>
+  </section>`;
+  return `
+  <section class="card">
+    <span class="label">3日目のふりかえり ・ 1分で終わります</span>
+    <h2>ここまで、どうですか？</h2>
+    <p class="empty">回答は教育担当だけが見ます。正直に答えてもらえると、働きやすくする手がかりになります。</p>
+  </section>
+  ${checkQs.map((q,i)=>`<section class="card"><h3>${q}</h3>
+    <div class="scale" role="group" aria-label="${q}">${[1,2,3,4,5].map(v=>`<button data-cv="${i}:${v}" aria-pressed="${c.vals[i]===v}"><b>${v}</b></button>`).join("")}</div>
+    <div class="scale-ends"><span>よくない</span><span>とてもよい</span></div></section>`).join("")}
+  <section class="card"><h3>困っていること、言いにくいこと（任意）</h3>
+    <textarea id="ctext" aria-label="自由記述" placeholder="例：朝食の片づけの順番がまだ不安です">${esc(c.text)}</textarea>
+    <button class="btn" id="csend" ${c.vals.every(v=>v>0)?"":"disabled"}>教育担当に送る</button>
+    ${c.vals.every(v=>v>0)?"":`<p class="note">5つの質問すべてに答えると送れます。</p>`}
+  </section>`;
+}
+
+/* ======================= 管理：新人の状況 ======================= */
+function meRow(){ return {name:state.profile.name, type:state.profile.type, job:state.profile.job, day:"着任3日目", prog:meProg(),
+  score:Object.values(state.scores)[0]||"—", checkin:state.checkin.sent?{day:3, vals:state.checkin.vals, text:state.checkin.text}:null,
+  fig:{hair:"#3a2a22", robe:"#557532", long:true}, me:true}; }
+function dash(){
+  const all=[meRow(),...others];
+  if(state.newbieView!==null){
+    const n = all[state.newbieView];
+    const low = n.checkin? n.checkin.vals.map((v,i)=>v<=2?checkQs[i]:null).filter(Boolean):[];
+    return `
+    <button class="back" id="nback">← 新人の一覧へ</button>
+    <section class="card">
+      <div class="row"><div class="avatar" aria-hidden="true">${face({...n.fig})}</div><div><h2>${esc(n.name)}</h2><span class="empty">${esc(n.type)} ・ ${esc(n.job)} ・ ${esc(n.day)}</span></div></div>
+    </section>
+    <section class="card"><h3>教材</h3>
+      ${n.me?`<ol class="steps">${lessons().map(l=>`<li>${esc(l.title)} ${state.done[l.id]?'<span class="tag ok">見た</span>':'<span class="tag">まだ</span>'} ${state.scores[l.id]?`<span class="tag">テスト ${state.scores[l.id]}</span>`:""}</li>`).join("")}</ol>`
+      :`<p>${n.prog}% 見終わっています。</p><div class="prog"><i style="width:${n.prog}%"></i></div>`}
+    </section>
+    <section class="card"><h3>ふりかえりの回答</h3>
+      ${n.checkin?`<dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${n.checkin.vals[i]} / 5 ${n.checkin.vals[i]<=2?'<span class="tag risk">低い</span>':""}</dd>`).join("")}</dl>
+      ${n.checkin.text?`<p class="say">${esc(n.checkin.text)}</p>`:""}
+      ${low.length?`<p class="err">「${low.join("」「")}」が低めです。今日中に一声かけるのがおすすめです。</p>`:`<p class="empty">気になる回答はありません。</p>`}`
+      :`<p class="empty">まだ回答がありません。${n.me?"新人の画面の「ふりかえり」から回答できます。":""}</p>`}
+    </section>`;
+  }
+  const alerts = all.filter(n=>n.checkin&&n.checkin.vals.some(v=>v<=2));
+  return `
+  <section class="card">
+    <span class="label">今週着任する人・着任中の人</span>
+    <h2>新人 ${all.length}名の状況</h2>
+    <div class="nlist">${all.map((n,i)=>`<button class="nrow" data-nb="${i}">
+      <div class="avatar" aria-hidden="true">${face({...n.fig})}</div>
+      <div><b>${esc(n.name)} <span class="tag">${esc(n.type)}</span></b><span class="sub">${esc(n.job)} ・ ${esc(n.day)} ・ 教材 ${n.prog}%</span><div class="prog"><i style="width:${n.prog}%"></i></div></div>
+      <span>${n.checkin&&n.checkin.vals.some(v=>v<=2)?'<span class="tag risk">声かけを</span>':(n.prog===100?'<span class="tag ok">準備OK</span>':"")}</span></button>`).join("")}</div>
+  </section>
+  ${alerts.length?`<section class="card"><h3>ふりかえりで気になる回答</h3>${alerts.map(n=>`<p><b>${esc(n.name)}さん</b>（${n.checkin.day}日目）「${checkQs.filter((q,i)=>n.checkin.vals[i]<=2).join("」「")}」が低め。${n.checkin.text?`<br><span class="empty">${esc(n.checkin.text)}</span>`:""}</p>`).join("")}<p class="empty">辞める前のサインになりやすい回答です。今日中に一声かけるのがおすすめです。</p></section>`:""}
+  <section class="card">
+    <h3>よく聞かれた質問（表示の見本）</h3>
+    <ol class="steps"><li>中抜けの時間</li><li>渓の湯の入替の時刻</li><li>門限と入浴の時間</li></ol>
+    <p class="empty">導入後は、ここに実際の質問の回数が出ます。先輩が同じ説明をしなくて済んだ回数です。</p>
+  </section>`;
+}
+
+/* ======================= 管理：質問への回答 ======================= */
+function queue(){
+  const open = state.queue.filter(q=>!q.answered), done = state.queue.filter(q=>q.answered);
+  return `
+  <section class="card">
+    <span class="label">質問係が答えなかった質問</span>
+    <h2>回答を待っている質問 ${open.length}件</h2>
+    <p class="empty">ここで答えると宿の資料に足され、次からは質問係が答えるようになります。新人の画面で質問すると、ここに届きます。</p>
+  </section>
+  <section class="card">${open.length?open.map(q=>`
+    <div class="qitem">${q.risk?`<span class="tag risk" style="align-self:flex-start">安全・お客様に関わる質問</span>`:""}
+      <b>${esc(q.q)}</b><span class="empty">${esc(q.by)}から</span>
+      ${q.risk?`<p class="empty">この種類の質問は、AIが答えないよう固定しています。本人に直接伝えてください。</p><div class="row"><button class="btn ghost small" data-done="${q.id}">対応した</button></div>`:
+      `<textarea id="reply-${q.id}" aria-label="回答を入力" placeholder="例：「◯◯」をおすすめしています。">${esc(q.draft||"")}</textarea>
+       <div class="row"><button class="btn small" data-reply="${q.id}">回答して資料に追加</button>${aiOK()?`<button class="btn ghost small" data-draft="${q.id}">AIで回答案を作る</button>`:""}</div>`}
+    </div>`).join(""):`<p class="empty">いまは回答待ちの質問はありません。</p>`}</section>
+  ${done.length?`<section class="card"><h3>回答済み（宿の資料に追加）</h3>${done.map(q=>`<div class="qitem"><b>${esc(q.q)}</b><span class="empty">${esc(q.reply||"本人に直接対応")}</span></div>`).join("")}</section>`:""}`;
+}
+function keywords(q){
+  const k = q.replace(/[？?。、！!「」]/g," ").split(/\s+/).filter(w=>w.length>=2);
+  if(!k.length) k.push(q.slice(0,6));
+  const extra = ["地酒","お酒","日本酒","駐車場","制服","洗濯","売店","お土産","温泉","チェックアウト","トロッコ","冬","運休"];
+  extra.forEach(w=>{ if(q.includes(w)) k.push(w); });
+  if(q.includes("地酒")) k.push("お酒","日本酒");
+  return k;
+}
+
+/* ======================= 管理：初日シート作成 ======================= */
+function make(){
+  const g = state.gen;
+  return `
+  <section class="card">
+    <span class="label">女将・担当者が答えるのは、これだけ</span>
+    <h2>新しく来る人の初日シートを作る</h2>
+    <p class="empty">実際のサービスでは、最初に90分のヒアリングと館内の撮影をして、宿の基本情報を登録します。来る人が決まるたびに、ここで数項目を入れるだけです。</p>
+  </section>
+  <section class="card">
+    <div class="grid2">
+      <label class="field">名前<input id="g-name" value="小林 翔"></label>
+      <label class="field">雇い方<select id="g-type"><option>タイミー</option><option>派遣</option><option>おてつたび</option><option>パート</option><option>アルバイト</option><option>新卒社員</option></select></label>
+      <label class="field">職種<select id="g-job"><option>朝食ホール</option><option>客室清掃</option><option>大浴場清掃</option><option>仲居・配膳</option><option>フロント・ベル</option></select></label>
+      <label class="field">初日<input id="g-date" value="11月18日（水）"></label>
+      <label class="field">集合時間<input id="g-time" value="5:30"></label>
+      <label class="field">迎えに来る人<select id="g-host">${staff.map(s=>`<option value="${s.name}">${s.name}</option>`).join("")}</select></label>
+    </div>
+    <label class="field">ひとこと（任意）<input id="g-note" value="飲食店のホールの経験あり"></label>
+    <button class="btn" id="gen">${aiOK()?"AIで初日シートを作る":"初日シートを作る"}</button>
+    <p class="err" id="generr" hidden></p>
+  </section>
+  ${g?`<section class="card"><span class="label">できあがったシート（確認用）</span>
+    <div class="out">
+      <b>${esc(g.name)}さんの初日 ・ ${esc(g.date)} ${esc(g.time)}</b>
+      <p>${esc(g.welcome)}</p>
+      <dl class="kv">${g.schedule.map(s=>`<dt>${esc(s.t)}</dt><dd>${esc(s.d)}</dd>`).join("")}</dl>
+      <p><b>持ち物：</b>${g.bring.map(esc).join("、")}</p>
+      <p><b>着任前に見る教材：</b>${g.lessons.map(esc).join("、")}</p>
+    </div>
+    <div class="row"><button class="btn" id="publish">公開して本人に送る</button><button class="btn ghost" id="regen">作り直す</button></div>
+    <p class="note">公開すると、本人のスマホとLINEに届きます（デモでは新人の画面が切り替わります）。集合場所と時刻は、訪問時に確認した内容に差し替えます。</p></section>`:""}`;
+}
+function templateSheet(f){
+  const job=f.job;
+  const map={
+    "朝食ホール":["","レストラン「マロニエ」で朝食の準備に同行","7:00","朝食の開始（和洋バイキング）、お迎えに同行","8:30","ラストオーダー","9:00","朝食の終了、片づけ","10:30","終業"],
+    "客室清掃":["","客室の棟（蘭亭、菊亭、梅亭）を見て回る","","客室清掃に同行","15:00","中抜け","18:00","夜の客室の仕事に同行","20:00","終業"],
+    "大浴場清掃":["","渓の湯、翠の湯、紅の湯を見て回る","","清掃の道具と薬剤の置き場を確認","","大浴場清掃に同行（時間割は施設で確認）","","備品の補充、終業"],
+    "仲居・配膳":["","客室の棟と宴会場を見て回る","15:00","チェックイン、お茶出しを見学","","中抜け（時間は施設で確認）","18:00","夕食の会席の配膳に同行","20:00","夕食の片づけ","22:00","終業"],
+    "フロント・ベル":["","フロントの仕事を見学","14:00","送迎の流れを確認（迎えは14:00〜18:00）","15:00","チェックインの開始、お出迎えに同行","19:30","チェックインの受付終了","","終業（時刻は施設で確認）"]}[job];
+  const sch=[{t:f.time,d:"集合（場所は施設で確認）、制服に着替える"}];
+  for(let i=1;i<map.length;i+=2){ sch.push({t:map[i-1]||"",d:map[i]}); }
+  const L={"朝食ホール":["朝食ホール・デシャップ","チェックイン時のお茶出しと館内案内"],"客室清掃":["客室清掃・布団","渓の湯と貸切風呂の案内"],"大浴場清掃":["大浴場清掃","渓の湯と貸切風呂の案内"],"仲居・配膳":["仲居・夕食の配膳","チェックイン時のお茶出しと館内案内"],"フロント・ベル":["フロント・ベル","渓の湯と貸切風呂の案内","チェックイン時のお茶出しと館内案内"]}[job];
+  return {...f, welcome:`${f.name}さん、延対寺荘へようこそ。初日は${f.host}が迎えに来ます。分からないことは、質問係か近くの先輩に何でも聞いてください。`,
+    schedule:sch.filter(s=>s.d), bring:["黒いスラックス","黒い靴"], lessons:L};
+}
+async function generate(){
+  const f={name:$("#g-name").value.trim()||"新人", type:$("#g-type").value, job:$("#g-job").value, date:$("#g-date").value.trim(), time:$("#g-time").value.trim(), host:$("#g-host").value, note:$("#g-note").value.trim()};
+  const btn=$("#gen"); btn.disabled=true; btn.textContent="作っています…";
+  let g=null;
+  if(aiOK()){
+    const prompt=`旅館「${INN}」に新しく来るスタッフの「初日シート」を作ってください。宿の資料に書かれた事実だけを使い、時間や場所を作らないでください。資料にない集合場所や時刻は「施設で確認」と書いてください。
+新人：${f.name}（${f.type}）、職種：${f.job}、初日：${f.date} ${f.time}集合、迎え：${f.host}、メモ：${f.note||"なし"}
+教材の題名（この中から職種に合うものを2〜3本選ぶ）：${lessons().map(l=>l.title).join("、")}
+宿の資料：
+${kbText()}
+返事は次のJSONだけ：{"welcome":"本人への2文の歓迎メッセージ","schedule":[{"t":"9:30","d":"内容"}],"bring":["持ち物"],"lessons":["教材の題名"]}
+scheduleは集合から終業まで6〜8行。`;
+    try{ const r=await sample.json(prompt,{modelTier:"default"}); if(r&&Array.isArray(r.schedule)) g={...f, welcome:String(r.welcome||""), schedule:r.schedule.map(s=>({t:String(s.t||""),d:String(s.d||"")})), bring:(r.bring||[]).map(String), lessons:(r.lessons||[]).map(String)}; }
+    catch(e){ const m=aiErr(e); if(m){ const el=$("#generr"); el.hidden=false; el.textContent=m; } }
+  }
+  if(!g) g=templateSheet(f);
+  state.gen=g; render();
+}
+
+/* ======================= 管理：教材づくり ======================= */
+const sampleTranscript = "はい、じゃあ浴衣のたたみ方ね。まず浴衣を広げて、背中の縫い目を真ん中にして置きます。次に右の脇の線で折って、左の身ごろを重ねる。そう、それで袖をそろえて。袖は内側に折り込んでね、外に出すとだらしなく見えるから。それから裾から三つ折り。帯は上にのせて、サイズが分かるように置いてね。あと、汚れがあるのは絶対に棚に戻さないで、別のかごに分けてください。";
+function author(){
+  return `
+  <section class="card">
+    <span class="label">その宿だけの手順を、教材にする</span>
+    <h2>ベテランの説明から教材を作る</h2>
+    <p class="empty">実際は、ベテランの実演をスマホで撮影し、音声を文字にしてから作ります。ここでは文字にした説明を貼りつけて試せます。下の文章は、どの旅館にもある作業の見本です。</p>
+  </section>
+  <section class="card">
+    <label class="field">教材の名前<input id="a-title" value="浴衣のたたみ方"></label>
+    <label class="field">説明の文字起こし<textarea id="a-text" style="min-height:150px">${esc(sampleTranscript)}</textarea></label>
+    <button class="btn" id="mklesson">${aiOK()?"AIで手順書とテストを作る":"手順書とテストを作る"}</button>
+    <p class="err" id="aerr" hidden></p>
+  </section>
+  ${state.custom.length?`<section class="card"><h3>作った教材</h3><ol class="steps">${state.custom.map(l=>`<li>${esc(l.title)}（手順${l.steps.length}つ、テスト${l.quiz.length}問）</li>`).join("")}</ol><div class="row"><button class="btn ghost small" id="seenew">新人の画面で見る</button></div></section>`:""}`;
+}
+function heuristicLesson(title,text){
+  const sents = text.replace(/はい、?|じゃあ|そう、?|ね。/g,"").split(/[。]/).map(s=>s.trim()).filter(s=>s.length>4);
+  const steps = sents.filter(s=>!/絶対|しないで|ないで/.test(s)).slice(0,6).map(s=>s.replace(/^(まず|次に|それから|あと、?)/,"").trim()+"。");
+  const ng = sents.filter(s=>/絶対|しないで|ないで/.test(s)).map(s=>s.trim());
+  return {steps, ng, quiz:[{q:"この手順で、最初にすることは？", o:[steps[0]||"広げる","最後の仕上げ","片づけ"], a:0, why:"動画の最初の手順です。"}]};
+}
+async function makeLesson(){
+  const title=$("#a-title").value.trim()||"新しい手順", text=$("#a-text").value.trim();
+  if(text.length<20){ toast("説明をもう少し長く入れてください"); return; }
+  const btn=$("#mklesson"); btn.disabled=true; btn.textContent="作っています…";
+  let r=null;
+  if(aiOK()){
+    const prompt=`旅館のベテランスタッフが新人に話した説明の文字起こしです。新人向けの手順書と確認テストにしてください。説明にないことは足さないでください。
+題名：${title}
+文字起こし：${text}
+返事は次のJSONだけ：{"steps":["短い手順（1文）"],"ng":["やってはいけないこと"],"rule":"この宿独自の決まりを1文で","quiz":[{"q":"問題","o":["選択肢1","選択肢2","選択肢3"],"a":正解の番号(0始まり),"why":"解説1文"}]}
+stepsは4〜6個、quizは3問。`;
+    try{ r=await sample.json(prompt,{modelTier:"default"}); if(!r||!Array.isArray(r.steps)||!r.steps.length) r=null; }
+    catch(e){ const m=aiErr(e); if(m){ const el=$("#aerr"); el.hidden=false; el.textContent=m; } }
+  }
+  if(!r) r=heuristicLesson(title,text);
+  const quiz=(r.quiz||[]).filter(q=>q&&Array.isArray(q.o)&&q.o.length>=2).map(q=>({q:String(q.q),o:q.o.map(String),a:Math.max(0,Math.min(q.o.length-1,Number(q.a)||0)),why:String(q.why||"")}));
+  const L={id:"c"+Date.now(), title:String(title), time:"2:10", kind:"この宿だけ", steps:r.steps.map(String), ng:(r.ng||[]).map(String),
+    diff:String(r.rule||"ベテランの説明をもとに、AIで手順書にしたものです。"), quiz};
+  state.custom.push(L); render(); toast("教材を追加しました。新人の画面の「教材」に並びます");
+}
+
+/* ======================= 管理：導入効果 ======================= */
+const EFF = [
+  {k:"n", t:"年間に入れ替わる新人の人数", u:"人", ph:"例：20"},
+  {k:"h", t:"新人1人に教える時間（初日〜3日目）", u:"時間", ph:"例：10"},
+  {k:"w", t:"教える人の時給", u:"円", ph:"例：1500"},
+  {k:"r", t:"減らせる割合", u:"％", ph:"例：30"}
+];
+const yen = v => Math.round(v).toLocaleString("ja-JP");
+function effCalc(){
+  const e=state.eff, num=k=>{const v=parseFloat(String(e[k]).replace(/[^\d.]/g,"")); return isFinite(v)&&v>=0?v:null;};
+  const n=num("n"), h=num("h"), w=num("w"), r=num("r");
+  if(n===null||h===null||w===null||r===null) return `<p class="empty">4つすべてを入れると、ここに結果が出ます。数字は、その場で伺って入れます。</p>`;
+  const hours=n*h, cost=hours*w, rr=Math.min(r,100)/100;
+  return `<div class="stats">
+      <div class="stat"><span class="label">戻ってくる時間（年間）</span><div class="num">${yen(hours*rr)}<small>時間</small></div><span class="delta">今は年 ${yen(hours)}時間</span></div>
+      <div class="stat"><span class="label">金額にすると（年間）</span><div class="num">${yen(cost*rr)}<small>円</small></div><span class="delta">今は年 ${yen(cost)}円</span></div>
+    </div>
+    <dl class="kv" style="margin-top:12px"><dt>今の負担</dt><dd>${yen(n)}人 × ${yen(h)}時間 × ${yen(w)}円 ＝ 年 ${yen(cost)}円</dd>
+    <dt>導入後</dt><dd>${yen(Math.min(r,100))}％減れば、年 ${yen(hours*rr)}時間、${yen(cost*rr)}円分が、ほかの仕事に使えます</dd></dl>`;
+}
+function effect(){
+  return `
+  <section class="card">
+    <span class="label">その場で伺って計算します</span>
+    <h2>教える時間が、どれだけ戻るか</h2>
+    <p class="empty">新人に教えている時間を伺い、数字を入れてください。結果はすぐ下に出ます。</p>
+  </section>
+  <section class="card">
+    ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k])}"></label>`).join("")}
+  </section>
+  <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div></section>
+  <section class="card"><p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。辞める人が減る効果は、ここには入れていません。</p></section>`;
+}
+
+/* ======================= 管理：ヒアリングメモ ======================= */
+function memo(){
+  const m=state.memo, done=memoQs.filter((_,i)=>m[i]&&m[i].ok).length;
+  return `
+  <section class="card">
+    <span class="label">訪問時に確認すること</span>
+    <h2>ヒアリングメモ ${done} / ${memoQs.length}</h2>
+    <p class="empty">ここは使う人だけが見る画面です。伺ったことを書き込み、確認できたら押して印をつけます。この端末の中だけに残ります。</p>
+  </section>
+  ${memoQs.map((q,i)=>`<section class="card">
+    <div class="todo"><button data-memo="${i}" class="${m[i]&&m[i].ok?"done":""}" aria-pressed="${!!(m[i]&&m[i].ok)}"><span class="box" aria-hidden="true">${m[i]&&m[i].ok?"✓":""}</span><span class="t">${i+1}. ${esc(q)}</span></button></div>
+    <textarea data-memotext="${i}" aria-label="${esc(q)}のメモ" placeholder="伺った内容">${esc(m[i]?.text||"")}</textarea>
+  </section>`).join("")}`;
+}
+
+/* ======================= 顔写真 ======================= */
+function openPerson(i){
+  const s=staff[i], box=$("#modal");
+  box.innerHTML=`<div class="sheet-bg" id="sheetbg"><div class="sheet-card" role="dialog" aria-modal="true" aria-label="${s.name}">
+    <div class="portrait">${face(s)}</div>
+    <h2>${s.name}</h2><span class="empty">${s.role} ・ ${s.where}</span>
+    <p class="say">${s.msg}</p>
+    <label class="upload">デモ用：写真を選んで差し替える<input type="file" id="photoin" accept="image/*"></label>
+    <p class="tap">実際のサービスでは、本人の同意を得て撮影した写真を使います。</p>
+    <button class="btn" id="closep" style="width:100%">閉じる</button></div></div>`;
+  box.hidden=false; $("#closep").focus();
+  $("#closep").onclick=closeModal;
+  $("#sheetbg").onclick=e=>{if(e.target.id==="sheetbg")closeModal()};
+  $("#photoin").onchange=e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+    r.onload=()=>{s.photo=r.result; openPerson(i); render(); toast("写真を差し替えました")}; r.readAsDataURL(f)};
+}
+function closeModal(){const box=$("#modal"); box.hidden=true; box.innerHTML=""}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+/* ======================= イベント ======================= */
+function bind(){
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+  document.querySelectorAll("[data-person]").forEach(b=>b.onclick=()=>openPerson(+b.dataset.person));
+  document.querySelectorAll("[data-floor]").forEach(b=>b.onclick=()=>{state.floor=+b.dataset.floor;render()});
+  document.querySelectorAll("[data-prep]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.prep; if(k==="lessons") return go("learn"); if(k==="quiz") return go("quiz");
+    state.prep[k]=!state.prep[k]; render(); });
+  document.querySelectorAll("[data-lesson]").forEach(b=>b.onclick=()=>{state.lesson=b.dataset.lesson;render();window.scrollTo(0,0)});
+  const back=$("#back"); if(back) back.onclick=()=>{state.lesson=null;render()};
+  const L = state.lesson && lessons().find(l=>l.id===state.lesson);
+  const pl=$("#play"); if(pl&&L) pl.onclick=()=>playVideo(L);
+  document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const a=(state.steps[L.id] ||= []); a[+b.dataset.step]=!a[+b.dataset.step]; render()});
+  const md=$("#markdone"); if(md) md.onclick=()=>{state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
+  const tq=$("#toquiz"); if(tq) tq.onclick=()=>{state.quizLesson=state.lesson; go("quiz")};
+  document.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>say(b.dataset.say));
+  const f=$("#composer"); if(f) f.onsubmit=e=>{e.preventDefault();const v=$("#askinput").value.trim();if(v)say(v)};
+  if(askCtl){ const sb=$("#sendbtn"); if(sb) sb.disabled=true; }
+  document.querySelectorAll("[data-ql]").forEach(b=>b.onclick=()=>{state.quizLesson=b.dataset.ql;render()});
+  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
+    const id=state.quizLesson, ans=(state.quiz[id] ||= {}); ans[b.dataset.q]=+b.dataset.o;
+    const Lq=lessons().find(l=>l.id===id);
+    if(Object.keys(ans).length===Lq.quiz.length){ state.scores[id]=`${Lq.quiz.filter((q,i)=>ans[i]===q.a).length}/${Lq.quiz.length}`; }
+    render()});
+  const r=$("#retry"); if(r) r.onclick=()=>{state.quiz[state.quizLesson]={};render();window.scrollTo(0,0)};
+  document.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.cv.split(":").map(Number); state.checkin.text=($("#ctext")||{}).value??state.checkin.text; state.checkin.vals[i]=v; render()});
+  const ct=$("#ctext"); if(ct) ct.oninput=()=>{state.checkin.text=ct.value; save()};
+  const cs=$("#csend"); if(cs) cs.onclick=()=>{state.checkin.sent=true; render(); toast("教育担当に送りました")};
+  const rc=$("#recheck"); if(rc) rc.onclick=()=>{state.checkin.sent=false; render()};
+  document.querySelectorAll("[data-nb]").forEach(b=>b.onclick=()=>{state.newbieView=+b.dataset.nb;render();window.scrollTo(0,0)});
+  const nb=$("#nback"); if(nb) nb.onclick=()=>{state.newbieView=null;render()};
+  document.querySelectorAll("[data-reply]").forEach(b=>b.onclick=()=>{
+    const q=state.queue.find(x=>x.id==b.dataset.reply), txt=$("#reply-"+q.id).value.trim();
+    if(!txt){toast("回答を入力してください");return}
+    q.answered=true; q.reply=txt;
+    state.learned.push({k:keywords(q.q), a:txt, src:"女将の回答"});
+    state.chat.push({who:"bot", text:`「${q.q}」への${HOST}からの回答です。\n${txt}`, src:"担当者からの回答"});
+    toast("資料に追加しました。次からは質問係が答えます"); render()});
+  document.querySelectorAll("[data-draft]").forEach(b=>b.onclick=async()=>{
+    const q=state.queue.find(x=>x.id==b.dataset.draft); b.disabled=true; b.textContent="作っています…";
+    try{ const {text}=await sample(`旅館「${INN}」の女将として、新人スタッフの質問への回答案を2文で書いてください。宿の資料にない固有名詞（商品名や店名）は「◯◯」と伏せ字にし、女将が埋められるようにしてください。回答文だけを返してください。\n宿の資料：\n${kbText()}\n質問：${q.q}`,{modelTier:"quick"}); q.draft=text.trim(); }
+    catch(e){ const m=aiErr(e); if(m) toast(m); }
+    render()});
+  document.querySelectorAll("[data-done]").forEach(b=>b.onclick=()=>{const q=state.queue.find(x=>x.id==b.dataset.done); q.answered=true; toast("対応済みにしました");render()});
+  const g=$("#gen"); if(g) g.onclick=generate;
+  const rg=$("#regen"); if(rg) rg.onclick=()=>{state.gen=null;render()};
+  const pb=$("#publish"); if(pb) pb.onclick=()=>{
+    const gg=state.gen;
+    state.profile={name:gg.name,type:gg.type,job:gg.job,date:gg.date,time:gg.time,meet:"施設で確認",host:gg.host,schedule:gg.schedule,bring:gg.bring,welcome:gg.welcome};
+    state.gen=null; setRole("new"); toast(`${gg.name}さんに初日シートを送りました`)};
+  const ml=$("#mklesson"); if(ml) ml.onclick=makeLesson;
+  document.querySelectorAll("[data-eff]").forEach(inp=>inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); save()});
+  document.querySelectorAll("[data-memo]").forEach(b=>b.onclick=()=>{const i=b.dataset.memo; const m=(state.memo[i] ||= {ok:false,text:""}); m.ok=!m.ok; render()});
+  document.querySelectorAll("[data-memotext]").forEach(t=>t.oninput=()=>{const i=t.dataset.memotext; const m=(state.memo[i] ||= {ok:false,text:""}); m.text=t.value; save()});
+  const sn=$("#seenew"); if(sn) sn.onclick=()=>{setRole("new"); go("learn")};
+}
+function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
+  $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
+$("#role-new").onclick=()=>setRole("new");
+$("#role-admin").onclick=()=>setRole("admin");
+$("#reset").onclick=()=>{ try{localStorage.removeItem(KEY)}catch(e){} state=fresh(); staff.forEach(s=>delete s.photo); setRole("new"); toast("デモを最初の状態に戻しました"); };
+$("#role-new").setAttribute("aria-pressed",state.role==="new");$("#role-admin").setAttribute("aria-pressed",state.role==="admin");
+render();
+</script>
