@@ -1179,7 +1179,7 @@ const EFF = [
   {k:"n", t:"年間に入れ替わる新人の人数", u:"人", ph:"例：20"},
   {k:"h", t:"新人1人に教える時間（初日〜3日目）", u:"時間", ph:"例：10"},
   {k:"w", t:"教える人の時給", u:"円", ph:"例：1500"},
-  {k:"r", t:"減らせる割合", u:"％", ph:"例：30"}
+  {k:"r", t:"教える時間のうち、アプリに任せられる割合", u:"％", ph:"例：30", note:"先輩が口で教えている時間のうち、教材や質問係が代わりにできる分です。たとえば10時間のうち3時間を任せられるなら、30です。最初は30で試し、あとで変えられます。"}
 ];
 const yen = v => Math.round(v).toLocaleString("ja-JP");
 function effCalc(){
@@ -1192,7 +1192,7 @@ function effCalc(){
       <div class="stat"><span class="label">金額にすると（年間）</span><div class="num">${yen(cost*rr)}<small>円</small></div><span class="delta">今は年 ${yen(cost)}円</span></div>
     </div>
     <dl class="kv" style="margin-top:12px"><dt>今の負担</dt><dd>${yen(n)}人 × ${yen(h)}時間 × ${yen(w)}円 ＝ 年 ${yen(cost)}円</dd>
-    <dt>導入後</dt><dd>${yen(Math.min(r,100))}％減れば、年 ${yen(hours*rr)}時間、${yen(cost*rr)}円分が、ほかの仕事に使えます</dd></dl>`;
+    <dt>導入後</dt><dd>教える時間の${yen(Math.min(r,100))}％をアプリに任せると、年 ${yen(hours*rr)}時間、${yen(cost*rr)}円分が、ほかの仕事に使えます</dd></dl>`;
 }
 function effect(){
   return `
@@ -1202,7 +1202,7 @@ function effect(){
     <p class="empty">新人に教えている時間を伺い、数字を入れてください。結果はすぐ下に出ます。</p>
   </section>
   <section class="card">
-    ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k])}"></label>`).join("")}
+    ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k])}">${f.note?`<span class="note">${f.note}</span>`:""}</label>`).join("")}
   </section>
   <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div></section>
   <section class="card"><p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。辞める人が減る効果は、ここには入れていません。</p></section>`;
