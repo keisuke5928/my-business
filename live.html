@@ -332,7 +332,8 @@ textarea,.field input,.field select{min-height:42px;border-radius:10px}
 textarea:focus-visible,.field input:focus-visible,.field select:focus-visible{outline:2px solid var(--ai);outline-offset:1px}
 .tag{padding:2px 9px}
 .score{color:var(--moss)}
-@media (prefers-reduced-motion:no-preference){.sheet-card{animation:rise .22s ease}.toast{animation:rise .2s ease}}
+@media (prefers-reduced-motion:no-preference){.sheet-card{animation:rise .22s ease}.toast{animation:riseT .2s ease}}
+@keyframes riseT{from{transform:translate(-50%,14px);opacity:.6}to{transform:translate(-50%,0);opacity:1}}
 @keyframes rise{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
 html.big .ring{width:66px;height:66px}
 </style>
@@ -588,7 +589,7 @@ function fresh(){
     queue:[{id:1, q:"冬にトロッコが運休しているとき、お客様にどう案内すればいいですか？", by:"田中 美咲さん", risk:false, answered:false, reply:""}],
     learned:[], custom:[], checkin:{vals:[0,0,0,0,0], text:"", sent:false, to:"inn", anon:false}, voices:[], relays:[], innvoices:[],
     gen:null,
-    eff:{n:"", h:"", w:"", r:"30"},
+    eff:{n:"", h:"", w:"", s:""},
     memo:{}, dorm:{address:"", steps:[]},
     log:[], props:[], notified:{}, mine:{}, drafts:{}, people:samplePeople(), notices:[], lang:"ja", tr:{}, ojtBy:HOST, tour:null, big:false, open:{}, quizMode:"test", cardCat:"all", cardIdx:0, cardShow:false, known:{}, cards:[]
   };
@@ -1610,30 +1611,32 @@ stepsは4〜6個、quizは3問。`;
 
 /* ======================= 管理：導入効果 ======================= */
 const EFF = [
-  {k:"n", t:"年間に入れ替わる新人の人数", u:"人", ph:"例：20"},
-  {k:"h", t:"新人1人に教える時間（初日〜3日目）", u:"時間", ph:"例：10"},
-  {k:"w", t:"教える人の時給", u:"円", ph:"例：1500"},
-  {k:"r", t:"教える時間のうち、アプリに任せられる割合", u:"％", ph:"例：30", note:"先輩が口で教えている時間のうち、教材や質問係が代わりにできる分です。たとえば10時間のうち3時間を任せられるなら、30です。最初は30で試し、あとで変えられます。"}
+  {k:"n", t:"1年に入ってくる新人の人数", u:"人", ph:"例：20", note:"派遣、アルバイト、おてつたびなど、すべて合わせた人数です。"},
+  {k:"h", t:"新人1人に、先輩が教える時間（初日〜3日目）", u:"時間", ph:"例：10", note:"先輩が新人につきっきりになっている時間の合計です。"},
+  {k:"s", t:"そのうち、毎回同じ説明をくり返している時間", u:"時間", ph:"例：3", note:"館内の場所、決まり、時間、持ち物など、だれが来ても同じように話している分です。ここをアプリに任せます。手を動かして教える実技は、これまでどおり先輩が教えます。"},
+  {k:"w", t:"教える先輩の時給", u:"円", ph:"例：1500"}
 ];
 const yen = v => Math.round(v).toLocaleString("ja-JP");
 function effCalc(){
-  const e=state.eff, num=k=>{const v=parseFloat(String(e[k]).replace(/[^\d.]/g,"")); return isFinite(v)&&v>=0?v:null;};
-  const n=num("n"), h=num("h"), w=num("w"), r=num("r");
-  if(n===null||h===null||w===null||r===null) return `<p class="empty">4つすべてを入れると、ここに結果が出ます。数字は、その場で伺って入れます。</p>`;
-  const hours=n*h, cost=hours*w, rr=Math.min(r,100)/100;
+  const e=state.eff, num=k=>{const v=parseFloat(String(e[k]??"").replace(/[^\d.]/g,"")); return isFinite(v)&&v>=0?v:null;};
+  const n=num("n"), h=num("h"), w=num("w"), s0=num("s");
+  if(n===null||h===null||w===null||s0===null) return `<p class="empty">4つすべてを入れると、ここに結果が出ます。数字は、その場で伺って入れます。</p>`;
+  const s1=Math.min(s0,h), hours=n*h, cost=hours*w, back=n*s1;
   return `<div class="stats">
-      <div class="stat"><span class="label">戻ってくる時間（年間）</span><div class="num">${yen(hours*rr)}<small>時間</small></div><span class="delta">今は年 ${yen(hours)}時間</span></div>
-      <div class="stat"><span class="label">金額にすると（年間）</span><div class="num">${yen(cost*rr)}<small>円</small></div><span class="delta">今は年 ${yen(cost)}円</span></div>
+      <div class="stat"><span class="label">アプリに任せられる時間（年間）</span><div class="num">${yen(back)}<small>時間</small></div><span class="delta">今は年 ${yen(hours)}時間 教えている</span></div>
+      <div class="stat"><span class="label">金額にすると（年間）</span><div class="num">${yen(back*w)}<small>円</small></div><span class="delta">今は年 ${yen(cost)}円</span></div>
     </div>
     <dl class="kv" style="margin-top:12px"><dt>今の負担</dt><dd>${yen(n)}人 × ${yen(h)}時間 × ${yen(w)}円 ＝ 年 ${yen(cost)}円</dd>
-    <dt>導入後</dt><dd>教える時間の${yen(Math.min(r,100))}％をアプリに任せると、年 ${yen(hours*rr)}時間、${yen(cost*rr)}円分が、ほかの仕事に使えます</dd></dl>`;
+    <dt>任せる分</dt><dd>${yen(n)}人 × 同じ説明 ${yen(s1)}時間 ＝ 年 ${yen(back)}時間（${yen(back*w)}円分）。先輩はこの時間を、実技を教えることやお客様の対応に使えます</dd></dl>
+    ${s0>h?`<p class="note">同じ説明の時間が、教える時間より長く入っています。教える時間と同じとして計算しました。</p>`:""}`;
 }
 function effect(){
   return `
   <section class="card">
     <span class="label">その場で伺って計算します</span>
     <h2>教える時間が、どれだけ戻るか</h2>
-    <p class="empty">新人に教えている時間を伺い、数字を入れてください。結果はすぐ下に出ます。</p>
+    <p class="empty">担当の方に4つ伺って、数字を入れます。結果はすぐ下に出ます。</p>
+    <div class="row"><button class="btn ghost small" id="effhint">分からないとき：同じ説明を「教える時間の3割」で入れる</button></div>
   </section>
   <section class="card">
     <span class="label">溜まった質問から</span>
@@ -1641,7 +1644,7 @@ function effect(){
     <p class="empty">先輩が同じ説明をしなくて済んだ回数です。1回5分とすると、約${Math.round(allQs().filter(q=>q.result==="answer").length*5/6)/10}時間になります。</p>
   </section>
   <section class="card">
-    ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k])}">${f.note?`<span class="note">${f.note}</span>`:""}</label>`).join("")}
+    ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k]??"")}">${f.note?`<span class="note">${f.note}</span>`:""}</label>`).join("")}
   </section>
   <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div></section>
   <section class="card"><p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。辞める人が減る効果は、ここには入れていません。</p></section>`;
@@ -1807,6 +1810,8 @@ function bind(){
     o.querySelectorAll("[data-flesson]").forEach(b=>b.onclick=()=>{ state.tab="learn"; state.lesson=b.dataset.flesson; render(); window.scrollTo(0,0); });
     o.querySelectorAll("[data-fgo]").forEach(b=>b.onclick=()=>go(b.dataset.fgo)); };
   const si=$("#sosinline"); if(si) si.onclick=()=>openSOS();
+  const eh=$("#effhint"); if(eh) eh.onclick=()=>{ const h=parseFloat(String(state.eff.h||"").replace(/[^\d.]/g,"")); if(!isFinite(h)||h<=0){ toast("先に「先輩が教える時間」を入れてください"); return; }
+    state.eff.s=String(Math.round(h*3)/10); render(); toast("3割を目安として入れました。あとで直せます"); };
   document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{ const a=b.dataset.tour; if(a==="close") setTour(null); else if(a==="prev") setTour(state.tour-1); else setTour(state.tour+1>=TOUR.length?null:state.tour+1); });
   document.querySelectorAll("details[data-fold]").forEach(d=>d.ontoggle=()=>{ (state.open ||= {})[d.dataset.fold]=d.open; save(); });
   document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ const k=b.dataset.next;
