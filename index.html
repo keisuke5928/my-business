@@ -711,7 +711,10 @@ function quizView(){
     ${q.o.map((o,j)=>{let c=""; if(ans[i]!==undefined){ if(j===q.a)c="right"; else if(j===ans[i])c="wrong";}
       return `<button class="opt ${c}" data-q="${i}" data-o="${j}" ${ans[i]!==undefined?"disabled":""}>${esc(o)}</button>`}).join("")}
     ${ans[i]!==undefined&&q.why?`<p class="why">${ans[i]===q.a?"正解。":"正しくは「"+esc(q.o[q.a])+"」。"}${esc(q.why)}</p>`:""}
-  </section>`).join("")}`;
+  </section>`).join("")}
+  ${total===qs.length?`<section class="card"><span class="label">${esc(L.title)} ・ 確認テストの結果</span><div class="score">${correct} / ${qs.length}</div>
+    <p class="empty">${state.qdone&&state.qdone[L.id]?"このテストは完了しています。":"解説を読んだら、完了を押してください。結果は教育担当の画面に記録されます。"}</p>
+    <div class="row"><button class="btn" id="qdone">${state.qdone&&state.qdone[L.id]?"次のテストへ":"完了"}</button><button class="btn ghost" id="retry2">もう一度</button></div></section>`:""}`;
 }
 
 /* ======================= 新人：ふりかえり ======================= */
@@ -1042,6 +1045,13 @@ function bind(){
     const Lq=lessons().find(l=>l.id===id);
     if(Object.keys(ans).length===Lq.quiz.length){ state.scores[id]=`${Lq.quiz.filter((q,i)=>ans[i]===q.a).length}/${Lq.quiz.length}`; }
     render()});
+  const qd=$("#qdone"); if(qd) qd.onclick=()=>{
+    const id=state.quizLesson; (state.qdone ||= {})[id]=true; state.done[id]=true;
+    const withQuiz=lessons().filter(l=>l.quiz&&l.quiz.length);
+    const next=withQuiz.find(l=>!(state.qdone[l.id]));
+    if(next){ state.quizLesson=next.id; toast("完了しました。次は「"+next.title+"」のテストです"); render(); window.scrollTo(0,0); }
+    else { toast("すべての確認テストが完了しました"); go("sheet"); } };
+  const r2=$("#retry2"); if(r2) r2.onclick=()=>{state.quiz[state.quizLesson]={};render();window.scrollTo(0,0)};
   const r=$("#retry"); if(r) r.onclick=()=>{state.quiz[state.quizLesson]={};render();window.scrollTo(0,0)};
   document.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.cv.split(":").map(Number); state.checkin.text=($("#ctext")||{}).value??state.checkin.text; state.checkin.vals[i]=v; render()});
   const ct=$("#ctext"); if(ct) ct.oninput=()=>{state.checkin.text=ct.value; save()};
