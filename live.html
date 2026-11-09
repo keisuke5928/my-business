@@ -115,6 +115,9 @@ dl.kv dd{margin:0;min-width:0}
 .fcard{border:1px solid var(--line);border-radius:12px;background:var(--bg);min-height:150px;padding:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px}
 .fcard .front{font-family:var(--display);font-size:1.35rem;color:var(--ai)}
 .fcard .back{font-size:.95rem}
+.sos{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;border:0;border-radius:999px;padding:10px 16px;font-weight:700;background:var(--warn);color:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.fb{display:flex;gap:6px;margin-top:6px}
+.fb button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:2px 10px;font-size:.75rem;color:var(--muted)}
 .tour{position:sticky;top:0;z-index:6;border:2px solid var(--ai);box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .nextcard{border:2px solid var(--moss)}
 details.card.fold{display:block}
@@ -263,6 +266,7 @@ nav.tabs .dot{position:absolute;top:4px;right:calc(50% - 18px);min-width:16px;he
   <main id="main"></main>
 </div>
 <nav class="tabs" aria-label="メニュー"><div class="inner" id="tabs"></div></nav>
+<button class="sos" id="sosbtn" hidden>困ったら</button>
 <div class="toast" id="toast" hidden></div>
 <div id="modal" hidden></div>
 
@@ -626,7 +630,7 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
 })();
 async function logQ(o){
   const rec={q:o.q, result:o.result, risk:!!o.risk, status:o.result==="answer"?"auto":"open", answer:o.answer||"", source:o.source||"",
-    by:state.profile.name+"さん", at:Date.now(), lesson:guessLesson(o.q)};
+    by:state.profile.name+"さん", at:Date.now(), lesson:guessLesson(o.q), key:o.key||""};
   if(live){
     try{ const ref = await db.collection("questions").add(rec); state.mine[ref.id]=1; save(); return; }
     catch(e){ toast(dbMsg(e)); }
@@ -640,7 +644,7 @@ const lessons = () => baseLessons.map(l=>{
   if(!add.length) return l;
   return {...l, faq:add.filter(p=>p.type==="faq"), quiz:l.quiz.concat(add.filter(p=>p.type==="quiz"&&p.quiz).map(p=>p.quiz))};
 }).concat(state.custom);
-const knowledge = () => kb.concat(live ? liveLearned : state.learned);
+const knowledge = () => (live ? liveLearned : state.learned).concat(kb);
 
 /* ======================= AI（Claude） ======================= */
 let sample = null;
@@ -692,6 +696,7 @@ function renderTabs(){
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
 function render(){
+  { const sb=$("#sosbtn"); if(sb) sb.hidden = state.role!=="new"; }
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
@@ -699,12 +704,12 @@ function render(){
   bind(); save();
 }
 const TOUR = [
-  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。"],
+  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。困ったときは右下の「困ったら」を押します。"],
   ["new","learn","bango","3分の教材","共通の仕事と、延対寺荘だけの手順を短い教材にします。これは「部屋番号で棟を覚える」です。外国人スタッフ向けに、教材をAIで翻訳することもできます。"],
-  ["new","ask",null,"聞きにくいことはAIに","「中抜けは何時から？」を押すと答えます。「卵アレルギー」のような危ないことは答えず、担当者に回します。"],
+  ["new","ask",null,"聞きにくいことはAIに","「中抜けは何時から？」を押すと答えます。「卵アレルギー」のような危ないことは答えず、内容に合った担当者を案内します。答えが違うときは「違う」を押すと、担当者に届きます。"],
   ["new","quiz",null,"確認テスト","覚えたかを3問で確かめます。終わったら、いちばん下の「完了」を押します。「覚えるカード」に切り替えると、お品書きや館内も覚えられます。"],
   ["new","checkin",null,"3日目のふりかえり","1分で答えます。低い点があると、担当者の画面に「声かけを」と出ます。辞める前のサインに気づけます。言いにくいことは、外部の相談窓口に名前を伏せて送ることもできます。"],
-  ["admin","dash",null,"担当者の画面","いちばん上の「今日のまとめ」で、回答待ちの質問と、声をかけたい人が分かります。受け入れ予定、準備のチェック、一人立ちチェック、LINEの案内文もここで扱います。"],
+  ["admin","dash",null,"担当者の画面","いちばん上の「今日のまとめ」で、回答待ちの質問と、声をかけたい人が分かります。受け入れ予定、準備のチェック、一人立ちチェック、LINEの案内文もここで扱います。「今週のまとめ」は、ボタン1つで上の人に送れます。"],
   ["admin","queue",null,"答えられなかった質問","AIが答えられなかった質問が届きます。一度答えると、次からはAIが答えます。質問が溜まると、AIが「教材に足す案」を作ります。"],
   ["admin","make",null,"初日シートを作る","名前と初日を入れるだけで、初日シートができます。寮までの道案内もここで書きます。"],
   ["admin","author",null,"ベテランの技を教材に","ベテランの説明を撮って文字にすると、手順書とテストができます。湯温の調整のような技も残せます。"],
@@ -920,20 +925,61 @@ function ask(){
     <p class="note">${live?"質問はすべて共有データとして溜まり、女将・管理者の画面に届きます。":"いまは、この端末の中だけに記録しています。"}</p>
   </section>
   <div class="suggest">${["中抜けは何時から？","朝食は何時から？","512号室はどの棟？","お部屋で夕食はできる？","卵アレルギーのお客様の料理は？","地酒のおすすめは？"].map(s=>`<button data-say="${s}">${s}</button>`).join("")}</div>
-  <div class="chat" id="chatlog">${state.chat.map(m=>`<div class="msg ${m.who}${m.esc?" esc":""}">${esc(m.text)}${m.src?`<span class="src">${esc(m.src)}</span>`:""}</div>`).join("")}</div>
+  <div class="chat" id="chatlog">${state.chat.map((m,i)=>`<div class="msg ${m.who}${m.esc?" esc":""}">${esc(m.text)}${m.src?`<span class="src">${esc(m.src)}</span>`:""}${m.fbKey?(m.fb?`<span class="src">${m.fb==="good"?"ありがとうございます":"担当者に確かめてもらいます。届いたらお知らせします"}</span>`:`<span class="fb"><button data-fb="good:${i}">役に立った</button><button data-fb="bad:${i}">違う・分からない</button></span>`):""}</div>`).join("")}</div>
   <form class="composer" id="composer"><input id="askinput" placeholder="例：貸切風呂の予約はどうする？" autocomplete="off" aria-label="質問を入力"><button class="btn" type="submit" id="sendbtn">送る</button></form>`;
 }
 function ruleAnswer(text){
   const t=text.toLowerCase(); const hit=knowledge().find(e=>e.k.some(k=>t.includes(String(k).toLowerCase())));
   return hit?{status:"answer",answer:hit.a,source:hit.src}:{status:"unknown"};
 }
+function whoFor(text){
+  const t=String(text||"");
+  if(/アレルギー|卵|そば|えび|エビ|小麦|乳|落花生|ピーナッツ/.test(t)) return "板場の責任者か仲居リーダー";
+  if(/けが|怪我|やけど|火傷|倒れ|救急|具合|体調|気分|熱が/.test(t)) return "近くの先輩かフロント（命に関わるときは119番）";
+  if(/セクハラ|パワハラ|ハラスメント|触られ/.test(t)) return "フロントの教育担当（言いにくいときは、ふりかえりから伝えられます）";
+  if(/地震|火事|災害|避難/.test(t)) return "近くの先輩の指示に従い、フロント";
+  if(/クレーム|怒|酔/.test(t)) return "フロント（一人で対応しないでください）";
+  if(/お金|会計|支払|返金|手当|給料|給与|時給/.test(t)) return "フロントの教育担当";
+  return "近くの先輩か"+HOST;
+}
+const SOS = [
+  {k:"body", t:"体調が悪い、けがをした", risk:true, d:"無理をせず、すぐ近くの先輩かフロントに伝えてください。命に関わるときは119番です。", act:"notify"},
+  {k:"guest", t:"お客様とトラブルになった", risk:true, d:"一人で対応せず、「担当の者を呼んでまいります」と伝えて、すぐフロントへ行きます。", act:"notify"},
+  {k:"ask", t:"お客様に聞かれて、答えが分からない", d:"その場で答えず「確認してまいります」と伝えます。質問係で調べるか、先輩に聞きます。", act:"ask"},
+  {k:"lost", t:"場所が分からない、迷った", d:"館内マップを開きます。部屋番号の下2けたで棟が分かります。", act:"map"},
+  {k:"work", t:"仕事のやり方が分からない", d:"教材を開きます。1本3分ほどです。", act:"learn"},
+  {k:"talk", t:"だれかに話を聞いてほしい", d:"ふりかえりから、言いにくいことも伝えられます。", act:"checkin"}
+];
+function openSOS(k){
+  const box=$("#modal"), it=SOS.find(x=>x.k===k);
+  const btn = it ? ({notify:"担当者に知らせる", ask:"質問係で調べる", map:"館内マップを開く", learn:"教材を開く", checkin:"ふりかえりを開く"})[it.act] : "";
+  box.innerHTML=`<div class="sheet-bg" id="sheetbg"><div class="sheet-card" role="dialog" aria-modal="true" aria-label="困ったとき" style="align-items:stretch;text-align:left">
+    ${it?`<span class="label">困ったとき</span><h2>${esc(it.t)}</h2><p class="${it.risk?"err":""}">${esc(it.d)}</p>
+      <button class="btn" id="sosgo">${btn}</button><button class="btn ghost" id="sosback">ほかの困りごと</button>`
+    :`<span class="label">困ったとき</span><h2>どうしましたか？</h2><div class="todo">${SOS.map(x=>`<button data-sos="${x.k}"><span class="t">${esc(x.t)}</span><span class="go">→</span></button>`).join("")}</div>`}
+    <button class="btn ghost" id="sosclose">閉じる</button></div></div>`;
+  box.hidden=false;
+  $("#sosclose").onclick=closeModal;
+  $("#sheetbg").onclick=e=>{ if(e.target.id==="sheetbg") closeModal(); };
+  box.querySelectorAll("[data-sos]").forEach(b=>b.onclick=()=>openSOS(b.dataset.sos));
+  const bk=$("#sosback"); if(bk) bk.onclick=()=>openSOS();
+  const g=$("#sosgo"); if(g) g.onclick=()=>{ closeModal();
+    if(it.act==="notify"){ notifyRisk("【困ったボタン】"+it.t); toast("担当者に知らせました。近くの先輩にも声をかけてください"); return; }
+    if(it.act==="ask") return go("ask");
+    if(it.act==="learn") return go("learn");
+    if(it.act==="checkin") return go("checkin");
+    if(it.act==="map"){ (state.open ||= {}).map=true; go("sheet"); const m=document.querySelector('[data-fold="map"]'); if(m) m.scrollIntoView({behavior:"smooth",block:"start"}); }
+  };
+  const f=box.querySelector("button"); if(f) f.focus();
+}
+function notifyRisk(t){ logQ({q:t, result:"escalate", risk:true}); }
 function enqueue(text,risk){ state.queue.unshift({id:Date.now(), q:text, by:state.profile.name+"さん", risk, answered:false, reply:""}); }
 async function say(text){
   if(askCtl) return;
   state.chat.push({who:"me",text});
   if(danger.some(d=>text.includes(d))){
     logQ({q:text, result:"escalate", risk:true});
-    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ近くの先輩か、"+HOST+"に確認してください。\n同じ内容を担当者にも通知しました。",src:"担当者へ通知済み"});
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ"+whoFor(text)+"に確認してください。\n同じ内容を担当者にも通知しました。",src:"担当者へ通知済み"});
     render(); scrollChat(); return;
   }
   state.chat.push({who:"bot",wait:true,text:"考えています…"}); render(); scrollChat();
@@ -959,10 +1005,11 @@ ${kbText()}
   state.chat.pop();
   if(r.status==="escalate"){
     logQ({q:text, result:"escalate", risk:true});
-    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ近くの先輩か、"+HOST+"に確認してください。",src:"担当者へ通知済み"});
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ"+whoFor(text)+"に確認してください。",src:"担当者へ通知済み"});
   }else if(r.status==="answer" && r.answer){
-    logQ({q:text, result:"answer", answer:String(r.answer), source:String(r.source||"")});
-    state.chat.push({who:"bot",text:String(r.answer),src:(r.source?"出典："+r.source:"")+(aiOK()?"（AIが宿の資料から回答）":"")});
+    const fbKey="k"+Date.now()+Math.random().toString(36).slice(2,6);
+    logQ({q:text, result:"answer", answer:String(r.answer), source:String(r.source||""), key:fbKey});
+    state.chat.push({who:"bot",text:String(r.answer),src:(r.source?"出典："+r.source:"")+(aiOK()?"（AIが宿の資料から回答）":""), fbKey, q:text});
   }else{
     logQ({q:text, result:"unknown"});
     state.chat.push({who:"bot",text:"まだ宿の資料にない質問でした。"+HOST+"に回答をお願いしたので、届いたらここにお知らせします。",src:"担当者へ質問を転送"});
@@ -1128,6 +1175,11 @@ function dash(){
       <span>${n.alert?'<span class="tag risk">声かけを</span>':(n.ojtDone===n.ojtAll?'<span class="tag ok">一人立ち</span>':(n.prepN<PREP.length?'<span class="tag">準備中</span>':""))}</span></button>`).join("")}</div>
     <p class="note">初日シートを「公開して本人に送る」と、ここに加わります。</p>
   </section>
+  ${skillCard(all)}
+  <section class="card"><span class="label">女将や支配人への報告に</span><h3>今週のまとめ</h3>
+    <p class="empty">新人、質問、先輩の時間、声かけが必要な人を、1つの文にまとめます。LINEやメールに貼って送れます。</p>
+    ${state.weekly?`<textarea id="weeklytext" readonly style="min-height:220px">${esc(weeklyText(all))}</textarea><div class="row"><button class="btn small" id="copyweekly">コピー</button><button class="btn ghost small" id="closeweekly">閉じる</button></div>`:`<div class="row"><button class="btn small" id="mkweekly">今週のまとめを作る</button></div>`}
+  </section>
   ${alerts.length?`<section class="card"><h3>ふりかえりで気になる回答</h3>${alerts.map(n=>`<p><b>${esc(n.name)}さん</b>（${n.checkin.day}日目）「${checkQs.filter((q,i)=>n.checkin.vals[i]>0&&n.checkin.vals[i]<=2).join("」「")}」が低め。${n.checkin.text?`<br><span class="empty">${esc(n.checkin.text)}</span>`:""}</p>`).join("")}<p class="empty">辞める前のサインになりやすい回答です。今日中に一声かけるのがおすすめです。</p></section>`:""}
   <section class="card">
     <h3>よく聞かれた質問</h3>
@@ -1135,11 +1187,36 @@ function dash(){
     <p class="empty">溜まった質問から数えています。質問係が答えた分は、先輩が同じ説明をしなくて済んだ回数です。</p>
   </section>`;
 }
+function skillCard(all){
+  const by={}; all.forEach(n=>{ (by[n.job] ||= []).push(n); });
+  const jobs=Object.entries(by); if(!jobs.length) return "";
+  return `<section class="card"><span class="label">シフトを組むときに</span><h3>仕事ごとの一人立ち</h3>
+    <div class="lbars">${jobs.map(([job,ns])=>{ const ok=ns.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length;
+      return `<div class="lb"><span><b>${esc(job)}</b></span><span class="v">一人で入れる ${ok} / ${ns.length}名</span><div style="grid-column:1/-1" class="note">${ns.map(n=>`${esc(n.name)}（${n.ojtDone}/${n.ojtAll}）`).join("、")}</div></div>`; }).join("")}</div>
+    <p class="note">一人立ちチェックがすべて終わった人を「一人で入れる」としています。</p></section>`;
+}
+function weeklyText(all){
+  const now=Date.now(), wk=allQs().filter(q=>(q.at||0)>=now-7*86400000);
+  const auto=wk.filter(q=>q.result==="answer").length, staffN=wk.length-auto, risk=wk.filter(q=>q.risk).length;
+  const m=new Map(); wk.filter(q=>!String(q.q).startsWith("【困ったボタン】")).forEach(q=>{ const k=norm(q.q), v=m.get(k); if(v) v[1]++; else m.set(k,[q.q,1]); });
+  const top=[...m.values()].sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const d0=new Date(now-6*86400000), d1=new Date(now), f=d=>`${d.getMonth()+1}月${d.getDate()}日`;
+  const inNow=all.filter(n=>n.startISO && new Date(n.startISO+"T00:00:00")<=TODAY).length, soon=all.length-inNow;
+  const solo=all.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length, alerts=all.filter(n=>n.alert).length;
+  const adopted=props().filter(p=>p.status==="adopted").length, voicesN=innVoices().length+relays().length;
+  return `【宿のはじめて帳 今週のまとめ】${f(d0)}〜${f(d1)}
+1. 新人：着任中 ${inNow}名、着任予定 ${soon}名。一人立ちできた人 ${solo}名。
+2. 質問：${wk.length}件。質問係が答えた ${auto}件（先輩の説明 約${Math.round(auto*5/6)/10}時間分）。担当者に届いた ${staffN}件（うち安全に関わる ${risk}件）。
+3. よく聞かれた質問：${top.length?top.map(([q,n],i)=>`${i+1}）${q}（${n}回）`).join(" "):"まだありません"}
+4. 声かけが必要な人：${alerts}名（ふりかえりで低い点がありました）
+5. 質問から教材に足した内容：${adopted}件
+6. スタッフから届いた声：${voicesN}件`;
+}
 function todayText(){ const d=new Date(); return `${d.getMonth()+1}月${d.getDate()}日`; }
 
 /* ======================= 管理：質問への回答 ======================= */
 function topQs(n){
-  const m=new Map(); allQs().forEach(q=>{ const k=norm(q.q); const v=m.get(k); if(v) v[1]++; else m.set(k,[q.q,1]); });
+  const m=new Map(); allQs().filter(q=>!String(q.q).startsWith("【困ったボタン】")).forEach(q=>{ const k=norm(q.q); const v=m.get(k); if(v) v[1]++; else m.set(k,[q.q,1]); });
   return [...m.values()].sort((a,b)=>b[1]-a[1]).slice(0,n);
 }
 function insights(){
@@ -1237,7 +1314,9 @@ function queue(){
   </section>
   <section class="card">${open.length?open.map(q=>`
     <div class="qitem">${q.risk?`<span class="tag risk" style="align-self:flex-start">安全・お客様に関わる質問</span>`:""}
+      ${q.fb==="bad"?`<span class="tag risk" style="align-self:flex-start">質問係の答えが「違う」と言われました</span>`:""}
       <b>${esc(q.q)}</b><span class="empty">${esc(q.by)}から${q.sample?' <span class="tag">見本</span>':""}</span>
+      ${q.fb==="bad"&&q.answer?`<span class="note">質問係の答え：${esc(q.answer)}</span>`:""}
       ${q.risk?`<p class="empty">この種類の質問は、AIが答えないよう固定しています。本人に直接伝えてください。</p><div class="row"><button class="btn ghost small" data-done="${q.id}">対応した</button></div>`:
       `<textarea id="reply-${q.id}" aria-label="回答を入力" placeholder="例：「◯◯」をおすすめしています。">${esc(q.draft||state.drafts[q.id]||"")}</textarea>
        <div class="row"><button class="btn small" data-reply="${q.id}">回答して資料に追加</button>${aiOK()?`<button class="btn ghost small" data-draft="${q.id}">AIで回答案を作る</button>`:""}</div>`}
@@ -1585,6 +1664,15 @@ function bind(){
     if(live){ try{ await db.doc("settings/dorm").set(rec); toast("道案内を保存しました"); }catch(e){ toast(dbMsg(e)); } return; }
     state.dorm=rec; toast("道案内を保存しました"); render(); };
   const gs=$("#gosheet"); if(gs) gs.onclick=()=>{ const t=$("#daysheet"); if(t) t.closest(".card").scrollIntoView({behavior:"smooth",block:"start"}); };
+  document.querySelectorAll("[data-fb]").forEach(b=>b.onclick=async()=>{ const [v,i]=b.dataset.fb.split(":"); const m=state.chat[+i]; if(!m||m.fb) return;
+    m.fb=v; render(); scrollChat();
+    if(v!=="bad") return;
+    if(live){ const q=liveQs.find(x=>x.key===m.fbKey); if(q){ try{ await db.doc("questions/"+q.id).update({status:"open", fb:"bad"}); state.mine[q.id]=1; save(); }catch(e){ toast(dbMsg(e)); } } return; }
+    const lg=state.log.find(x=>x.key===m.fbKey); if(lg){ lg.status="open"; lg.fb="bad"; }
+    state.queue.unshift({id:Date.now(), q:m.q, by:state.profile.name+"さん", risk:false, answered:false, reply:"", fb:"bad", answer:m.text}); save(); render(); });
+  const mw=$("#mkweekly"); if(mw) mw.onclick=()=>{ state.weekly=true; render(); };
+  const cw=$("#closeweekly"); if(cw) cw.onclick=()=>{ state.weekly=false; render(); };
+  const cpw=$("#copyweekly"); if(cpw) cpw.onclick=async()=>{ const t=$("#weeklytext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
   document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{ const a=b.dataset.tour; if(a==="close") setTour(null); else if(a==="prev") setTour(state.tour-1); else setTour(state.tour+1>=TOUR.length?null:state.tour+1); });
   document.querySelectorAll("details[data-fold]").forEach(d=>d.ontoggle=()=>{ (state.open ||= {})[d.dataset.fold]=d.open; save(); });
   document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ const k=b.dataset.next;
@@ -1621,6 +1709,7 @@ function bind(){
 function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
   $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
 $("#tourbtn").onclick=()=>setTour(0);
+$("#sosbtn").onclick=()=>openSOS();
 $("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };
 $("#role-new").onclick=()=>setRole("new");
 $("#role-admin").onclick=()=>setRole("admin");

@@ -97,6 +97,9 @@ dl.kv dd{margin:0;min-width:0}
 .fac:first-child{border-top:0;padding-top:0}
 .fac b{display:block}
 .fac span{display:block;font-size:.82rem;color:var(--muted)}
+.sos{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;border:0;border-radius:999px;padding:10px 16px;font-weight:700;background:var(--warn);color:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.fb{display:flex;gap:6px;margin-top:6px}
+.fb button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:2px 10px;font-size:.75rem;color:var(--muted)}
 .tour{position:sticky;top:0;z-index:6;border:2px solid var(--ai);box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .nextcard{border:2px solid var(--moss)}
 details.card.fold{display:block}
@@ -241,6 +244,7 @@ nav.tabs .dot{position:absolute;top:4px;right:calc(50% - 18px);min-width:16px;he
   <main id="main"></main>
 </div>
 <nav class="tabs" aria-label="メニュー"><div class="inner" id="tabs"></div></nav>
+<button class="sos" id="sosbtn" hidden>困ったら</button>
 <div class="toast" id="toast" hidden></div>
 <div id="modal" hidden></div>
 
@@ -499,6 +503,7 @@ function renderTabs(){
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
 function render(){
+  { const sb=$("#sosbtn"); if(sb) sb.hidden = state.role!=="new"; }
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
@@ -506,7 +511,7 @@ function render(){
   bind(); save();
 }
 const TOUR = [
-  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。"],
+  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。困ったときは右下の「困ったら」を押します。"],
   ["new","learn","bango","3分の教材","共通の仕事と、延対寺荘だけの手順を短い教材にします。これは「部屋番号で棟を覚える」です。"],
   ["new","ask",null,"聞きにくいことはAIに","「中抜けは何時から？」を押すと答えます。「卵アレルギー」のような危ないことは答えず、担当者に回します。"],
   ["new","quiz",null,"確認テスト","覚えたかを3問で確かめます。終わったら、いちばん下の「完了」を押します。"],
@@ -706,13 +711,54 @@ function ruleAnswer(text){
   const t=text.toLowerCase(); const hit=knowledge().find(e=>e.k.some(k=>t.includes(String(k).toLowerCase())));
   return hit?{status:"answer",answer:hit.a,source:hit.src}:{status:"unknown"};
 }
+function whoFor(text){
+  const t=String(text||"");
+  if(/アレルギー|卵|そば|えび|エビ|小麦|乳|落花生|ピーナッツ/.test(t)) return "板場の責任者か仲居リーダー";
+  if(/けが|怪我|やけど|火傷|倒れ|救急|具合|体調|気分|熱が/.test(t)) return "近くの先輩かフロント（命に関わるときは119番）";
+  if(/セクハラ|パワハラ|ハラスメント|触られ/.test(t)) return "フロントの教育担当（言いにくいときは、ふりかえりから伝えられます）";
+  if(/地震|火事|災害|避難/.test(t)) return "近くの先輩の指示に従い、フロント";
+  if(/クレーム|怒|酔/.test(t)) return "フロント（一人で対応しないでください）";
+  if(/お金|会計|支払|返金|手当|給料|給与|時給/.test(t)) return "フロントの教育担当";
+  return "近くの先輩か"+HOST;
+}
+const SOS = [
+  {k:"body", t:"体調が悪い、けがをした", risk:true, d:"無理をせず、すぐ近くの先輩かフロントに伝えてください。命に関わるときは119番です。", act:"notify"},
+  {k:"guest", t:"お客様とトラブルになった", risk:true, d:"一人で対応せず、「担当の者を呼んでまいります」と伝えて、すぐフロントへ行きます。", act:"notify"},
+  {k:"ask", t:"お客様に聞かれて、答えが分からない", d:"その場で答えず「確認してまいります」と伝えます。質問係で調べるか、先輩に聞きます。", act:"ask"},
+  {k:"lost", t:"場所が分からない、迷った", d:"館内マップを開きます。部屋番号の下2けたで棟が分かります。", act:"map"},
+  {k:"work", t:"仕事のやり方が分からない", d:"教材を開きます。1本3分ほどです。", act:"learn"},
+  {k:"talk", t:"だれかに話を聞いてほしい", d:"ふりかえりから、言いにくいことも伝えられます。", act:"checkin"}
+];
+function openSOS(k){
+  const box=$("#modal"), it=SOS.find(x=>x.k===k);
+  const btn = it ? ({notify:"担当者に知らせる", ask:"質問係で調べる", map:"館内マップを開く", learn:"教材を開く", checkin:"ふりかえりを開く"})[it.act] : "";
+  box.innerHTML=`<div class="sheet-bg" id="sheetbg"><div class="sheet-card" role="dialog" aria-modal="true" aria-label="困ったとき" style="align-items:stretch;text-align:left">
+    ${it?`<span class="label">困ったとき</span><h2>${esc(it.t)}</h2><p class="${it.risk?"err":""}">${esc(it.d)}</p>
+      <button class="btn" id="sosgo">${btn}</button><button class="btn ghost" id="sosback">ほかの困りごと</button>`
+    :`<span class="label">困ったとき</span><h2>どうしましたか？</h2><div class="todo">${SOS.map(x=>`<button data-sos="${x.k}"><span class="t">${esc(x.t)}</span><span class="go">→</span></button>`).join("")}</div>`}
+    <button class="btn ghost" id="sosclose">閉じる</button></div></div>`;
+  box.hidden=false;
+  $("#sosclose").onclick=closeModal;
+  $("#sheetbg").onclick=e=>{ if(e.target.id==="sheetbg") closeModal(); };
+  box.querySelectorAll("[data-sos]").forEach(b=>b.onclick=()=>openSOS(b.dataset.sos));
+  const bk=$("#sosback"); if(bk) bk.onclick=()=>openSOS();
+  const g=$("#sosgo"); if(g) g.onclick=()=>{ closeModal();
+    if(it.act==="notify"){ notifyRisk("【困ったボタン】"+it.t); toast("担当者に知らせました。近くの先輩にも声をかけてください"); return; }
+    if(it.act==="ask") return go("ask");
+    if(it.act==="learn") return go("learn");
+    if(it.act==="checkin") return go("checkin");
+    if(it.act==="map"){ (state.open ||= {}).map=true; go("sheet"); const m=document.querySelector('[data-fold="map"]'); if(m) m.scrollIntoView({behavior:"smooth",block:"start"}); }
+  };
+  const f=box.querySelector("button"); if(f) f.focus();
+}
+function notifyRisk(t){ enqueue(t,true); save(); }
 function enqueue(text,risk){ state.queue.unshift({id:Date.now(), q:text, by:state.profile.name+"さん", risk, answered:false, reply:""}); }
 async function say(text){
   if(askCtl) return;
   state.chat.push({who:"me",text});
   if(danger.some(d=>text.includes(d))){
     enqueue(text,true);
-    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ近くの先輩か、"+HOST+"に確認してください。\n同じ内容を担当者にも通知しました。",src:"担当者へ通知済み"});
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ"+whoFor(text)+"に確認してください。\n同じ内容を担当者にも通知しました。",src:"担当者へ通知済み"});
     render(); scrollChat(); return;
   }
   state.chat.push({who:"bot",wait:true,text:"考えています…"}); render(); scrollChat();
@@ -738,7 +784,7 @@ ${kbText()}
   state.chat.pop();
   if(r.status==="escalate"){
     enqueue(text,true);
-    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ近くの先輩か、"+HOST+"に確認してください。",src:"担当者へ通知済み"});
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ"+whoFor(text)+"に確認してください。",src:"担当者へ通知済み"});
   }else if(r.status==="answer" && r.answer){
     state.chat.push({who:"bot",text:String(r.answer),src:(r.source?"出典："+r.source:"")+(aiOK()?"（AIが宿の資料から回答）":"")});
   }else{
@@ -1154,6 +1200,7 @@ function bind(){
 function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
   $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
 $("#tourbtn").onclick=()=>setTour(0);
+$("#sosbtn").onclick=()=>openSOS();
 $("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };
 $("#role-new").onclick=()=>setRole("new");
 $("#role-admin").onclick=()=>setRole("admin");
