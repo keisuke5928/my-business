@@ -813,8 +813,9 @@ function keywords(q){
 }
 
 /* ======================= 管理：初日シート作成 ======================= */
-const dormInfo = () => state.dorm;
-const mapUrl = a => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(a);
+const DORM_ADDR = "〒938-0282 富山県黒部市宇奈月温泉4";
+const dormInfo = () => { const d = state.dorm || {}; return {...d, address: d.address || DORM_ADDR, steps: d.steps || []}; };
+const mapUrl = a => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(String(a).replace(/〒?\s*\d{3}-\d{4}\s*/,"").trim());
 function dormCard(){
   const d = dormInfo(), steps = (d.steps||[]).filter(Boolean);
   return `<section class="card">
