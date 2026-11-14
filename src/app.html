@@ -1,0 +1,1637 @@
+<title>/*__TITLE__*/</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: phone-width app column, role switch on top, tab bar at the bottom (five for staff, six for admin).
+   Indigo (藍) ink on a pale washi grey; moss green is the one accent; rust is reserved for "ask a person". */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#1b2430; --muted:#5d6670; --line:#dde2dc;
+  --ai:#24426a; --ai-soft:#e4eaf3; --moss:#557532; --moss-soft:#e7eedc;
+  --warn:#a5461f; --warn-soft:#f7e6dc; --scrim:rgba(10,14,20,.55); --skin:#f0cfb4; --skin2:#e3bb9c; --collar:#f4f2ec;
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171e; --surface:#1a212b; --ink:#e6eaee; --muted:#9aa4ae; --line:#2b3440;
+  --ai:#9fb8dc; --ai-soft:#22304a; --moss:#a6c47c; --moss-soft:#26321c;
+  --warn:#f0a07b; --warn-soft:#3a2418; --scrim:rgba(0,0,0,.65); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171e; --surface:#1a212b; --ink:#e6eaee; --muted:#9aa4ae; --line:#2b3440;
+  --ai:#9fb8dc; --ai-soft:#22304a; --moss:#a6c47c; --moss-soft:#26321c;
+  --warn:#f0a07b; --warn-soft:#3a2418; --scrim:rgba(0,0,0,.65); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 104px}
+.app{max-width:480px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.35}
+h2{font-size:1.25rem} h3{font-size:1.05rem}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+
+header.top{padding-block:16px 8px;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.brand h1{font-size:1.45rem;color:var(--ai)}
+.aibadge{font-size:.72rem;padding:2px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.aibadge.on{background:var(--moss-soft);color:var(--moss);border-color:transparent;font-weight:700}
+.demo-note{font-size:.78rem;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.linkbtn{border:0;background:none;color:var(--ai);font-size:.78rem;font-weight:700;padding:0;text-decoration:underline}
+.role{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.role button{border:0;background:transparent;border-radius:999px;padding:7px 8px;font-size:.88rem;color:var(--muted)}
+.role button[aria-pressed="true"]{background:var(--ai);color:var(--surface);font-weight:700}
+
+main{padding-top:8px}
+.view{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.label{font-size:.72rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.empty{color:var(--muted);font-size:.88rem}
+.tap{font-size:.75rem;color:var(--muted)}
+.hero{background:var(--ai);color:var(--surface);border:0}
+.hero .label{color:var(--ai-soft)}
+.hero .when{font-size:2rem;font-family:var(--display);font-variant-numeric:tabular-nums;line-height:1.2}
+.hero .count{display:inline-block;background:var(--surface);color:var(--ai);border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:700;align-self:flex-start}
+dl.kv{display:grid;grid-template-columns:5.5em 1fr;gap:6px 12px;margin:0}
+dl.kv dt{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+dl.kv dd{margin:0;min-width:0}
+
+.todo{display:flex;flex-direction:column;gap:6px}
+.todo button{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;width:100%}
+.box{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-size:.8rem;color:var(--surface)}
+.done .box,.box.on{background:var(--moss);border-color:var(--moss)}
+.todo button.done span.t{color:var(--muted);text-decoration:line-through}
+.todo .go{margin-left:auto;font-size:.75rem;color:var(--ai);font-weight:700;white-space:nowrap}
+
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.person{display:flex;gap:10px;align-items:center;border:0;background:none;padding:6px;margin:-6px;border-radius:10px;text-align:left;width:100%}
+.person:hover{background:var(--bg)}
+.avatar{width:44px;height:44px;border-radius:50%;overflow:hidden;flex:none;background:var(--ai-soft)}
+.avatar svg,.avatar img,.portrait svg,.portrait img{width:100%;height:100%;display:block;object-fit:cover}
+.person b{display:block;font-size:.92rem}
+.person span{font-size:.78rem;color:var(--muted)}
+.call{font-size:.78rem;color:var(--moss);font-weight:700}
+
+.seg{display:inline-grid;grid-auto-flow:column;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px;align-self:flex-start}
+.seg button{border:0;background:none;border-radius:999px;padding:3px 14px;font-size:.82rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ai);font-weight:700;box-shadow:0 0 0 1px var(--line)}
+.map{overflow-x:auto}
+.map svg{width:100%;min-width:0;height:auto;display:block}
+.room{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+.room.key{fill:var(--moss-soft);stroke:var(--moss)}
+.room.guest{fill:var(--surface)}
+.maptext{fill:var(--ink);font-size:12px;font-family:var(--body)}
+.maptext.small{fill:var(--muted);font-size:10px}
+.route{stroke:var(--moss);stroke-width:2.5;fill:none;stroke-dasharray:6 5}
+.pin{fill:var(--moss)}
+.floors{display:grid;grid-template-columns:2.2em repeat(var(--cols,4),minmax(0,1fr));gap:3px;font-size:.68rem;line-height:1.3}
+.floors .h{font-weight:700;text-align:center;color:var(--ai);font-family:var(--display);font-size:.85rem;padding-bottom:2px}
+.floors .f{display:grid;place-items:center;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.floors .c{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 4px;min-height:2.6em;display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0;font-variant-numeric:tabular-nums}
+.floors .c.none{background:none;border-color:transparent}
+.floors .c .k{color:var(--moss);font-weight:700}
+.floors .c .o{color:var(--muted)}
+.fac{border-top:1px solid var(--line);padding:7px 0}
+.fac:first-child{border-top:0;padding-top:0}
+.fac b{display:block}
+.fac span{display:block;font-size:.82rem;color:var(--muted)}
+.lbars{display:flex;flex-direction:column;gap:8px}
+.lb{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:.85rem}
+.lb .v{font-variant-numeric:tabular-nums;color:var(--muted)}
+.lb .track{grid-column:1/-1;height:8px;background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.lb .fill{height:100%;background:var(--ai)}
+.ojt{display:flex;flex-direction:column;gap:6px}
+.ojt button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 12px;width:100%}
+.ojt button.done{background:var(--moss-soft);border-color:transparent}
+.ojt .who{display:block;font-size:.74rem;color:var(--moss);font-weight:700}
+.notice{background:var(--moss-soft);border:0}
+.notice .label{color:var(--moss)}
+.nitem{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding-top:8px}
+.nitem:first-child{border-top:0;padding-top:0}
+.nitem .btn{flex:none;white-space:nowrap}
+.tr{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.fcard{border:1px solid var(--line);border-radius:12px;background:var(--bg);min-height:150px;padding:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px}
+.fcard .front{font-family:var(--display);font-size:1.35rem;color:var(--ai)}
+.fcard .back{font-size:.95rem}
+.faq .note{display:block}
+.faq span[lang]{display:block;color:var(--muted);font-size:.88rem}
+.sos{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;border:0;border-radius:999px;padding:10px 16px;font-weight:700;background:var(--warn);color:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.sos.up{bottom:calc(136px + env(safe-area-inset-bottom,0px))}
+.fb{display:flex;gap:6px;margin-top:6px}
+.fb button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:2px 10px;font-size:.75rem;color:var(--muted)}
+.tour{position:sticky;top:0;z-index:6;border:2px solid var(--ai);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.nextcard{border:2px solid var(--moss)}
+details.card.fold{display:block}
+details.card.fold>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+details.card.fold>summary::-webkit-details-marker{display:none}
+details.card.fold>summary::after{content:"開く";font-size:.75rem;color:var(--ai);font-weight:700;white-space:nowrap}
+details.card.fold[open]>summary::after{content:"閉じる"}
+details.card.fold[open]>*:not(summary){margin-top:10px}
+button.stat{text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column}
+html.big{font-size:117%}
+html.big body{font-size:17.5px}
+.voice{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.voice:first-child{border-top:0;padding-top:0}
+.faq{display:flex;flex-direction:column;gap:6px}
+.faq>div{border-top:1px solid var(--line);padding-top:6px}
+.faq>div:first-child{border-top:0;padding-top:0}
+.faq b{display:block}
+details.term{border-top:1px solid var(--line);padding-block:8px}
+details.term:first-of-type{border-top:0}
+details.term summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:8px}
+details.term summary::-webkit-details-marker{display:none}
+details.term summary::after{content:"＋";color:var(--muted)}
+details.term[open] summary::after{content:"－"}
+details.term p{color:var(--muted);font-size:.9rem;padding-top:4px}
+
+.lesson-list{display:flex;flex-direction:column;gap:8px}
+.lesson{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+.lesson b{display:block}
+.lesson span{font-size:.8rem;color:var(--muted)}
+.status{font-size:.75rem;padding:2px 10px;border-radius:999px;white-space:nowrap;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.status.done{background:var(--moss-soft);color:var(--moss);border-color:transparent;font-weight:700}
+.status.own{background:var(--ai-soft);color:var(--ai);border-color:transparent}
+.player{aspect-ratio:16/9;max-width:100%;border-radius:10px;background:linear-gradient(135deg,var(--ai),var(--ink));color:var(--surface);position:relative;overflow:hidden;border:0;width:100%;padding:0;display:block}
+.player .play{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;border:2px solid var(--surface);display:grid;place-items:center;font-size:1.2rem}
+.player .sub{position:absolute;left:12px;right:12px;bottom:24px;font-size:.88rem;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.6);min-height:1.4em}
+.player .meta{position:absolute;left:10px;right:10px;top:8px;display:flex;justify-content:space-between;font-size:.75rem;font-variant-numeric:tabular-nums}
+.player .pbar{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.25)}
+.player .pbar i{display:block;height:100%;width:0;background:var(--moss)}
+ol.steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px}
+ol.steps li::marker{color:var(--ai);font-weight:700}
+.stepchk{display:flex;flex-direction:column;gap:6px}
+.stepchk button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;width:100%}
+.stepchk .n{font-family:var(--display);color:var(--ai);font-weight:700;min-width:1.2em}
+.stepchk button.on{background:var(--moss-soft);border-color:transparent}
+.diff{background:var(--ai-soft);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.diff b{color:var(--ai)}
+.ng{background:var(--warn-soft);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.ng b{color:var(--warn)}
+.ng ul{margin:4px 0 0;padding-left:1.2em}
+a.btn{text-decoration:none;display:inline-block}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--ai);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--ai);border:1px solid var(--ai)}
+.btn.small{padding:7px 12px;font-size:.85rem}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.back{border:0;background:none;color:var(--ai);padding:0;font-weight:700;align-self:flex-start}
+
+.chat{display:flex;flex-direction:column;gap:10px;min-height:240px}
+.msg{max-width:86%;padding:9px 13px;border-radius:14px;font-size:.92rem;white-space:pre-line;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--ai);color:var(--surface);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot.esc{background:var(--warn-soft);border-color:transparent}
+.msg.bot.wait{color:var(--muted)}
+.msg .src{display:block;margin-top:4px;font-size:.72rem;color:var(--muted)}
+.composer{display:flex;gap:8px;position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:8px}
+.composer input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--ink);font:inherit}
+.suggest{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.suggest button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.82rem}
+
+.q{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px}
+.opt.right{border-color:var(--moss);background:var(--moss-soft)}
+.opt.wrong{border-color:var(--warn);background:var(--warn-soft)}
+.why{font-size:.86rem;color:var(--muted);border-left:3px solid var(--moss);padding-left:10px}
+.score{font-family:var(--display);font-size:2.2rem;color:var(--moss);font-variant-numeric:tabular-nums;line-height:1.2}
+.picker{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.picker button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.82rem}
+.picker button[aria-pressed="true"]{background:var(--ai);color:var(--surface);border-color:var(--ai);font-weight:700}
+
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 0;font-size:.82rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+.scale button b{font-family:var(--display);font-size:1.1rem}
+.scale button[aria-pressed="true"]{background:var(--ai);color:var(--surface);border-color:var(--ai)}
+.scale-ends{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+textarea,.field input,.field select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:.92rem}
+textarea{min-height:72px;resize:vertical}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:380px){.grid2{grid-template-columns:1fr}}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .num{font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .num small{font-size:.8rem;font-family:var(--body);color:var(--muted)}
+.stat .delta{font-size:.78rem;color:var(--moss);font-weight:700}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:4.5em 1fr 3.5em;gap:8px;align-items:center;font-size:.85rem}
+.bar .track{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.bar .fill{height:100%;background:var(--ai)}
+.bar .fill.after{background:var(--moss)}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums}
+.nlist{display:flex;flex-direction:column}
+.nrow{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;border:0;border-top:1px solid var(--line);background:none;padding:10px 0;text-align:left;width:100%}
+.nrow:first-child{border-top:0}
+.nrow b{display:block}
+.nrow .sub{font-size:.78rem;color:var(--muted)}
+.prog{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px;border:1px solid var(--line)}
+.prog i{display:block;height:100%;background:var(--moss)}
+.tag{font-size:.7rem;padding:1px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.risk{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:700}
+.tag.ok{background:var(--moss-soft);color:var(--moss);border-color:transparent;font-weight:700}
+.qitem{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.qitem:first-child{border-top:0;padding-top:0}
+.out{background:var(--moss-soft);border-radius:10px;padding:12px;font-size:.9rem;display:flex;flex-direction:column;gap:6px}
+.note{font-size:.78rem;color:var(--muted)}
+.err{font-size:.82rem;color:var(--warn)}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px));z-index:5}
+nav.tabs .inner{max-width:480px;margin:0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:1fr}
+nav.tabs button{border:0;background:none;padding:8px 2px 9px;font-size:.7rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+nav.tabs button .ic{font-family:var(--display);font-size:1.05rem;line-height:1}
+nav.tabs button[aria-current="page"]{color:var(--ai);font-weight:700}
+nav.tabs .dot{position:absolute;top:4px;right:calc(50% - 18px);min-width:16px;height:16px;border-radius:8px;background:var(--warn);color:var(--surface);font-size:.62rem;display:grid;place-items:center;padding:0 4px;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.85rem;z-index:30;max-width:calc(100% - 32px);text-align:center}
+.sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:end center;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-card{background:var(--surface);color:var(--ink);border-radius:16px;width:100%;max-width:420px;max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.portrait{width:180px;height:180px;max-width:100%;border-radius:50%;background:var(--ai-soft);overflow:hidden}
+.say{background:var(--bg);border-radius:10px;padding:8px 12px;font-size:.9rem;width:100%}
+.upload{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center}
+.upload input{font-size:.8rem;max-width:100%}
+@media (prefers-reduced-motion:no-preference){.view{animation:fade .2s ease}}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+
+/* ---- UI polish (v13): same palette and roles; adds depth, touch targets, and a calmer hero ---- */
+:root{--hero:#24426a;--hero-ink:#ffffff;--hero-soft:#c9d6ea;--hero-line:rgba(255,255,255,.22);--shadow:0 1px 2px rgba(27,36,48,.05),0 6px 18px rgba(27,36,48,.05);--press:rgba(27,36,48,.06)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--hero:#1c3152;--hero-ink:#eef3fa;--hero-soft:#a9bcd8;--hero-line:rgba(255,255,255,.16);--shadow:0 1px 2px rgba(0,0,0,.35);--press:rgba(255,255,255,.06)}}
+:root[data-theme="dark"]{--hero:#1c3152;--hero-ink:#eef3fa;--hero-soft:#a9bcd8;--hero-line:rgba(255,255,255,.16);--shadow:0 1px 2px rgba(0,0,0,.35);--press:rgba(255,255,255,.06)}
+.brand h1{display:flex;align-items:center;gap:10px;letter-spacing:.02em}
+.brand h1::before{content:"帳";display:grid;place-items:center;width:1.5em;height:1.5em;border-radius:7px;background:var(--hero);color:var(--hero-ink);font-size:.78em;line-height:1;flex:none}
+.demo-note{border-style:solid;border-radius:12px;padding:8px 12px}
+.demo-note .linkbtn{text-decoration:none;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 11px;font-weight:500;color:var(--ink);min-height:28px}
+.demo-note .row{gap:6px!important}
+.role{box-shadow:var(--shadow)}
+.role button{min-height:40px;transition:background .15s,color .15s}
+.card{border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.card h2{font-size:1.18rem}
+.hero{background:var(--hero);color:var(--hero-ink);position:relative;overflow:hidden;padding:18px;gap:12px;box-shadow:none}
+.hero .label{color:var(--hero-soft)}
+.hero .when{font-size:clamp(1.7rem,8vw,2.1rem);letter-spacing:.01em;position:relative}
+.hero .count{background:var(--hero-ink);color:var(--hero)}
+.hero-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;position:relative;z-index:1}
+.hero-meta{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.92rem;border-top:1px solid var(--hero-line);padding-top:10px;position:relative;z-index:1}
+.hero-meta dt{color:var(--hero-soft);font-size:.8rem;align-self:center}
+.hero-meta dd{margin:0;min-width:0}
+.ring{width:58px;height:58px;flex:none;position:relative}
+.ring svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+.ring .tr{fill:none;stroke:var(--hero-line);stroke-width:5}
+.ring .pg{fill:none;stroke:var(--hero-ink);stroke-width:5;stroke-linecap:round}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:.82rem;font-variant-numeric:tabular-nums}
+.nextcard{border-width:1px;border-color:var(--moss);background:var(--moss-soft);box-shadow:none}
+.nextcard .label{color:var(--moss)}
+.btn{min-height:44px;transition:transform .08s,filter .15s}
+.btn.small{min-height:36px}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.ghost{background:var(--surface)}
+.todo button,.stepchk button,.opt,.lesson,.ojt button{min-height:48px;transition:background .15s,border-color .15s}
+.todo button:active,.stepchk button:active,.opt:active:not(:disabled),.lesson:active,.nrow:active,.person:active{background:var(--press)}
+.lesson{box-shadow:var(--shadow);border-radius:14px;padding:14px 16px}
+.stepchk .n{display:grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--ai-soft);min-width:1.7em;font-size:.9rem;font-family:var(--body)}
+.stepchk button.on .n{background:var(--moss);color:var(--surface)}
+.stat .num{color:var(--ai)}
+.stat{box-shadow:none;background:var(--bg)}
+button.stat{border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:background .15s}
+button.stat:active{background:var(--press)}
+details.card.fold>summary{min-height:32px}
+details.card.fold>summary::after{border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--bg)}
+details.card.fold>summary h2{font-size:1.08rem}
+.suggest,.picker{scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.suggest::-webkit-scrollbar,.picker::-webkit-scrollbar{display:none}
+.suggest button,.picker button{min-height:36px;padding:6px 14px;box-shadow:var(--shadow)}
+.msg{line-height:1.65;padding:10px 14px;border-radius:16px}
+.msg.bot{box-shadow:var(--shadow)}
+.msg.bot.esc{border-left:3px solid var(--warn);box-shadow:none}
+.composer{gap:8px;padding:8px;margin-inline:-8px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.10)}
+.composer input{border:0;background:transparent;min-height:40px}
+.composer input:focus-visible{outline:0}
+.composer:focus-within{border-color:var(--ai)}
+.fb button{min-height:30px}
+nav.tabs{box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+nav.tabs button{padding:6px 2px 8px;gap:3px;min-height:54px}
+nav.tabs button .ic{padding:3px 14px;border-radius:999px;transition:background .15s}
+nav.tabs button[aria-current="page"] .ic{background:var(--ai-soft)}
+nav.tabs .dot{top:2px;right:calc(50% - 26px)}
+.toast{box-shadow:0 6px 20px rgba(0,0,0,.2);padding:10px 18px}
+.sos{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 10px}
+.sos[hidden]{display:none}
+.sosin{background:var(--warn);color:var(--surface);border:0;border-radius:999px;padding:6px 14px;font-weight:700;font-size:.85rem;min-height:36px}
+.player{background:linear-gradient(135deg,var(--hero),var(--hero) 40%,#14233b);color:var(--hero-ink)}
+.player .play{border-color:var(--hero-ink)}
+.sos::before{content:"?";display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--surface);color:var(--warn);font-weight:700;font-size:.9rem}
+.sheet-card{border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.sheet-card::before{content:"";width:40px;height:4px;border-radius:2px;background:var(--line);align-self:center;flex:none}
+.tour{top:calc(env(safe-area-inset-top,0px) + 6px);background:var(--surface)}
+.floors .c{border-radius:8px}
+.fcard{box-shadow:var(--shadow);background:var(--surface)}
+textarea,.field input,.field select{min-height:42px;border-radius:10px}
+textarea:focus-visible,.field input:focus-visible,.field select:focus-visible{outline:2px solid var(--ai);outline-offset:1px}
+.tag{padding:2px 9px}
+.score{color:var(--moss)}
+@media (prefers-reduced-motion:no-preference){.sheet-card{animation:rise .22s ease}.toast{animation:riseT .2s ease}}
+@keyframes riseT{from{transform:translate(-50%,14px);opacity:.6}to{transform:translate(-50%,0);opacity:1}}
+@keyframes rise{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
+html.big .ring{width:66px;height:66px}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>宿のはじめて帳</h1><span class="row" style="gap:6px"><span class="aibadge" id="livebadge">この端末だけ</span><span class="aibadge" id="aibadge">見本モード</span></span></div>
+    <div class="demo-note"><span id="innnote"></span><span class="row" style="gap:14px"><button class="linkbtn" id="tourbtn">デモの案内</button><button class="linkbtn" id="bigtxt">文字を大きく</button><button class="linkbtn" id="reset">最初に戻す</button></span></div>
+    <div class="role" role="group" aria-label="画面の切り替え">
+      <button id="role-new" aria-pressed="true">新人スタッフの画面</button>
+      <button id="role-admin" aria-pressed="false">女将・管理者の画面</button>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+<nav class="tabs" aria-label="メニュー"><div class="inner" id="tabs"></div></nav>
+<button class="sos" id="sosbtn" hidden>困ったら</button>
+<div class="toast" id="toast" hidden></div>
+<div id="modal" hidden></div>
+
+<script>
+/* ======================= データ ======================= */
+/* 宿ごとのデータは inns/<id>.json にある。build.py がここに埋め込む。アプリ本体には宿の事実を書かない。 */
+const D = /*__INN_DATA__*/null;
+const INN = D.name, HOST = D.host, SOURCE = D.source || "";
+const staff = D.staff, terms = D.terms, FLOORS = D.floors || null, baseLessons = D.lessons, kb = D.kb;
+const APP_URL = D.appUrl || "";
+const memoQs = D.memoQs || [];
+const JOBS = D.jobs || {};
+const jobNames = Object.keys(JOBS);
+const ojtFor = job => ((JOBS[job] || JOBS[jobNames[0]] || {}).ojt) || [];
+const samplePeople = () => JSON.parse(JSON.stringify(D.samplePeople || []));
+/* ここから下は全館共通 */
+const danger = ["アレルギー","卵","そば","えび","エビ","小麦","乳","落花生","ピーナッツ","けが","怪我","やけど","火傷","倒れ","救急","具合","体調","気分","熱が","お金","会計","支払","返金","手当","給料","給与","時給","クレーム","怒","酔っ","酔い","セクハラ","パワハラ","ハラスメント","触られ","地震","火事","災害","避難"].concat(D.danger || []);
+const TODAY = (()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; })();
+const PREP = [["sheet","初日シートを送った"],["lessons","着任前の教材を案内した"],["uniform","制服と持ち物を伝えた"],["room","寮や部屋を用意した"],["host","迎えの担当を決めた"]];
+const LANGS = [["ja","やさしい日本語"],["en","English"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"],["ne","नेपाली"],["zh","中文"],["my","မြန်မာ"]];
+function parseStart(t){ const m=String(t||"").match(/(\d{1,2})月(\d{1,2})日/); if(!m) return ""; const mo=+m[1], y=mo>=TODAY.getMonth()+1-1?TODAY.getFullYear():TODAY.getFullYear()+1;
+  return `${y}-${String(mo).padStart(2,"0")}-${String(+m[2]).padStart(2,"0")}`; }
+function dayLabel(iso){ if(!iso) return "初日は未定"; const d=new Date(iso+"T00:00:00"), n=Math.round((d-TODAY)/86400000);
+  return n>0?`着任まであと${n}日`:(n===0?"今日が初日":`着任${1-n}日目`); }
+const CARD_CATS = [["all","すべて"],["kan","館内"],["food","料理と飲み物"],["word","言葉"]];
+const BUILTIN_CARDS = (D.cards || []).concat(terms.map(([t,d],i)=>({id:"t"+i, cat:"word", front:t, back:d})));
+const checkQs = ["体の調子","仕事の量","質問のしやすさ","生活のこと","このまま続けられそう"];
+
+/* ======================= 状態 ======================= */
+const KEY = "yado-hajimete-" + D.id + "-v3";
+function fresh(){
+  return {
+    role:"new", tab:"sheet", lesson:null, quizLesson:baseLessons[0].id, floor:1, newbieView:null,
+    profile:{...D.profile, host:D.profile.host || HOST},
+    prep:{sheet:false, bring:false},
+    steps:{}, done:{}, quiz:{}, scores:{},
+    chat:[{who:"bot", text:INN+"の質問係です。館内のこと、仕事の手順など、先輩に聞きにくいことも気軽にどうぞ。資料にないことは、担当者に確認してからお答えします。", src:""}],
+    queue:[{id:1, q:D.seedQuestion||"", by:D.profile.name+"さん", risk:false, answered:false, reply:""}],
+    learned:[], custom:[], checkin:{vals:[0,0,0,0,0], text:"", sent:false, to:"inn", anon:false}, voices:[], relays:[], innvoices:[],
+    gen:null,
+    eff:{n:"", h:"", w:"", s:""},
+    memo:{}, dorm:{address:"", steps:[]},
+    log:[], props:[], notified:{}, mine:{}, drafts:{}, people:samplePeople(), notices:[], lang:"ja", tr:{}, ojtBy:HOST, tour:null, big:false, open:{}, quizMode:"test", cardCat:"all", cardIdx:0, cardShow:false, known:{}, cards:[]
+  };
+}
+let state = fresh();
+try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+/* ======================= 質問のデータ（共有、または端末の中） ======================= */
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[];
+const allQs = () => live ? liveQs : state.log;
+const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
+const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
+const props = () => live ? liveProps : state.props;
+const voicesOut = () => (live ? liveVoices : (state.voices||[])).slice().sort((a,b)=>(b.at||0)-(a.at||0));
+const innVoices = () => live ? liveInnVoices : (state.innvoices||[]);
+const relays = () => live ? liveRelays : (state.relays||[]);
+async function sendVoice(c){
+  const text=String(c.text||"").trim(); if(!text) return true;
+  const urgent = danger.some(d=>text.includes(d)) || /いじめ|怖い|こわい|やめたい|辞めたい/.test(text);
+  const rec={text, to:c.to||"inn", anon:!!c.anon, by:c.anon?"名前なし":state.profile.name+"さん", at:Date.now(), urgent, status:"new", vals:c.vals.slice()};
+  if(!live){ if(rec.to==="outside") (state.voices ||= []).unshift({id:"v"+rec.at, ...rec}); else (state.innvoices ||= []).unshift({id:"i"+rec.at, ...rec}); return true; }
+  try{
+    if(rec.to==="inn"){ await db.collection("innvoices").add(rec); return true; }
+    if(!me){ toast("外部の窓口に送るには、サインインが必要です"); return false; }
+    const ref=db.doc("voices/"+me), snap=await ref.get(), items=(snap.exists&&(snap.data()||{}).items)||[];
+    await ref.set({items: items.concat([rec]).slice(-50)}); return true;
+  }catch(e){ toast(dbMsg(e)); return false; }
+}
+function relayCard(){
+  const iv=innVoices().slice(0,5), rl=relays().slice(0,5);
+  if(!iv.length && !rl.length) return "";
+  return `<section class="card"><h3>スタッフから届いた声</h3>
+    ${iv.map(v=>`<div class="voice">${v.urgent?'<span class="tag risk" style="align-self:flex-start">急ぎ</span>':""}<span>${esc(v.text)}</span><span class="note">${esc(v.by)} ・ 本人から施設へ</span></div>`).join("")}
+    ${rl.map(v=>`<div class="voice">${v.urgent?'<span class="tag risk" style="align-self:flex-start">急ぎ</span>':""}<span>${esc(v.text)}</span><span class="note">外部の相談窓口から（名前は伏せています） ・ ${esc(v.when||"")}</span></div>`).join("")}
+  </section>`;
+}
+function windowCard(){
+  if(live && !isOwnerV) return "";
+  const vs=voicesOut(), open=vs.filter(v=>v.status!=="relayed").length;
+  const day = t => { const d=new Date(t); return `${d.getMonth()+1}月${d.getDate()}日`; };
+  return `<section class="card"><span class="label">外部の相談窓口（持ち主だけが見られます）</span><h2>届いた声 ${open}件</h2>
+    <p class="empty">スタッフが「外部の相談窓口」に送った声です。施設には、名前を伏せ、言い方を整えてから伝えます。</p>
+    ${vs.length?vs.map((v,i)=>`<div class="voice">${v.urgent?'<span class="tag risk" style="align-self:flex-start">安全に関わる。今日中に施設へ</span>':""}<b>${esc(v.text)}</b><span class="note">${esc(v.by)} ・ ${day(v.at)}${v.status==="relayed"?" ・ 施設に伝えました":""}</span>
+      ${v.status==="relayed"?"":`<textarea id="relay-${i}" aria-label="施設に伝える文" placeholder="施設に伝える文（名前や本人が分かる言葉を外す）">${esc((state.relayDraft||{})[v.at]||"")}</textarea>
+      <div class="row"><button class="btn small" data-relay="${i}">施設に伝える</button>${aiOK()?`<button class="btn ghost small" data-rdraft="${i}">AIで伝え方を整える</button>`:""}</div>`}</div>`).join(""):`<p class="note">まだ届いていません。</p>`}
+  </section>`;
+}
+const userCards = () => (live ? liveCards : state.cards).slice().sort((a,b)=>(a.at||0)-(b.at||0));
+const allCards = () => BUILTIN_CARDS.concat(userCards());
+const people = () => (live ? livePeople : state.people).slice().sort((a,b)=>String(a.startISO||"9").localeCompare(String(b.startISO||"9")));
+const notices = () => (live ? liveNotices : state.notices).slice().sort((a,b)=>(b.at||0)-(a.at||0));
+function deepMerge(a,b){ for(const k in b){ if(b[k]&&typeof b[k]==="object"&&!Array.isArray(b[k])){ a[k]=deepMerge(a[k]&&typeof a[k]==="object"?a[k]:{}, b[k]); } else a[k]=b[k]; } return a; }
+async function patchPerson(id, patch){
+  if(live){ try{ await db.doc("people/"+id).update(patch); }catch(e){ toast(dbMsg(e)); } return; }
+  const p=state.people.find(x=>x.id===id); if(p){ deepMerge(p, patch); render(); }
+}
+async function upsertPerson(rec){
+  const ex=people().find(p=>p.name===rec.name);
+  if(ex) return patchPerson(ex.id, {type:rec.type, job:rec.job, start:rec.start, startISO:rec.startISO, host:rec.host, prep:{sheet:true}});
+  const doc={...rec, prep:{sheet:true}, ojt:{}, note:"", at:Date.now()};
+  if(live){ try{ await db.collection("people").add(doc); }catch(e){ toast(dbMsg(e)); } return; }
+  state.people.push({id:"p"+Date.now(), ...doc});
+}
+const meLessonProg = () => Math.round(baseLessons.concat(state.custom).filter(l=>state.done[l.id]).length/(baseLessons.length+state.custom.length)*100);
+function personView(p){
+  const me = p.name===state.profile.name;
+  const items = ojtFor(p.job), done = items.filter(([k])=>p.ojt&&p.ojt[k]&&p.ojt[k].done).length;
+  const prepN = PREP.filter(([k])=>p.prep&&p.prep[k]).length;
+  const checkin = me ? (state.checkin.sent?{day:3, vals:state.checkin.vals, text:(state.checkin.text&&state.checkin.to==="outside")?"（書いた内容は、本人の希望で外部の相談窓口に送られました）":(state.checkin.anon&&state.checkin.text?"（名前を伏せた声として届いています）":state.checkin.text)}:null) : (p.checkin||null);
+  return {...p, me, prog: me?meLessonProg():(p.prog||0), ojtDone:done, ojtAll:items.length, prepN, checkin, day:dayLabel(p.startISO),
+    alert: !!(checkin&&checkin.vals.some(v=>v>0&&v<=2))};
+}
+const peopleAlerts = () => people().map(personView).filter(v=>v.alert);
+const norm = q => String(q||"").replace(/[\s？?。、！!「」]/g,"");
+const LESSON_WORDS = D.lessonWords || [];
+function guessLesson(q){ const t=String(q||""); for(const [id,ks] of LESSON_WORDS) if(ks.some(k=>t.includes(k))) return id; return "other"; }
+const propLesson = q => { const g=guessLesson(q); return g==="other" ? (D.fallbackLesson || baseLessons[0].id) : g; };
+const lessonTitle = id => (baseLessons.find(l=>l.id===id)||{}).title || "その他（中抜け、決まりなど）";
+function dbMsg(e){ const c=e?.code;
+  if(c==="quota_exceeded") return "データがいっぱいです。質問の画面の下にある「消す」で空けてください。";
+  if(c==="invalid_argument") return "この共有のしかたでは保存できません。編集できる人に共有してもらってください。";
+  return "保存できませんでした。少しおいて、もう一度試してください。"; }
+let rrPending=false;
+function rerender(){
+  if(vTimer) return;
+  const a=document.activeElement;
+  if(a&&main.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){
+    if(!rrPending){ rrPending=true; a.addEventListener("blur",()=>{ rrPending=false; render(); },{once:true}); }
+    return;
+  }
+  render();
+}
+function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
+  if(live){ b.textContent = liveErr ? "データ確認中" : "データ共有中"; b.classList.toggle("on", !liveErr); } else { b.textContent="この端末だけ"; b.classList.remove("on"); } }
+(async()=>{
+  try{ db = await window.claude?.use?.("db") ?? null; }catch(e){ db = null; }
+  if(!db) return;
+  live = true; liveErr = "読み込み中"; setLiveBadge();
+  const timer = setTimeout(()=>{ if(liveErr){ liveErr="データにまだつながりません"; setLiveBadge(); rerender(); } }, 10000);
+  const fail = ()=>{ clearTimeout(timer); liveErr="データを読めませんでした"; setLiveBadge(); rerender(); };
+  db.collection("questions").orderBy("at","desc").limit(1000).onSnapshot(snap=>{
+    liveQs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    if(!snap.metadata.fromCache){ clearTimeout(timer); liveErr=""; }
+    liveQs.forEach(q=>{
+      if(q.status!=="answered"||q.answeredBy!=="admin"||state.notified[q.id]) return;
+      state.notified[q.id]=1;
+      if(!firstQs && state.mine[q.id]) state.chat.push({who:"bot", text:`「${q.q}」への${HOST}からの回答です。\n${q.answer}`, src:"担当者からの回答"});
+    });
+    if(!snap.metadata.fromCache) firstQs=false;
+    setLiveBadge(); rerender();
+  }, fail);
+  db.collection("learned").onSnapshot(snap=>{ liveLearned = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("proposals").onSnapshot(snap=>{ liveProps = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.doc("settings/dorm").onSnapshot(snap=>{ liveDorm = snap.exists ? snap.data() : null; rerender(); }, fail);
+  db.collection("cards").onSnapshot(snap=>{ liveCards = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("people").onSnapshot(snap=>{ livePeople = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("notices").orderBy("at","desc").limit(20).onSnapshot(snap=>{ liveNotices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  db.collection("innvoices").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveInnVoices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
+  db.collection("relays").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveRelays = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
+  try{ const u = await window.claude?.use?.("user"); if(u){ me = await u.id(); isOwnerV = !!(await u.isOwner()); } }catch(e){}
+  if(isOwnerV) db.collection("voices").onSnapshot(snap=>{ liveVoices = snap.docs.flatMap(d=>((d.data()||{}).items||[]).map(it=>({...it, uid:d.id}))); rerender(); }, ()=>{});
+})();
+async function logQ(o){
+  const rec={q:o.q, result:o.result, risk:!!o.risk, status:o.result==="answer"?"auto":"open", answer:o.answer||"", source:o.source||"",
+    by:state.profile.name+"さん", at:Date.now(), lesson:guessLesson(o.q), key:o.key||""};
+  if(live){
+    try{ const ref = await db.collection("questions").add(rec); state.mine[ref.id]=1; save(); return; }
+    catch(e){ toast(dbMsg(e)); }
+  }
+  state.log.unshift({id:"l"+Date.now(), ...rec});
+  if(rec.status==="open") enqueue(o.q, rec.risk);
+  save();
+}
+const lessons = () => baseLessons.map(l=>{
+  const add = props().filter(p=>p.status==="adopted" && p.lesson===l.id);
+  if(!add.length) return l;
+  return {...l, faq:add.filter(p=>p.type==="faq"), quiz:l.quiz.concat(add.filter(p=>p.type==="quiz"&&p.quiz).map(p=>p.quiz))};
+}).concat(state.custom);
+const knowledge = () => (live ? liveLearned : state.learned).concat(kb);
+
+/* ======================= AI（Claude） ======================= */
+let sample = null;
+(async()=>{ try{ sample = await window.claude?.use?.("sample") ?? null; }catch(e){ sample = null; }
+  const b=$("#aibadge"); if(sample){ b.textContent="AI接続中"; b.classList.add("on"); } })();
+let aiBlocked = false;
+function aiOK(){ return !!sample && !aiBlocked; }
+function aiErr(e){
+  const c = e?.code;
+  if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c)){ aiBlocked = true; const b=$("#aibadge"); b.textContent="見本モード"; b.classList.remove("on"); return "AIが使えないため、見本の答え方に切り替えました。"; }
+  if(c==="rate_limited") return "AIが混み合っています。少し時間をおいてもう一度試してください。";
+  if(c==="cancelled") return "";
+  return "AIにつながりませんでした。見本の答え方で表示します。";
+}
+const kbText = () => knowledge().map((e,i)=>`[${i+1}] ${e.src}：${e.a}`).join("\n")
+  + "\n" + lessons().map(l=>`[教材 ${l.title}] 手順：${l.steps.join(" / ")}。宿のルール：${l.diff}${(l.faq||[]).map(f=>` よくある質問：${f.q} → ${f.a}`).join("")}`).join("\n");
+
+/* ======================= 共通 ======================= */
+const $ = s => document.querySelector(s);
+const main = $("#main");
+const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+function face(s){
+  if(s.photo) return `<img src="${s.photo}" alt="">`;
+  const hb = s.long?`<path d="M28 52 Q26 22 50 20 Q74 22 72 52 L72 70 L28 70 Z" fill="${s.hair}"/>`:"";
+  const ht = s.cap?`<rect x="30" y="15" width="40" height="19" rx="6" style="fill:var(--collar)" stroke="#c9c4b8"/>`
+    :`<path d="M31 44 Q30 22 50 22 Q70 22 69 44 Q62 32 50 32 Q38 32 31 44 Z" fill="${s.hair}"/>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" style="fill:var(--ai-soft)"/>${hb}
+    <path d="M18 100 Q20 74 50 72 Q80 74 82 100 Z" fill="${s.robe}"/>
+    <path d="M40 74 L50 90 L60 74" fill="none" style="stroke:var(--collar)" stroke-width="4"/>
+    <rect x="44" y="60" width="12" height="14" style="fill:var(--skin2)"/>
+    <ellipse cx="50" cy="46" rx="18" ry="21" style="fill:var(--skin)"/>${ht}
+    <circle cx="43" cy="48" r="2" fill="#2a2a2a"/><circle cx="57" cy="48" r="2" fill="#2a2a2a"/>
+    <path d="M44 57 Q50 61 56 57" fill="none" stroke="#a0614a" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+}
+const doneCount = () => lessons().filter(l=>state.done[l.id]).length;
+const meProg = () => Math.round(doneCount()/lessons().length*100);
+const openQueue = () => openQs().length;
+const meAlert = () => state.checkin.sent && state.checkin.vals.some(v=>v>0&&v<=2);
+
+const TABS = {
+  new:[["sheet","初","初日"],["learn","学","教材"],["ask","問","質問"],["quiz","試","テスト"],["checkin","心","ふりかえり"]],
+  admin:[["dash","状","新人"],["queue","答","質問"],["make","作","初日シート"],["author","撮","教材づくり"],["effect","効","効果"],["memo","聞","メモ"]]
+};
+function renderTabs(){
+  $("#tabs").innerHTML = TABS[state.role].map(([id,ic,l]) => {
+    let dot=""; if(id==="queue"&&openQueue()) dot=`<span class="dot">${openQueue()}</span>`;
+    if(id==="dash"){ const n=peopleAlerts().length; if(n) dot=`<span class="dot">${n}</span>`; }
+    return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
+}
+function render(){
+  { const sb=$("#sosbtn"); if(sb){ sb.hidden = state.role!=="new" || state.tab==="ask"; } }
+  stopVideo();
+  renderTabs();
+  const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
+  main.innerHTML = `${tourBar()}<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
+  bind(); save();
+}
+const TOUR = [
+  ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。「すぐ探す」に言葉を入れると、その場で答えが出ます。困ったときは右下の「困ったら」を押します。"],
+  ["new","learn",D.tourLesson||baseLessons[0].id,"3分の教材","共通の仕事と、"+INN+"だけの手順を短い教材にします。これは「"+((baseLessons.find(l=>l.id===D.tourLesson)||baseLessons[0]).title)+"」です。外国人スタッフ向けに、教材をAIで翻訳することもできます。"],
+  ["new","ask",null,"聞きにくいことはAIに","「中抜けは何時から？」を押すと答えます。「卵アレルギー」のような危ないことは答えず、内容に合った担当者を案内します。答えが違うときは「違う」を押すと、担当者に届きます。"],
+  ["new","quiz",null,"確認テスト","覚えたかを3問で確かめます。終わったら、いちばん下の「完了」を押します。「覚えるカード」に切り替えると、お品書きや館内も覚えられます。"],
+  ["new","checkin",null,"3日目のふりかえり","1分で答えます。低い点があると、担当者の画面に「声かけを」と出ます。辞める前のサインに気づけます。言いにくいことは、外部の相談窓口に名前を伏せて送ることもできます。"],
+  ["admin","dash",null,"担当者の画面","いちばん上の「今日のまとめ」で、回答待ちの質問と、声をかけたい人が分かります。受け入れ予定、準備のチェック、一人立ちチェック、LINEの案内文もここで扱います。「今週のまとめ」は、ボタン1つで上の人に送れます。"],
+  ["admin","queue",null,"答えられなかった質問","AIが答えられなかった質問が届きます。一度答えると、次からはAIが答えます。質問が溜まると、AIが「教材に足す案」を作ります。"],
+  ["admin","make",null,"初日シートを作る","名前と初日を入れるだけで、初日シートができます。寮までの道案内もここで書きます。"],
+  ["admin","author",null,"ベテランの技を教材に","ベテランの説明を撮って文字にすると、手順書とテストができます。湯温の調整のような技も残せます。"],
+  ["admin","effect",null,"効果をその場で計算","新人の人数と教える時間を伺って、戻ってくる時間と金額を出します。"],
+  ["admin","memo",null,"確認したいこと","最後に、このメモの項目を伺います。外部の相談窓口に届いた声も、ここで見て、言い方を整えて施設に伝えます。"]
+];
+function tourBar(){
+  if(state.tour==null || !TOUR[state.tour]) return "";
+  const i=state.tour, t=TOUR[i];
+  return `<section class="card tour" aria-live="polite"><span class="label">デモの案内 ${i+1} / ${TOUR.length}</span><b>${esc(t[3])}</b><p class="empty">${esc(t[4])}</p>
+    <div class="row"><button class="btn ghost small" data-tour="prev" ${i===0?"disabled":""}>戻る</button><button class="btn small" data-tour="next">${i===TOUR.length-1?"おわり":"次へ"}</button><button class="linkbtn" data-tour="close">案内を閉じる</button></div></section>`;
+}
+function setTour(i){
+  if(i==null || i<0 || i>=TOUR.length){ state.tour=null; render(); return; }
+  const t=TOUR[i]; state.tour=i; state.role=t[0]; state.tab=t[1]; state.lesson=t[2]; state.newbieView=null;
+  $("#role-new").setAttribute("aria-pressed",t[0]==="new"); $("#role-admin").setAttribute("aria-pressed",t[0]==="admin");
+  render(); window.scrollTo(0,0);
+}
+function applyBig(){ document.documentElement.classList.toggle("big", !!state.big); const b=$("#bigtxt"); if(b) b.textContent = state.big ? "文字を標準に" : "文字を大きく"; }
+function nextCard(items){
+  const n=items.find(i=>!i.done); if(!n) return "";
+  const lbl={sheet:"初日シートを読む ↓", lessons:"教材を見る", quiz:"テストを受ける", bring:"持ち物を見る ↓"}[n.k]||"開く";
+  return `<section class="card nextcard"><span class="label">次にやること</span><b>${esc(n.t)}</b><div class="row"><button class="btn small" data-next="${n.k}">${lbl}</button></div></section>`;
+}
+function todaySummary(alertN){
+  const d=new Date(), pend = (typeof props==="function") ? props().filter(p=>p.status==="pending").length : 0;
+  const relayN = (typeof relays==="function") ? relays().length : 0;
+  return `<section class="card"><span class="label">今日のまとめ ・ ${d.getMonth()+1}月${d.getDate()}日</span>
+    <div class="stats"><button class="stat" data-go="queue"><span class="label">回答待ちの質問</span><div class="num">${openQueue()}<small>件</small></div><span class="delta">押すと開く →</span></button>
+    <div class="stat"><span class="label">声かけが必要な人</span><div class="num">${alertN}<small>名</small></div><span class="delta" style="color:var(--muted)">下の一覧で確かめる</span></div></div>
+    ${pend?`<p class="note">教材に足す案が ${pend}件 あります。「質問」の画面で確かめてください。</p>`:""}
+    ${relayN?`<p class="note">外部の相談窓口から届いた声が ${relayN}件 あります。下に出ています。</p>`:""}</section>`;
+}
+function go(tab){ state.tab=tab; state.lesson=null; state.newbieView=null; render(); window.scrollTo(0,0); }
+
+/* ======================= 新人：初日 ======================= */
+function sheet(){
+  const p = state.profile;
+  const prepItems = [
+    {k:"sheet", t:"初日シート（この画面の「当日の流れ」から下）を読んだ", done:state.prep.sheet},
+    {k:"lessons", t:`着任前の教材を見る（${doneCount()}/${lessons().length}本）`, done:doneCount()===lessons().length, go:"learn"},
+    {k:"quiz", t:"確認テストを1つ受ける", done:Object.keys(state.scores).length>0, go:"quiz"},
+    {k:"bring", t:"持ち物をそろえる", done:state.prep.bring}
+  ];
+  const left = prepItems.filter(i=>!i.done).length;
+  const ns = notices().slice(0,3);
+  return `
+  ${ns.length?`<section class="card notice"><span class="label">今日の連絡</span>${ns.map(n=>`<div class="nitem"><span>${esc(n.text)}</span><span class="note">${esc(n.when||"")}</span></div>`).join("")}</section>`:""}
+  <section class="card hero">
+    <div class="hero-top"><div><span class="label">${esc(p.name)}さんの初日シート</span>
+      <div class="when">${esc(p.date)} ${esc(p.time)}</div></div>
+      <div class="ring" role="img" aria-label="準備 ${prepItems.length-left} / ${prepItems.length}"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pg" cx="30" cy="30" r="25" stroke-dasharray="${(prepItems.length-left)/prepItems.length*157} 157"/></svg><b>${prepItems.length-left}/${prepItems.length}</b></div></div>
+    <dl class="hero-meta"><dt>集合場所</dt><dd>${esc(p.meet)}</dd><dt>迎え</dt><dd>${esc(p.host)}</dd></dl>
+    <span class="count" style="position:relative;z-index:1">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
+  </section>
+  ${findCard()}
+  ${nextCard(prepItems)}
+  ${myOjt()}
+  <section class="card">
+    <h2>着任までにやること</h2>
+    <p class="note">初日シートは、この画面の「当日の流れ」から下の内容です。<button class="linkbtn" id="gosheet">初日シートへ ↓</button></p>
+    <div class="todo">${prepItems.map(i=>`<button data-prep="${i.k}" class="${i.done?"done":""}"><span class="box" aria-hidden="true">${i.done?"✓":""}</span><span class="t">${i.t}</span>${i.go&&!i.done?`<span class="go">開く →</span>`:""}</button>`).join("")}</div>
+  </section>
+  <section class="card">
+    <span class="label" id="daysheet">ここから初日シート</span>
+    <h2>当日の流れ</h2>
+    <dl class="kv">${(p.schedule||defaultSchedule()).map(x=>`<dt>${esc(x.t)}</dt><dd>${esc(x.d)}</dd>`).join("")}
+    </dl>
+  </section>
+  <section class="card" id="bringcard">
+    <h2>持ち物と服装</h2>
+    <ol class="steps">${(p.bring||D.bring).map(b=>`<li>${esc(b)}</li>`).join("")}</ol>
+    <p class="empty">${p.welcome?esc(p.welcome):esc(D.bringNote||"")}</p>
+  </section>
+  <details class="card fold" data-fold="people" ${state.open&&state.open.people?"open":""}>
+    <summary><h2>覚えておきたい人</h2></summary>
+    <p class="tap">押すと、顔と担当の内容が出ます。実際は、本人の同意を得た写真に差し替えます。</p>
+    <div class="people">${staff.map((s,i)=>`<button class="person" data-person="${i}" aria-label="${s.name}の顔を見る"><div class="avatar" aria-hidden="true">${face(s)}</div><div><b>${s.name}</b><span>${s.role}</span><div class="call">${s.where}</div></div></button>`).join("")}</div>
+  </details>
+  <details class="card fold" data-fold="map" ${state.open&&state.open.map?"open":""}>
+    <summary><h2>館内マップ</h2></summary>
+    <div class="row" style="justify-content:flex-end">
+      <div class="seg" role="group" aria-label="表示"><button data-floor="1" aria-pressed="${state.floor===1}">棟と階</button><button data-floor="2" aria-pressed="${state.floor===2}">施設と時間</button></div></div>
+    <p class="empty">${esc(state.floor===1?D.mapNote.floors:D.mapNote.facilities)}</p>
+    <div>${state.floor===1?map1():map2()}</div>
+  </details>
+  <details class="card fold" data-fold="rules" ${state.open&&state.open.rules?"open":""}>
+    <summary><h2>スタッフの決まり</h2></summary>
+    <dl class="kv">${(D.rules||[]).map(([t,d])=>`<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl>
+    ${D.rulesNote?`<p class="note">${esc(D.rulesNote)}</p>`:""}
+  </details>
+  ${dormCard()}
+  <details class="card fold" data-fold="words" ${state.open&&state.open.words?"open":""}>
+    <summary><h2>この宿の言葉</h2></summary>
+    <div>${terms.map(([t,d])=>`<details class="term"><summary>${t}</summary><p>${d}</p></details>`).join("")}</div>
+  </details>`;
+}
+function defaultSchedule(){ return D.defaultSchedule; }
+function map1(){
+  if(!FLOORS) return `<p class="empty">館内図は、施設で確認してから入れます。</p>`;
+  const cell = items => items.length ? `<div class="c">${items.map(i=>`<span class="${i.k?"k":(i.g?"":"o")}">${esc(i.g?i.n.replace("客室 ",""):i.n)}</span>`).join("")}</div>` : `<div class="c none"></div>`;
+  return `<div class="floors" style="--cols:${FLOORS.cols.length}" role="table" aria-label="棟と階の一覧">
+    <div class="f"></div>${FLOORS.cols.map(c=>`<div class="h">${c}</div>`).join("")}
+    ${FLOORS.rows.map(([f,...cols])=>`<div class="f">${f}</div>${cols.map(cell).join("")}`).join("")}
+  </div>
+  <p class="note" style="margin-top:8px">数字は部屋番号、緑の字は新人がよく案内する場所です。出典：${esc(SOURCE)}</p>`;
+}
+function map2(){
+  const list = D.facilities || [];
+  return `<div>${list.map(([n,d])=>`<div class="fac"><b>${esc(n)}</b><span>${esc(d)}</span></div>`).join("")}</div>`;
+}
+
+/* ======================= 新人：教材 ======================= */
+function learn(){
+  const L = state.lesson && lessons().find(l=>l.id===state.lesson);
+  if(L){
+    const st = state.steps[L.id]||[];
+    const allChecked = L.steps.every((_,i)=>st[i]);
+    return `
+    <button class="back" id="back">← 教材の一覧へ</button>
+    <section class="card">
+      <span class="label">${L.kind==="共通"?"どの旅館でも共通の教材":INN+"だけの手順"}</span>
+      <h2>${esc(L.title)}</h2>
+      <label class="field">ことばを選ぶ（外国人スタッフ向け）<select id="lang">${LANGS.map(([v,n])=>`<option value="${v}" ${state.lang===v?"selected":""}>${n}</option>`).join("")}</select></label>
+      ${trBlock(L)}
+      <button class="player" id="play" aria-label="見本の動画を再生">
+        <span class="meta"><span>見本の動画</span><span id="vtime">0:00 / ${esc(L.time)}</span></span>
+        <span class="play" id="playicon" aria-hidden="true">▶</span>
+        <span class="sub" id="vsub">字幕つき。押すと再生します</span>
+        <span class="pbar"><i id="vbar"></i></span>
+      </button>
+      <h3>手順（できたら押して確認）</h3>
+      <div class="stepchk">${L.steps.map((s,i)=>`<button data-step="${i}" class="${st[i]?"on":""}" aria-pressed="${!!st[i]}"><span class="n">${i+1}</span><span>${esc(s)}</span></button>`).join("")}</div>
+      ${L.ng&&L.ng.length?`<div class="ng"><b>やってはいけないこと</b><ul>${L.ng.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`:""}
+      <div class="diff"><b>${INN}では</b><br>${esc(L.diff)}</div>
+      ${L.faq&&L.faq.length?`<div class="diff"><b>よくある質問（スタッフの質問から追加）</b><div class="faq" style="margin-top:6px">${L.faq.map(f=>`<div><b>${esc(f.q)}</b>${esc(f.a)}</div>`).join("")}</div></div>`:""}
+      <div class="row"><button class="btn" id="markdone" ${state.done[L.id]?"disabled":""}>${state.done[L.id]?"見終わりました":(allChecked?"見終わった":"手順を確認して見終わる")}</button>
+      ${L.quiz&&L.quiz.length?`<button class="btn ghost" id="toquiz">確認テストへ</button>`:""}</div>
+    </section>`;
+  }
+  const n = doneCount(), all = lessons();
+  return `
+  <section class="card">
+    <span class="label">着任前に見ておく教材</span>
+    <h2>${n} / ${all.length} 本 見終わりました</h2>
+    <div class="prog" aria-hidden="true"><i style="width:${n/all.length*100}%"></i></div>
+    <p class="empty">1本3分前後です。スマホで、通勤中や前日の夜に見られます。</p>
+  </section>
+  <div class="lesson-list">${all.map(l=>`
+    <button class="lesson" data-lesson="${l.id}"><div><b>${esc(l.title)}</b><span>動画 ${esc(l.time)} ・ 手順${l.steps.length}つ${l.faq&&l.faq.length?` ・ 質問から追加 ${l.faq.length}`:""}${state.scores[l.id]?` ・ テスト ${state.scores[l.id]}`:""}</span></div>
+    <span class="status ${state.done[l.id]?"done":(l.kind==="共通"?"":"own")}">${state.done[l.id]?"見た":(l.kind==="共通"?"未視聴":"この宿だけ")}</span></button>`).join("")}</div>`;
+}
+function trBlock(L){
+  if(state.lang==="ja") return "";
+  const t=state.tr[L.id+":"+state.lang], name=(LANGS.find(x=>x[0]===state.lang)||[])[1];
+  if(!t) return `<div class="tr"><b>${esc(name)}</b><span class="note">${aiOK()?"翻訳を作っています…":"翻訳はAIモード（公開したページ）で使えます。"}</span></div>`;
+  return `<div class="tr" lang="${state.lang}"><b>${esc(name)} ・ ${esc(t.title||"")}</b><ol class="steps">${(t.steps||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+    ${(t.ng||[]).length?`<div class="ng">${(t.ng||[]).map(x=>`<div>✕ ${esc(x)}</div>`).join("")}</div>`:""}${t.diff?`<div class="diff">${esc(t.diff)}</div>`:""}
+    <span class="note">AIによる翻訳です。施設名はそのままにしています。大事なことは日本語の手順でも確かめてください。</span></div>`;
+}
+let trBusy=false;
+async function translateLesson(L){
+  const key=L.id+":"+state.lang; if(state.lang==="ja"||state.tr[key]||!aiOK()||trBusy) return;
+  trBusy=true; const name=(LANGS.find(x=>x[0]===state.lang)||[])[1];
+  const prompt=`旅館の新人スタッフ向け教材を「${name}」に翻訳してください。施設名や部屋の名前は、もとの表記のまま残し、かっこで短い説明を足してもよいです。内容を足したり削ったりしないでください。
+返事は次のJSONだけ：{"title":"…","steps":["…"],"ng":["…"],"diff":"…"}
+題名：${L.title}
+手順：${JSON.stringify(L.steps)}
+やってはいけないこと：${JSON.stringify(L.ng||[])}
+この宿では：${L.diff}`;
+  try{ const r=await sample.json(prompt,{modelTier:"quick"}); if(r&&Array.isArray(r.steps)) state.tr[key]={title:String(r.title||""), steps:r.steps.map(String), ng:(r.ng||[]).map(String), diff:String(r.diff||"")}; }
+  catch(e){ const m=aiErr(e); if(m) toast(m); state.lang="ja"; }
+  trBusy=false; render();
+}
+let vTimer=null;
+function stopVideo(){ if(vTimer){ clearInterval(vTimer); vTimer=null; } }
+function playVideo(L){
+  if(vTimer){ stopVideo(); $("#playicon").textContent="▶"; return; }
+  const [m,s] = L.time.split(":").map(Number), total=m*60+s;
+  let t = 0; const dur = 9000; $("#playicon").textContent="❚❚";
+  vTimer = setInterval(()=>{
+    t += 100; const r = Math.min(1,t/dur), sec = Math.round(total*r);
+    const bar=$("#vbar"); if(!bar){ stopVideo(); return; }
+    bar.style.width = (r*100)+"%";
+    $("#vtime").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")} / ${L.time}`;
+    $("#vsub").textContent = L.steps[Math.min(L.steps.length-1, Math.floor(r*L.steps.length))];
+    if(r>=1){ stopVideo(); $("#playicon").textContent="↻"; $("#vsub").textContent="見終わりました。手順を押して確認しましょう";
+      if(!state.done[L.id]){ state.done[L.id]=true; save(); toast("見終わった記録を残しました"); const b=$("#markdone"); if(b){b.disabled=true;b.textContent="見終わりました";} } }
+  },100);
+}
+
+/* ======================= 新人：質問 ======================= */
+let askCtl=null;
+function ask(){
+  return `
+  <section class="card">
+    <span class="label">LINEでも同じように使えます</span>
+    <div class="row" style="justify-content:space-between"><h2>聞きにくいことも、ここで</h2><button class="sosin" id="sosinline">困ったら</button></div>
+    <p class="empty">答えは${INN}の資料だけから返します。資料にないことは作らずに、担当者に確認します。アレルギー、けが、お金、お客様とのトラブルは、AIは答えずに担当者へつなぎます。</p>
+    ${sample&&!aiBlocked?`<p class="note">AIに質問すると、最初の1回だけ利用の許可を求められます。</p>`:""}
+    <p class="note">${live?"質問はすべて共有データとして溜まり、女将・管理者の画面に届きます。":"いまは、この端末の中だけに記録しています。"}</p>
+  </section>
+  ${phraseCard()}
+  <div class="suggest">${(D.suggest||[]).map(s=>`<button data-say="${s}">${s}</button>`).join("")}</div>
+  <div class="chat" id="chatlog">${state.chat.map((m,i)=>`<div class="msg ${m.who}${m.esc?" esc":""}">${esc(m.text)}${m.src?`<span class="src">${esc(m.src)}</span>`:""}${m.fbKey?(m.fb?`<span class="src">${m.fb==="good"?"ありがとうございます":"担当者に確かめてもらいます。届いたらお知らせします"}</span>`:`<span class="fb"><button data-fb="good:${i}">役に立った</button><button data-fb="bad:${i}">違う・分からない</button></span>`):""}</div>`).join("")}</div>
+  <form class="composer" id="composer"><input id="askinput" placeholder="${esc(D.placeholders.ask)}" autocomplete="off" aria-label="質問を入力"><button class="btn" type="submit" id="sendbtn">送る</button></form>`;
+}
+function ruleAnswer(text){
+  const t=text.toLowerCase(); const hit=knowledge().find(e=>e.k.some(k=>t.includes(String(k).toLowerCase())));
+  return hit?{status:"answer",answer:hit.a,source:hit.src}:{status:"unknown"};
+}
+const PHRASES = [
+  ["答えが分からないとき","確認してまいります。少々お待ちくださいませ。","Let me check. One moment, please."],
+  ["担当者を呼ぶとき","担当の者を呼んでまいります。","I will get the person in charge."],
+  ["場所を案内するとき","ご案内いたします。こちらへどうぞ。","I will show you the way. This way, please."],
+  ["お待たせしたとき","お待たせいたしました。","Thank you for waiting."],
+  ["聞き取れなかったとき","恐れ入ります。もう一度お願いできますか。","I am sorry. Could you say that again, please?"],
+  ["おわびするとき","申し訳ございません。すぐに確認いたします。","I am very sorry. I will check right away."]
+];
+function phraseCard(){
+  return `<details class="card fold" data-fold="phr" ${state.open&&state.open.phr?"open":""}>
+    <summary><h2>とっさの一言</h2></summary>
+    <p class="empty">お客様の前で困ったときの言い方です。外国のお客様には、下の英語を見せても伝わります。</p>
+    <div class="faq">${PHRASES.map(([w,j,e])=>`<div><span class="note">${w}</span><b>${j}</b><span lang="en">${e}</span></div>`).join("")}</div>
+    <p class="note">どの旅館でも使える言い方です。施設の決まった言い方があれば、そちらに合わせます。</p>
+  </details>`;
+}
+function findHTML(q){
+  const t=String(q||"").trim().toLowerCase(); if(!t) return "";
+  if(danger.some(d=>t.includes(d.toLowerCase()))) return `<p class="err">安全やお客様に関わることは、ここでは答えません。今すぐ${esc(whoFor(q))}に確認してください。</p>`;
+  const res=[];
+  const rm=t.match(/^(\d{3})(号室)?$/);
+  if(rm && D.rooms){ const n=+rm[1], hit=D.rooms.find(r=>r.ranges.some(([x,y])=>n>=x&&n<=y));
+    res.push(hit?{h:"館内図", b:hit.floor===false?`${n}号室は、${hit.name}です。階は館内で確かめてください。`:`${n}号室は、${hit.name}の${Math.floor(n/100)}階です。`}:{h:"館内図", b:`${n}号室は、館内図にありません。フロントで確かめてください。`}); }
+  knowledge().forEach(e=>{ if((e.k||[]).some(k=>{k=String(k).toLowerCase(); return t.includes(k)||k.includes(t);}) || String(e.a).toLowerCase().includes(t)) res.push({h:e.src, b:e.a}); });
+  terms.forEach(([n,d])=>{ if((n+d).toLowerCase().includes(t)) res.push({h:"言葉："+n, b:d}); });
+  lessons().forEach(l=>{ if((l.title+l.steps.join("")+l.diff).toLowerCase().includes(t)) res.push({h:"教材："+l.title, b:l.diff, l:l.id}); });
+  if(!res.length) return `<p class="empty">見つかりませんでした。質問係に聞くと、担当者にも届きます。</p><div class="row"><button class="btn small" data-fgo="ask">質問係を開く</button></div>`;
+  return `<div class="faq">${res.slice(0,5).map(r=>`<div><span class="note">${esc(r.h)}</span>${esc(r.b)}${r.l?`<div class="row" style="margin-top:4px"><button class="btn ghost small" data-flesson="${r.l}">教材を開く</button></div>`:""}</div>`).join("")}</div>${res.length>5?`<p class="note">ほかに${res.length-5}件あります。言葉を足すと絞れます。</p>`:""}`;
+}
+function findCard(){
+  return `<section class="card"><label class="field"><b style="color:var(--ink);font-size:.95rem">すぐ探す</b><input id="findq" type="search" autocomplete="off" placeholder="${esc(D.placeholders.find)}"></label><div id="findout" aria-live="polite"></div></section>`;
+}
+function myOjt(){
+  const p=people().find(x=>x.name===state.profile.name); if(!p) return "";
+  const items=ojtFor(p.job), done=items.filter(([k])=>p.ojt&&p.ojt[k]&&p.ojt[k].done).length;
+  return `<details class="card fold" data-fold="ojt" ${state.open&&state.open.ojt?"open":""}>
+    <summary><h2>一人立ちまで ${done} / ${items.length}</h2></summary>
+    <div class="prog" aria-hidden="true"><i style="width:${items.length?done/items.length*100:0}%"></i></div>
+    <p class="empty">先輩に教わって、できるようになったことです。印は先輩がつけます。</p>
+    <ol class="steps">${items.map(([k,t])=>{const o=p.ojt&&p.ojt[k]; return `<li>${esc(t)} ${o&&o.done?`<span class="tag ok">できた</span> <span class="note">${esc(o.at||"")} ${esc(o.by||"")}</span>`:'<span class="tag">これから</span>'}</li>`;}).join("")}</ol>
+  </details>`;
+}
+function whoFor(text){
+  const t=String(text||""), W=D.who||{};
+  if(/アレルギー|卵|そば|えび|エビ|小麦|乳|落花生|ピーナッツ/.test(t)) return W.allergy||HOST;
+  if(/けが|怪我|やけど|火傷|倒れ|救急|具合|体調|気分|熱が/.test(t)) return W.body||"近くの先輩（命に関わるときは119番）";
+  if(/セクハラ|パワハラ|ハラスメント|触られ/.test(t)) return W.harass||HOST;
+  if(/地震|火事|災害|避難/.test(t)) return W.disaster||"近くの先輩の指示に従ってください。そのあと"+HOST;
+  if(/クレーム|怒|酔/.test(t)) return W.trouble||HOST;
+  if(/お金|会計|支払|返金|手当|給料|給与|時給/.test(t)) return W.money||HOST;
+  return "近くの先輩か"+HOST;
+}
+const SOS = [
+  {k:"body", t:"体調が悪い、けがをした", risk:true, d:"無理をせず、すぐ近くの先輩かフロントに伝えてください。命に関わるときは119番です。", act:"notify"},
+  {k:"guest", t:"お客様とトラブルになった", risk:true, d:"一人で対応せず、「担当の者を呼んでまいります」と伝えて、すぐフロントへ行きます。", act:"notify"},
+  {k:"ask", t:"お客様に聞かれて、答えが分からない", d:"その場で答えず「確認してまいります」と伝えます。質問係で調べるか、先輩に聞きます。", act:"ask"},
+  {k:"lost", t:"場所が分からない、迷った", d:"館内マップを開きます。部屋番号の下2けたで棟が分かります。", act:"map"},
+  {k:"work", t:"仕事のやり方が分からない", d:"教材を開きます。1本3分ほどです。", act:"learn"},
+  {k:"talk", t:"だれかに話を聞いてほしい", d:"ふりかえりから、言いにくいことも伝えられます。", act:"checkin"}
+];
+function openSOS(k){
+  const box=$("#modal"), it=SOS.find(x=>x.k===k);
+  const btn = it ? ({notify:"担当者に知らせる", ask:"質問係で調べる", map:"館内マップを開く", learn:"教材を開く", checkin:"ふりかえりを開く"})[it.act] : "";
+  box.innerHTML=`<div class="sheet-bg" id="sheetbg"><div class="sheet-card" role="dialog" aria-modal="true" aria-label="困ったとき" style="align-items:stretch;text-align:left">
+    ${it?`<span class="label">困ったとき</span><h2>${esc(it.t)}</h2><p class="${it.risk?"err":""}">${esc(it.d)}</p>
+      <button class="btn" id="sosgo">${btn}</button><button class="btn ghost" id="sosback">ほかの困りごと</button>`
+    :`<span class="label">困ったとき</span><h2>どうしましたか？</h2><div class="todo">${SOS.map(x=>`<button data-sos="${x.k}"><span class="t">${esc(x.t)}</span><span class="go">→</span></button>`).join("")}</div>`}
+    <button class="btn ghost" id="sosclose">閉じる</button></div></div>`;
+  box.hidden=false;
+  $("#sosclose").onclick=closeModal;
+  $("#sheetbg").onclick=e=>{ if(e.target.id==="sheetbg") closeModal(); };
+  box.querySelectorAll("[data-sos]").forEach(b=>b.onclick=()=>openSOS(b.dataset.sos));
+  const bk=$("#sosback"); if(bk) bk.onclick=()=>openSOS();
+  const g=$("#sosgo"); if(g) g.onclick=()=>{ closeModal();
+    if(it.act==="notify"){ notifyRisk("【困ったボタン】"+it.t); toast("担当者に知らせました。近くの先輩にも声をかけてください"); return; }
+    if(it.act==="ask") return go("ask");
+    if(it.act==="learn") return go("learn");
+    if(it.act==="checkin") return go("checkin");
+    if(it.act==="map"){ (state.open ||= {}).map=true; go("sheet"); const m=document.querySelector('[data-fold="map"]'); if(m) m.scrollIntoView({behavior:"smooth",block:"start"}); }
+  };
+  const f=box.querySelector("button"); if(f) f.focus();
+}
+function notifyRisk(t){ logQ({q:t, result:"escalate", risk:true}); }
+function enqueue(text,risk){ state.queue.unshift({id:Date.now(), q:text, by:state.profile.name+"さん", risk, answered:false, reply:""}); }
+async function say(text){
+  if(askCtl) return;
+  state.chat.push({who:"me",text});
+  if(danger.some(d=>text.includes(d))){
+    logQ({q:text, result:"escalate", risk:true});
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ"+whoFor(text)+"に確認してください。\n同じ内容を担当者にも通知しました。",src:"担当者へ通知済み"});
+    render(); scrollChat(); return;
+  }
+  state.chat.push({who:"bot",wait:true,text:"考えています…"}); render(); scrollChat();
+  let r = null, note="";
+  if(aiOK()){
+    askCtl = new AbortController();
+    const prompt = `あなたは旅館「${INN}」の新人スタッフ向け質問係です。下の「宿の資料」に書かれていることだけを根拠に、やさしい日本語で2〜3文で答えてください。
+ルール：
+1. 資料に答えがないことは推測せず status を "unknown" にする。一般常識や他の旅館の例で補わない。
+2. アレルギー、けが、体調、お金、お客様とのトラブル、ハラスメント、災害に関わる質問は status を "escalate" にする。
+3. 答えるときは、根拠にした資料の見出し（例：初日シート：集合）を source に入れる。
+返事は次のJSONだけ：{"status":"answer"|"unknown"|"escalate","answer":"…","source":"…"}
+
+宿の資料：
+${kbText()}
+
+新人の質問：${text}`;
+    try{ r = await sample.json(prompt,{modelTier:"quick",signal:askCtl.signal}); }
+    catch(e){ note = aiErr(e); r = null; }
+    askCtl = null;
+  }
+  if(!r || !r.status) r = ruleAnswer(text);
+  state.chat.pop();
+  if(r.status==="escalate"){
+    logQ({q:text, result:"escalate", risk:true});
+    state.chat.push({who:"bot",esc:true,text:"安全やお客様に関わる内容なので、AIは答えません。\n今すぐ"+whoFor(text)+"に確認してください。",src:"担当者へ通知済み"});
+  }else if(r.status==="answer" && r.answer){
+    const fbKey="k"+Date.now()+Math.random().toString(36).slice(2,6);
+    logQ({q:text, result:"answer", answer:String(r.answer), source:String(r.source||""), key:fbKey});
+    state.chat.push({who:"bot",text:String(r.answer),src:(r.source?"出典："+r.source:"")+(aiOK()?"（AIが宿の資料から回答）":""), fbKey, q:text});
+  }else{
+    logQ({q:text, result:"unknown"});
+    state.chat.push({who:"bot",text:"まだ宿の資料にない質問でした。"+HOST+"に回答をお願いしたので、届いたらここにお知らせします。",src:"担当者へ質問を転送"});
+  }
+  if(note) state.chat.push({who:"bot",text:note,src:""});
+  render(); scrollChat();
+}
+function scrollChat(){ const c=$("#chatlog"); if(c&&c.lastElementChild) c.lastElementChild.scrollIntoView({block:"center"}); }
+
+/* ======================= 新人：テスト ======================= */
+function cardsView(){
+  const list = allCards().filter(c=>state.cardCat==="all"||c.cat===state.cardCat);
+  const knownN = list.filter(c=>state.known[c.id]).length;
+  const rest = list.filter(c=>!state.known[c.id]);
+  const pool = rest.length ? rest : list;
+  const c = pool.length ? pool[state.cardIdx % pool.length] : null;
+  return `
+  <section class="card">
+    <span class="label">覚えるカード ・ 覚えた ${knownN} / ${list.length}</span>
+    <h2>お品書きや館内を、すきま時間に</h2>
+    <div class="picker" role="group" aria-label="カードの種類">${CARD_CATS.map(([v,n])=>`<button data-cc="${v}" aria-pressed="${state.cardCat===v}">${n}</button>`).join("")}</div>
+    ${c?`<div class="fcard" aria-live="polite"><span class="front">${esc(c.front)}</span>${state.cardShow?`<span class="back">${esc(c.back)}</span>`:`<span class="note">思い出してから、答えを見ましょう</span>`}</div>
+    ${state.cardShow?`<div class="row"><button class="btn" id="cknow">覚えた</button><button class="btn ghost" id="cagain">もう一度</button></div>`:`<div class="row"><button class="btn" id="cshow">答えを見る</button></div>`}`
+    :`<p class="empty">この種類のカードは、まだありません。</p>`}
+    ${!rest.length&&list.length?`<p class="tag ok" style="align-self:flex-start">全部覚えました</p><div class="row"><button class="btn ghost small" id="creset">最初からやり直す</button></div>`:""}
+    <p class="note">ドリンクやお品書きのカードは、女将・管理者の「教材づくり」から足せます。</p>
+  </section>`;
+}
+function quizView(){
+  const mode = `<div class="seg" role="group" aria-label="テストとカード"><button data-qm="test" aria-pressed="${state.quizMode==="test"}">確認テスト</button><button data-qm="cards" aria-pressed="${state.quizMode==="cards"}">覚えるカード</button></div>`;
+  if(state.quizMode==="cards") return mode + cardsView();
+  return mode + quizTests();
+}
+function quizTests(){
+  const withQuiz = lessons().filter(l=>l.quiz&&l.quiz.length);
+  if(!withQuiz.find(l=>l.id===state.quizLesson)) state.quizLesson = withQuiz[0].id;
+  const L = withQuiz.find(l=>l.id===state.quizLesson);
+  const ans = (state.quiz[L.id] ||= {}), total = Object.keys(ans).length, qs = L.quiz;
+  const correct = qs.filter((q,i)=>ans[i]===q.a).length;
+  return `
+  <div class="picker" role="group" aria-label="テストを選ぶ">${withQuiz.map(l=>`<button data-ql="${l.id}" aria-pressed="${l.id===L.id}">${esc(l.title)}${state.scores[l.id]?" ✓":""}</button>`).join("")}</div>
+  <section class="card">
+    <span class="label">${esc(L.title)} ・ 確認テスト</span>
+    <h2>${qs.length}問。間違えても何度でも</h2>
+    ${total===qs.length?`<div class="score">${correct} / ${qs.length}</div><p>${correct===qs.length?"全問正解です。結果は教育担当の画面に記録されました。":"解説を読んで、もう一度挑戦してみましょう。結果は教育担当の画面に記録されました。"}</p><div class="row"><button class="btn ghost" id="retry">もう一度</button></div>`:`<p class="empty">${total} / ${qs.length} 問 回答済み</p>`}
+  </section>
+  ${qs.map((q,i)=>`<section class="card q"><h3>${i+1}. ${esc(q.q)}</h3>
+    ${q.o.map((o,j)=>{let c=""; if(ans[i]!==undefined){ if(j===q.a)c="right"; else if(j===ans[i])c="wrong";}
+      return `<button class="opt ${c}" data-q="${i}" data-o="${j}" ${ans[i]!==undefined?"disabled":""}>${esc(o)}</button>`}).join("")}
+    ${ans[i]!==undefined&&q.why?`<p class="why">${ans[i]===q.a?"正解。":"正しくは「"+esc(q.o[q.a])+"」。"}${esc(q.why)}</p>`:""}
+  </section>`).join("")}
+  ${total===qs.length?`<section class="card"><span class="label">${esc(L.title)} ・ 確認テストの結果</span><div class="score">${correct} / ${qs.length}</div>
+    <p class="empty">${state.qdone&&state.qdone[L.id]?"このテストは完了しています。":"解説を読んだら、完了を押してください。結果は教育担当の画面に記録されます。"}</p>
+    <div class="row"><button class="btn" id="qdone">${state.qdone&&state.qdone[L.id]?"次のテストへ":"完了"}</button><button class="btn ghost" id="retry2">もう一度</button></div></section>`:""}`;
+}
+
+/* ======================= 新人：ふりかえり ======================= */
+function checkin(){
+  const c = state.checkin;
+  if(c.sent) return `
+  <section class="card">
+    <span class="label">3日目のふりかえり</span>
+    <h2>送りました。ありがとうございます</h2>
+    <p>5段階の答えは、教育担当が見ます。気になる点があれば、教育担当から声をかけます。</p>
+    <dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${"●".repeat(c.vals[i])}${"○".repeat(5-c.vals[i])}</dd>`).join("")}</dl>
+    ${c.text?`<p class="say">${esc(c.text)}</p><p class="note">${c.to==="outside"?"書いた内容は、外部の相談窓口に送りました。施設には、名前を伏せて伝えます。":"書いた内容は、施設の教育担当に送りました。"}</p>`:""}
+    <div class="row"><button class="btn ghost small" id="recheck">回答をやり直す</button></div>
+  </section>`;
+  return `
+  <section class="card">
+    <span class="label">3日目のふりかえり ・ 1分で終わります</span>
+    <h2>ここまで、どうですか？</h2>
+    <p class="empty">5段階の答えは、教育担当が見ます。書いた内容は、施設か外部の相談窓口かを選べます。正直に答えてもらえると、働きやすくする手がかりになります。</p>
+  </section>
+  ${checkQs.map((q,i)=>`<section class="card"><h3>${q}</h3>
+    <div class="scale" role="group" aria-label="${q}">${[1,2,3,4,5].map(v=>`<button data-cv="${i}:${v}" aria-pressed="${c.vals[i]===v}"><b>${v}</b></button>`).join("")}</div>
+    <div class="scale-ends"><span>よくない</span><span>とてもよい</span></div></section>`).join("")}
+  <section class="card"><h3>困っていること、言いにくいこと（任意）</h3>
+    <textarea id="ctext" aria-label="自由記述" placeholder="${esc(D.placeholders.checkin)}">${esc(c.text)}</textarea>
+    <div class="field">書いた内容の送り先
+      <div class="seg" role="group" aria-label="送り先"><button data-to="inn" aria-pressed="${(c.to||"inn")==="inn"}">施設の教育担当</button><button data-to="outside" aria-pressed="${c.to==="outside"}">外部の相談窓口</button></div></div>
+    <label class="row note" style="gap:6px"><input type="checkbox" id="canon" ${c.anon?"checked":""}> 名前を伏せて送る</label>
+    <p class="note">${c.to==="outside"?"外部の相談窓口は、施設とは別の担当です。名前を伏せ、言い方を整えてから施設に伝えます。ハラスメント、けが、体調のことは、その日のうちに施設にも伝えます。":"書いた内容は、施設の教育担当に届きます。"}5段階の答えは、いつも施設の教育担当に届きます。</p>
+    <button class="btn" id="csend" ${c.vals.every(v=>v>0)?"":"disabled"}>送る</button>
+    ${c.vals.every(v=>v>0)?"":`<p class="note">5つの質問すべてに答えると送れます。</p>`}
+  </section>`;
+}
+
+/* ======================= 管理：受け入れ（新人の状況） ======================= */
+function lineText(p){
+  return `${p.name}さん
+${INN}の${p.job}でお待ちしています。
+初日：${p.start||"決まりしだいお知らせします"}
+集合場所：決まりしだいお知らせします
+迎え：${p.host||HOST}
+持ち物：${D.bringLine||D.bring.join("、")}
+${dormInfo().address?`寮：${dormInfo().address}
+地図：${mapUrl(dormInfo().address)}
+`:""}着任前に、このアプリで教材を見ておいてください（1本3分ほどです）。
+${APP_URL}`;
+}
+function dash(){
+  const all = people().map(personView);
+  if(state.newbieView!==null){
+    const n = all.find(x=>x.id===state.newbieView);
+    if(!n){ state.newbieView=null; return dash(); }
+    const items = ojtFor(n.job);
+    const low = n.checkin? n.checkin.vals.map((v,i)=>v>0&&v<=2?checkQs[i]:null).filter(Boolean):[];
+    return `
+    <button class="back" id="nback">← 受け入れの一覧へ</button>
+    <section class="card">
+      <div class="row"><div class="avatar" aria-hidden="true">${face({hair:"#3a2a22", robe:n.me?"#557532":"#4d6b8a", long:/美|彩|子/.test(n.name)})}</div>
+      <div><h2>${esc(n.name)}</h2><span class="empty">${esc(n.type)} ・ ${esc(n.job)} ・ ${esc(n.start||"")} ・ ${esc(n.day)}</span></div></div>
+      ${n.sample?`<span class="tag" style="align-self:flex-start">見本の人</span>`:""}
+    </section>
+    <section class="card"><h3>受け入れの準備 ${n.prepN} / ${PREP.length}</h3>
+      <div class="todo">${PREP.map(([k,t])=>{const on=n.prep&&n.prep[k]; return `<button data-pp="${k}" class="${on?"done":""}" aria-pressed="${!!on}"><span class="box" aria-hidden="true">${on?"✓":""}</span><span class="t">${t}</span></button>`;}).join("")}</div>
+    </section>
+    <section class="card"><h3>一人立ちチェック ${n.ojtDone} / ${n.ojtAll}</h3>
+      <div class="prog" aria-hidden="true"><i style="width:${n.ojtAll?n.ojtDone/n.ojtAll*100:0}%"></i></div>
+      <p class="empty">教えて、できたら押します。教えた人と日付が残るので、次に教える人が同じ説明をくり返さずに済みます。</p>
+      <label class="field">教えた人<select id="ojtby">${staff.map(s=>`<option ${state.ojtBy===s.name?"selected":""}>${s.name}</option>`).join("")}</select></label>
+      <div class="ojt">${items.map(([k,t])=>{const o=n.ojt&&n.ojt[k]; const on=o&&o.done; return `<button data-oj="${k}" class="${on?"done":""}" aria-pressed="${!!on}"><span class="box ${on?"on":""}" aria-hidden="true">${on?"✓":""}</span><span>${esc(t)}${on?`<span class="who">${esc(o.at||"")} ${esc(o.by||"")}</span>`:""}</span></button>`;}).join("")}</div>
+      ${n.ojtDone===n.ojtAll?`<p class="tag ok" style="align-self:flex-start">一人立ちできます。シフトに一人で入れられます</p>`:`<p class="note">あと${n.ojtAll-n.ojtDone}つで一人立ちです。</p>`}
+    </section>
+    <section class="card"><h3>教える人どうしの引き継ぎメモ</h3>
+      <textarea id="pnote" aria-label="引き継ぎメモ" placeholder="例：布団は2人で運ぶよう伝えた。部屋番号はもう一度教える">${esc(n.note||"")}</textarea>
+      <div class="row"><button class="btn small ghost" id="pnotesave">メモを残す</button></div>
+    </section>
+    <section class="card"><h3>LINEに貼る案内文</h3>
+      <textarea id="linetext" readonly style="min-height:170px">${esc(lineText(n))}</textarea>
+      <div class="row"><button class="btn small" id="copyline">案内文をコピー</button></div>
+      <p class="note">集合場所は、決まったら書き足してから送ってください。</p>
+    </section>
+    <section class="card"><h3>教材</h3><p>${n.prog}% 見終わっています。</p><div class="prog"><i style="width:${n.prog}%"></i></div></section>
+    <section class="card"><h3>ふりかえりの回答</h3>
+      ${n.checkin?`<dl class="kv">${checkQs.map((q,i)=>`<dt>${q}</dt><dd>${n.checkin.vals[i]} / 5 ${n.checkin.vals[i]>0&&n.checkin.vals[i]<=2?'<span class="tag risk">低い</span>':""}</dd>`).join("")}</dl>
+      ${n.checkin.text?`<p class="say">${esc(n.checkin.text)}</p>`:""}
+      ${low.length?`<p class="err">「${low.join("」「")}」が低めです。今日中に一声かけるのがおすすめです。</p>`:`<p class="empty">気になる回答はありません。</p>`}`
+      :`<p class="empty">まだ回答がありません。${n.me?"新人の画面の「ふりかえり」から回答できます。":""}</p>`}
+    </section>`;
+  }
+  const soon = all.filter(n=>n.startISO && (new Date(n.startISO+"T00:00:00")-TODAY)/86400000 >= 0 && (new Date(n.startISO+"T00:00:00")-TODAY)/86400000 <= 7).length;
+  const notReady = all.filter(n=>n.prepN<PREP.length && !(n.startISO && new Date(n.startISO+"T00:00:00")<TODAY)).length;
+  const alerts = all.filter(n=>n.alert);
+  return `${todaySummary(alerts.length)}${relayCard()}
+  <section class="card">
+    <span class="label">今日の連絡（新人の画面のいちばん上に出ます）</span>
+    <textarea id="ntext" aria-label="今日の連絡" placeholder="${esc(D.placeholders.notice)}"></textarea>
+    <div class="row"><button class="btn small" id="nsend">新人に知らせる</button></div>
+    ${notices().slice(0,5).map(n=>`<div class="nitem"><span>${esc(n.text)}<br><span class="note">${esc(n.when||"")}</span></span><button class="btn ghost small" data-ndel="${n.id}">消す</button></div>`).join("")}
+  </section>
+  <section class="card">
+    <span class="label">受け入れ予定と、着任中の人</span>
+    <h2>新人 ${all.length}名</h2>
+    <div class="stats">
+      <div class="stat"><span class="label">7日以内に着任</span><div class="num">${soon}<small>名</small></div></div>
+      <div class="stat"><span class="label">準備が残っている</span><div class="num">${notReady}<small>名</small></div></div>
+    </div>
+    <div class="nlist">${all.map(n=>`<button class="nrow" data-nb="${n.id}">
+      <div class="avatar" aria-hidden="true">${face({hair:"#3a2a22", robe:n.me?"#557532":"#4d6b8a", long:/美|彩|子/.test(n.name)})}</div>
+      <div><b>${esc(n.name)} <span class="tag">${esc(n.type)}</span></b><span class="sub">${esc(n.job)} ・ ${esc(n.day)} ・ 準備 ${n.prepN}/${PREP.length} ・ 一人立ち ${n.ojtDone}/${n.ojtAll}</span><div class="prog"><i style="width:${n.ojtAll?n.ojtDone/n.ojtAll*100:0}%"></i></div></div>
+      <span>${n.alert?'<span class="tag risk">声かけを</span>':(n.ojtDone===n.ojtAll?'<span class="tag ok">一人立ち</span>':(n.prepN<PREP.length?'<span class="tag">準備中</span>':""))}</span></button>`).join("")}</div>
+    <p class="note">初日シートを「公開して本人に送る」と、ここに加わります。</p>
+  </section>
+  ${skillCard(all)}
+  <section class="card"><span class="label">女将や支配人への報告に</span><h3>今週のまとめ</h3>
+    <p class="empty">新人、質問、先輩の時間、声かけが必要な人を、1つの文にまとめます。LINEやメールに貼って送れます。</p>
+    ${state.weekly?`<textarea id="weeklytext" readonly style="min-height:220px">${esc(weeklyText(all))}</textarea><div class="row"><button class="btn small" id="copyweekly">コピー</button><button class="btn ghost small" id="closeweekly">閉じる</button></div>`:`<div class="row"><button class="btn small" id="mkweekly">今週のまとめを作る</button></div>`}
+  </section>
+  ${alerts.length?`<section class="card"><h3>ふりかえりで気になる回答</h3>${alerts.map(n=>`<p><b>${esc(n.name)}さん</b>（${n.checkin.day}日目）「${checkQs.filter((q,i)=>n.checkin.vals[i]>0&&n.checkin.vals[i]<=2).join("」「")}」が低め。${n.checkin.text?`<br><span class="empty">${esc(n.checkin.text)}</span>`:""}</p>`).join("")}<p class="empty">辞める前のサインになりやすい回答です。今日中に一声かけるのがおすすめです。</p></section>`:""}
+  <section class="card">
+    <h3>よく聞かれた質問</h3>
+    ${topQs(3).length?`<ol class="steps">${topQs(3).map(([q,n])=>`<li>${esc(q)}（${n}回）</li>`).join("")}</ol>`:`<p class="empty">まだ質問がありません。</p>`}
+    <p class="empty">溜まった質問から数えています。質問係が答えた分は、先輩が同じ説明をしなくて済んだ回数です。</p>
+  </section>`;
+}
+function skillCard(all){
+  const by={}; all.forEach(n=>{ (by[n.job] ||= []).push(n); });
+  const jobs=Object.entries(by); if(!jobs.length) return "";
+  return `<section class="card"><span class="label">シフトを組むときに</span><h3>仕事ごとの一人立ち</h3>
+    <div class="lbars">${jobs.map(([job,ns])=>{ const ok=ns.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length;
+      return `<div class="lb"><span><b>${esc(job)}</b></span><span class="v">一人で入れる ${ok} / ${ns.length}名</span><div style="grid-column:1/-1" class="note">${ns.map(n=>`${esc(n.name)}（${n.ojtDone}/${n.ojtAll}）`).join("、")}</div></div>`; }).join("")}</div>
+    <p class="note">一人立ちチェックがすべて終わった人を「一人で入れる」としています。</p></section>`;
+}
+function weeklyText(all){
+  const now=Date.now(), wk=allQs().filter(q=>(q.at||0)>=now-7*86400000);
+  const auto=wk.filter(q=>q.result==="answer").length, staffN=wk.length-auto, risk=wk.filter(q=>q.risk).length;
+  const m=new Map(); wk.filter(q=>!String(q.q).startsWith("【困ったボタン】")).forEach(q=>{ const k=norm(q.q), v=m.get(k); if(v) v[1]++; else m.set(k,[q.q,1]); });
+  const top=[...m.values()].sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const d0=new Date(now-6*86400000), d1=new Date(now), f=d=>`${d.getMonth()+1}月${d.getDate()}日`;
+  const inNow=all.filter(n=>n.startISO && new Date(n.startISO+"T00:00:00")<=TODAY).length, soon=all.length-inNow;
+  const solo=all.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length, alerts=all.filter(n=>n.alert).length;
+  const adopted=props().filter(p=>p.status==="adopted").length, voicesN=innVoices().length+relays().length;
+  return `【宿のはじめて帳 今週のまとめ】${f(d0)}〜${f(d1)}
+1. 新人：着任中 ${inNow}名、着任予定 ${soon}名。一人立ちできた人 ${solo}名。
+2. 質問：${wk.length}件。質問係が答えた ${auto}件（先輩の説明 約${Math.round(auto*5/6)/10}時間分）。担当者に届いた ${staffN}件（うち安全に関わる ${risk}件）。
+3. よく聞かれた質問：${top.length?top.map(([q,n],i)=>`${i+1}）${q}（${n}回）`).join(" "):"まだありません"}
+4. 声かけが必要な人：${alerts}名（ふりかえりで低い点がありました）
+5. 質問から教材に足した内容：${adopted}件
+6. スタッフから届いた声：${voicesN}件`;
+}
+function todayText(){ const d=new Date(); return `${d.getMonth()+1}月${d.getDate()}日`; }
+
+/* ======================= 管理：質問への回答 ======================= */
+function topQs(n){
+  const m=new Map(); allQs().filter(q=>!String(q.q).startsWith("【困ったボタン】")).forEach(q=>{ const k=norm(q.q); const v=m.get(k); if(v) v[1]++; else m.set(k,[q.q,1]); });
+  return [...m.values()].sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+function insights(){
+  const qs=allQs(), total=qs.length, auto=qs.filter(q=>q.result==="answer").length, staffN=total-auto, risk=qs.filter(q=>q.risk).length;
+  const by={}; qs.forEach(q=>{ const k=q.lesson||guessLesson(q.q); by[k]=(by[k]||0)+1; });
+  const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,5), max=rows.length?rows[0][1]:1;
+  return `
+  <section class="card">
+    <span class="label">${live?"共有データ":"この端末の記録"} ・ スタッフの質問</span>
+    <h2>溜まった質問 ${total}件</h2>
+    ${live&&liveErr?`<p class="note">${esc(liveErr)}</p>`:""}
+    <div class="stats">
+      <div class="stat"><span class="label">質問係が答えた</span><div class="num">${auto}<small>件</small></div><span class="delta">先輩の説明が不要に</span></div>
+      <div class="stat"><span class="label">担当者に届いた</span><div class="num">${staffN}<small>件</small></div><span class="delta" style="color:var(--muted)">うち安全に関わる ${risk}件</span></div>
+    </div>
+    ${rows.length?`<h3>質問が集まっている教材</h3><div class="lbars">${rows.map(([id,n])=>`<div class="lb"><span>${esc(lessonTitle(id))}</span><span class="v">${n}件</span><div class="track"><div class="fill" style="width:${n/max*100}%"></div></div></div>`).join("")}</div>`:""}
+  </section>`;
+}
+function propCard(){
+  const pend=props().filter(p=>p.status==="pending"), adopted=props().filter(p=>p.status==="adopted");
+  const body=p=>p.type==="quiz"&&p.quiz?`<b>テスト：${esc(p.quiz.q)}</b><ol class="steps">${p.quiz.o.map((o,i)=>`<li>${esc(o)}${i===p.quiz.a?' <span class="tag ok">正解</span>':""}</li>`).join("")}</ol>`
+    :`<b>Q. ${esc(p.q)}</b><span>A. ${esc(p.a)}</span>`;
+  return `
+  <section class="card">
+    <span class="label">質問を教材に反映する</span>
+    <h2>教材に足す案</h2>
+    <p class="empty">溜まった質問と回答から、どの教材に何を足すとよいかを${aiOK()?"AIが":""}考えます。採用した案だけが教材に入ります。</p>
+    <button class="btn" id="mkprops">${aiOK()?"AIで反映案を作る":"反映案を作る"}</button>
+    <p class="err" id="perr" hidden></p>
+    ${pend.map(p=>`<div class="qitem"><span class="tag" style="align-self:flex-start">${esc(lessonTitle(p.lesson))} ・ ${p.type==="quiz"?"テスト問題":"よくある質問"}</span>
+      ${body(p)}${p.reason?`<span class="note">${esc(p.reason)}</span>`:""}
+      <div class="row"><button class="btn small" data-adopt="${p.id}">採用して教材に入れる</button><button class="btn ghost small" data-reject="${p.id}">見送る</button></div></div>`).join("")}
+    ${adopted.length?`<p class="note">採用した案 ${adopted.length}件。新人の画面の教材とテストに入っています。</p>`:""}
+  </section>`;
+}
+function heuristicProps(qs){
+  const m=new Map(); qs.forEach(q=>{ const k=norm(q.q); const v=m.get(k); if(v) v.n++; else m.set(k,{q:q.q,a:q.answer,n:1,admin:q.answeredBy==="admin"}); });
+  return [...m.values()].sort((a,b)=>(b.admin-a.admin)||(b.n-a.n)).map(v=>({lesson:propLesson(v.q), type:"faq", q:v.q, a:v.a,
+    reason:v.admin?"担当者が答えた内容です。ほかの新人にも役立ちます。":`${v.n}回聞かれています。`}));
+}
+async function makeProps(){
+  const qs=allQs().filter(q=>q.answer);
+  if(!qs.length){ toast("回答のある質問が、まだありません"); return; }
+  const btn=$("#mkprops"); btn.disabled=true; btn.textContent="作っています…";
+  const seen=new Set(props().map(p=>norm(p.type==="quiz"&&p.quiz?p.quiz.q:p.q)));
+  let list=null;
+  if(aiOK()){
+    const data=qs.slice(0,150).map(q=>`・${q.q} → ${q.answer}（${q.answeredBy==="admin"?"担当者が回答":"質問係が回答"}）`).join("\n");
+    const prompt=`旅館「${INN}」の新人が質問係に聞いた質問と、その回答の一覧です。新人の教材に足すとよい内容を、最大4件の案にしてください。
+ルール：
+1. 回答に書かれた事実だけを使う。新しい事実や数字を作らない。
+2. 何度も聞かれている質問、担当者が答えた質問、間違えると困る質問を優先する。
+3. type は "faq"（教材に「よくある質問」として載せる）か "quiz"（確認テストの3択問題）。
+4. lesson は次の教材IDから一番合うものを選ぶ：${baseLessons.map(l=>l.id+"="+l.title).join("、")}
+5. やさしい日本語で短く書く。reason には、なぜ足すとよいかを1文で書く。
+返事は次のJSONだけ：{"proposals":[{"lesson":"ID","type":"faq","q":"質問","a":"答え","reason":"理由"},{"lesson":"ID","type":"quiz","quiz":{"q":"問題","o":["選択肢1","選択肢2","選択肢3"],"a":0,"why":"解説"},"reason":"理由"}]}
+
+質問と回答：
+${data}`;
+    try{ const r=await sample.json(prompt,{modelTier:"default"}); if(r&&Array.isArray(r.proposals)) list=r.proposals; }
+    catch(e){ const m=aiErr(e); if(m){ const el=$("#perr"); if(el){ el.hidden=false; el.textContent=m; } } }
+  }
+  if(!list) list=heuristicProps(qs);
+  list=list.map(p=>{
+    const isQuiz=p&&p.type==="quiz"&&p.quiz&&Array.isArray(p.quiz.o)&&p.quiz.o.length>=2;
+    const quiz=isQuiz?{q:String(p.quiz.q||""), o:p.quiz.o.slice(0,4).map(String), a:Math.max(0,Math.min(Math.min(p.quiz.o.length,4)-1,Number(p.quiz.a)||0)), why:String(p.quiz.why||"")}:null;
+    const text=isQuiz?quiz.q:String(p&&p.q||"");
+    return {lesson:baseLessons.some(l=>l.id===p.lesson)?p.lesson:propLesson(text), type:isQuiz?"quiz":"faq", q:isQuiz?"":String(p.q||""), a:isQuiz?"":String(p.a||""), quiz, reason:String(p.reason||""), status:"pending", at:Date.now()};
+  }).filter(p=>p.type==="quiz"?p.quiz.q:(p.q&&p.a)).filter(p=>{ const k=norm(p.type==="quiz"?p.quiz.q:p.q); if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,4);
+  if(!list.length){ toast("新しい案はありませんでした"); render(); return; }
+  if(live){ for(const p of list){ try{ await db.collection("proposals").add(p); }catch(e){ toast(dbMsg(e)); break; } } }
+  else list.forEach((p,i)=>state.props.push({id:"p"+Date.now()+i, ...p}));
+  toast(`${list.length}件の案を作りました`); render();
+}
+async function setProp(id, status){
+  if(live){ try{ await db.doc("proposals/"+id).update({status, decidedAt:Date.now()}); }catch(e){ toast(dbMsg(e)); return; } }
+  else { const p=state.props.find(x=>x.id===id); if(p) p.status=status; }
+  toast(status==="adopted"?"教材に入れました。新人の画面で見られます":"見送りました"); render();
+}
+async function wipeLive(){
+  if(!live||!confirm("溜めた質問、資料に足した回答、反映案、今日の連絡、スタッフの声をすべて消します（受け入れの一覧は残ります）。元に戻せません。消しますか？")) return;
+  for(const c of ["questions","learned","proposals","notices","innvoices","relays","voices"]){
+    try{ const snap=await db.collection(c).get(); for(const d of snap.docs){ await db.doc(c+"/"+d.id).delete(); } }
+    catch(e){ toast(dbMsg(e)); return; }
+  }
+  toast("消しました");
+}
+function queue(){
+  const open = openQs(), done = doneQs();
+  return `${insights()}
+  <section class="card">
+    <span class="label">質問係が答えなかった質問</span>
+    <h2>回答を待っている質問 ${open.length}件</h2>
+    <p class="empty">ここで答えると宿の資料に足され、次からは質問係が答えるようになります。新人の画面で質問すると、ここに届きます。</p>
+  </section>
+  <section class="card">${open.length?open.map(q=>`
+    <div class="qitem">${q.risk?`<span class="tag risk" style="align-self:flex-start">安全・お客様に関わる質問</span>`:""}
+      ${q.fb==="bad"?`<span class="tag risk" style="align-self:flex-start">質問係の答えが「違う」と言われました</span>`:""}
+      <b>${esc(q.q)}</b><span class="empty">${esc(q.by)}から${q.sample?' <span class="tag">見本</span>':""}</span>
+      ${q.fb==="bad"&&q.answer?`<span class="note">質問係の答え：${esc(q.answer)}</span>`:""}
+      ${q.risk?`<p class="empty">この種類の質問は、AIが答えないよう固定しています。本人に直接伝えてください。</p><div class="row"><button class="btn ghost small" data-done="${q.id}">対応した</button></div>`:
+      `<textarea id="reply-${q.id}" aria-label="回答を入力" placeholder="例：「◯◯」をおすすめしています。">${esc(q.draft||state.drafts[q.id]||"")}</textarea>
+       <div class="row"><button class="btn small" data-reply="${q.id}">回答して資料に追加</button>${aiOK()?`<button class="btn ghost small" data-draft="${q.id}">AIで回答案を作る</button>`:""}</div>`}
+    </div>`).join(""):`<p class="empty">いまは回答待ちの質問はありません。</p>`}</section>
+  ${propCard()}
+  ${done.length?`<section class="card"><h3>回答済み（宿の資料に追加）</h3>${done.map(q=>`<div class="qitem"><b>${esc(q.q)}</b><span class="empty">${esc(q.reply||q.answer||"本人に直接対応")}</span></div>`).join("")}</section>`:""}
+  ${live?`<section class="card"><span class="label">デモ用</span><p class="empty">訪問ごとに、溜めたデータを空にできます。</p><div class="row"><button class="btn ghost small" id="wipe">溜めた質問と案をすべて消す</button></div></section>`:""}`;
+}
+function keywords(q){
+  const k = q.replace(/[？?。、！!「」]/g," ").split(/\s+/).filter(w=>w.length>=2);
+  if(!k.length) k.push(q.slice(0,6));
+  const extra = ["地酒","お酒","日本酒","駐車場","制服","洗濯","売店","お土産","温泉","チェックアウト","トロッコ","冬","運休"];
+  extra.forEach(w=>{ if(q.includes(w)) k.push(w); });
+  if(q.includes("地酒")) k.push("お酒","日本酒");
+  return k;
+}
+
+/* ======================= 管理：初日シート作成 ======================= */
+const DORM_ADDR = (D.dorm && D.dorm.address) || "";
+const dormInfo = () => { const d = (live && liveDorm) ? liveDorm : state.dorm || {}; return {...d, address: d.address || DORM_ADDR, steps: d.steps || []}; };
+const mapUrl = a => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(String(a).replace(/〒?\s*\d{3}-\d{4}\s*/,"").trim());
+function dormCard(){
+  const d = dormInfo(), steps = (d.steps||[]).filter(Boolean);
+  return `<details class="card fold" data-fold="dorm" ${state.open&&state.open.dorm?"open":""}>
+    <summary><h2>寮までの道</h2></summary>
+    ${D.dorm&&D.dorm.walk?`<p class="empty">${esc(D.dorm.walk)}</p>`:""}
+    ${steps.length?`<ol class="steps">${steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p class="note">道順は、受け入れ担当が書き込むとここに出ます。</p>`}
+    ${d.address?`<p>住所：${esc(d.address)}</p><div class="row"><a class="btn small" href="${mapUrl(d.address)}" target="_blank" rel="noopener">地図で開く</a></div>`:""}
+  </details>`;
+}
+function dormEditor(){
+  const d = dormInfo();
+  return `<section class="card">
+    <span class="label">新人の「初日」の画面に出ます</span>
+    <h2>寮までの道案内</h2>
+    <label class="field">寮の住所（任意）<input id="dorm-addr" value="${esc(d.address||"")}" placeholder="例：◯◯県◯◯市◯◯ 1-2"></label>
+    <label class="field">道順（1行に1つ）<textarea id="dorm-steps" style="min-height:120px" placeholder="例：玄関を出て右へ&#10;◯◯の角を左へ&#10;2軒目の白い建物が寮">${esc((d.steps||[]).join("\\n"))}</textarea></label>
+    <div class="row"><button class="btn small" id="dorm-save">道案内を保存</button>${d.address?`<a class="btn ghost small" href="${mapUrl(d.address)}" target="_blank" rel="noopener">地図で確かめる</a>`:""}</div>
+    <p class="note">住所を入れると「地図で開く」ボタンが出ます。スタッフの住まいなので、載せてよいか施設と決めてから入れてください。</p>
+  </section>`;
+}
+function make(){
+  const g = state.gen;
+  return `${dormEditor()}
+  <section class="card">
+    <span class="label">女将・担当者が答えるのは、これだけ</span>
+    <h2>新しく来る人の初日シートを作る</h2>
+    <p class="empty">実際のサービスでは、最初に90分のヒアリングと館内の撮影をして、宿の基本情報を登録します。来る人が決まるたびに、ここで数項目を入れるだけです。</p>
+  </section>
+  <section class="card">
+    <div class="grid2">
+      <label class="field">名前<input id="g-name" value="小林 翔"></label>
+      <label class="field">雇い方<select id="g-type"><option>タイミー</option><option>派遣</option><option>おてつたび</option><option>パート</option><option>アルバイト</option><option>新卒社員</option></select></label>
+      <label class="field">職種<select id="g-job">${jobNames.map(j=>`<option>${esc(j)}</option>`).join("")}</select></label>
+      <label class="field">初日<input id="g-date" value="11月18日（水）"></label>
+      <label class="field">集合時間<input id="g-time" value="${esc(D.profile.time)}"></label>
+      <label class="field">迎えに来る人<select id="g-host">${staff.map(s=>`<option value="${s.name}">${s.name}</option>`).join("")}</select></label>
+    </div>
+    <label class="field">ひとこと（任意）<input id="g-note" value="飲食店のホールの経験あり"></label>
+    <button class="btn" id="gen">${aiOK()?"AIで初日シートを作る":"初日シートを作る"}</button>
+    <p class="err" id="generr" hidden></p>
+  </section>
+  ${g?`<section class="card"><span class="label">できあがったシート（確認用）</span>
+    <div class="out">
+      <b>${esc(g.name)}さんの初日 ・ ${esc(g.date)} ${esc(g.time)}</b>
+      <p>${esc(g.welcome)}</p>
+      <dl class="kv">${g.schedule.map(s=>`<dt>${esc(s.t)}</dt><dd>${esc(s.d)}</dd>`).join("")}</dl>
+      <p><b>持ち物：</b>${g.bring.map(esc).join("、")}</p>
+      <p><b>着任前に見る教材：</b>${g.lessons.map(esc).join("、")}</p>
+    </div>
+    <div class="row"><button class="btn" id="publish">公開して本人に送る</button><button class="btn ghost" id="regen">作り直す</button></div>
+    <p class="note">公開すると、本人のスマホとLINEに届きます（デモでは新人の画面が切り替わります）。集合場所と時刻は、訪問時に確認した内容に差し替えます。</p></section>`:""}`;
+}
+function templateSheet(f){
+  const J = JOBS[f.job] || JOBS[jobNames[0]] || {schedule:[], lessons:[]};
+  const sch=[{t:f.time,d:D.meetStep||"集合"}].concat(J.schedule||[]);
+  return {...f, welcome:`${f.name}さん、${INN}へようこそ。初日は${f.host}が迎えに来ます。分からないことは、質問係か近くの先輩に何でも聞いてください。`,
+    schedule:sch.filter(s=>s.d), bring:(J.bring||D.bring).slice(), lessons:(J.lessons||[]).slice()};
+}
+async function generate(){
+  const f={name:$("#g-name").value.trim()||"新人", type:$("#g-type").value, job:$("#g-job").value, date:$("#g-date").value.trim(), time:$("#g-time").value.trim(), host:$("#g-host").value, note:$("#g-note").value.trim()};
+  const btn=$("#gen"); btn.disabled=true; btn.textContent="作っています…";
+  let g=null;
+  if(aiOK()){
+    const prompt=`旅館「${INN}」に新しく来るスタッフの「初日シート」を作ってください。宿の資料に書かれた事実だけを使い、時間や場所を作らないでください。資料にない集合場所や時刻は「施設で確認」と書いてください。
+新人：${f.name}（${f.type}）、職種：${f.job}、初日：${f.date} ${f.time}集合、迎え：${f.host}、メモ：${f.note||"なし"}
+教材の題名（この中から職種に合うものを2〜3本選ぶ）：${lessons().map(l=>l.title).join("、")}
+宿の資料：
+${kbText()}
+返事は次のJSONだけ：{"welcome":"本人への2文の歓迎メッセージ","schedule":[{"t":"9:30","d":"内容"}],"bring":["持ち物"],"lessons":["教材の題名"]}
+scheduleは集合から終業まで6〜8行。`;
+    try{ const r=await sample.json(prompt,{modelTier:"default"}); if(r&&Array.isArray(r.schedule)) g={...f, welcome:String(r.welcome||""), schedule:r.schedule.map(s=>({t:String(s.t||""),d:String(s.d||"")})), bring:(r.bring||[]).map(String), lessons:(r.lessons||[]).map(String)}; }
+    catch(e){ const m=aiErr(e); if(m){ const el=$("#generr"); el.hidden=false; el.textContent=m; } }
+  }
+  if(!g) g=templateSheet(f);
+  state.gen=g; render();
+}
+
+/* ======================= 管理：教材づくり ======================= */
+const sampleTranscript = "はい、じゃあ浴衣のたたみ方ね。まず浴衣を広げて、背中の縫い目を真ん中にして置きます。次に右の脇の線で折って、左の身ごろを重ねる。そう、それで袖をそろえて。袖は内側に折り込んでね、外に出すとだらしなく見えるから。それから裾から三つ折り。帯は上にのせて、サイズが分かるように置いてね。あと、汚れがあるのは絶対に棚に戻さないで、別のかごに分けてください。";
+function author(){
+  return `
+  <section class="card">
+    <span class="label">その宿だけの手順を、教材にする</span>
+    <h2>ベテランの説明から教材を作る</h2>
+    <p class="empty">実際は、ベテランの実演をスマホで撮影し、音声を文字にしてから作ります。ここでは文字にした説明を貼りつけて試せます。下の文章は、どの旅館にもある作業の見本です。</p>
+  </section>
+  <section class="card">
+    <label class="field">教材の名前<input id="a-title" value="浴衣のたたみ方"></label>
+    <label class="field">説明の文字起こし<textarea id="a-text" style="min-height:150px">${esc(sampleTranscript)}</textarea></label>
+    <button class="btn" id="mklesson">${aiOK()?"AIで手順書とテストを作る":"手順書とテストを作る"}</button>
+    <p class="err" id="aerr" hidden></p>
+  </section>
+  <section class="card">
+    <span class="label">覚えることを、カードにする</span>
+    <h2>お品書きやドリンクのカードを足す</h2>
+    <p class="empty">新人が覚えるのに苦労しやすいのは、お品書きやドリンクの種類です。表に名前、裏に説明を書くと、新人の「テスト」の画面で覚えるカードになります。</p>
+    <div class="grid2"><label class="field">表（名前）<input id="c-front" placeholder="例：地酒「◯◯」"></label>
+    <label class="field">種類<select id="c-cat"><option value="food">料理と飲み物</option><option value="kan">館内</option><option value="word">言葉</option></select></label></div>
+    <label class="field">裏（説明）<input id="c-back" placeholder="例：辛口。冷やでおすすめ"></label>
+    <div class="row"><button class="btn small" id="addcard">カードを足す</button></div>
+    ${userCards().length?`<div>${userCards().map(c=>`<div class="nitem"><span><b>${esc(c.front)}</b><br><span class="note">${esc(c.back)}</span></span><button class="btn ghost small" data-cdel="${c.id}">消す</button></div>`).join("")}</div>`:""}
+  </section>
+  ${state.custom.length?`<section class="card"><h3>作った教材</h3><ol class="steps">${state.custom.map(l=>`<li>${esc(l.title)}（手順${l.steps.length}つ、テスト${l.quiz.length}問）</li>`).join("")}</ol><div class="row"><button class="btn ghost small" id="seenew">新人の画面で見る</button></div></section>`:""}`;
+}
+function heuristicLesson(title,text){
+  const sents = text.replace(/はい、?|じゃあ|そう、?|ね。/g,"").split(/[。]/).map(s=>s.trim()).filter(s=>s.length>4);
+  const steps = sents.filter(s=>!/絶対|しないで|ないで/.test(s)).slice(0,6).map(s=>s.replace(/^(まず|次に|それから|あと、?)/,"").trim()+"。");
+  const ng = sents.filter(s=>/絶対|しないで|ないで/.test(s)).map(s=>s.trim());
+  return {steps, ng, quiz:[{q:"この手順で、最初にすることは？", o:[steps[0]||"広げる","最後の仕上げ","片づけ"], a:0, why:"動画の最初の手順です。"}]};
+}
+async function makeLesson(){
+  const title=$("#a-title").value.trim()||"新しい手順", text=$("#a-text").value.trim();
+  if(text.length<20){ toast("説明をもう少し長く入れてください"); return; }
+  const btn=$("#mklesson"); btn.disabled=true; btn.textContent="作っています…";
+  let r=null;
+  if(aiOK()){
+    const prompt=`旅館のベテランスタッフが新人に話した説明の文字起こしです。新人向けの手順書と確認テストにしてください。説明にないことは足さないでください。
+題名：${title}
+文字起こし：${text}
+返事は次のJSONだけ：{"steps":["短い手順（1文）"],"ng":["やってはいけないこと"],"rule":"この宿独自の決まりを1文で","quiz":[{"q":"問題","o":["選択肢1","選択肢2","選択肢3"],"a":正解の番号(0始まり),"why":"解説1文"}]}
+stepsは4〜6個、quizは3問。`;
+    try{ r=await sample.json(prompt,{modelTier:"default"}); if(!r||!Array.isArray(r.steps)||!r.steps.length) r=null; }
+    catch(e){ const m=aiErr(e); if(m){ const el=$("#aerr"); el.hidden=false; el.textContent=m; } }
+  }
+  if(!r) r=heuristicLesson(title,text);
+  const quiz=(r.quiz||[]).filter(q=>q&&Array.isArray(q.o)&&q.o.length>=2).map(q=>({q:String(q.q),o:q.o.map(String),a:Math.max(0,Math.min(q.o.length-1,Number(q.a)||0)),why:String(q.why||"")}));
+  const L={id:"c"+Date.now(), title:String(title), time:"2:10", kind:"この宿だけ", steps:r.steps.map(String), ng:(r.ng||[]).map(String),
+    diff:String(r.rule||"ベテランの説明をもとに、AIで手順書にしたものです。"), quiz};
+  state.custom.push(L); render(); toast("教材を追加しました。新人の画面の「教材」に並びます");
+}
+
+/* ======================= 管理：導入効果 ======================= */
+const EFF = [
+  {k:"n", t:"1年に入ってくる新人の人数", u:"人", ph:"例：20", note:"派遣、アルバイト、おてつたびなど、すべて合わせた人数です。"},
+  {k:"h", t:"新人1人に、先輩が教える時間（初日〜3日目）", u:"時間", ph:"例：10", note:"先輩が新人につきっきりになっている時間の合計です。"},
+  {k:"s", t:"そのうち、毎回同じ説明をくり返している時間", u:"時間", ph:"例：3", note:"館内の場所、決まり、時間、持ち物など、だれが来ても同じように話している分です。ここをアプリに任せます。手を動かして教える実技は、これまでどおり先輩が教えます。"},
+  {k:"w", t:"教える先輩の時給", u:"円", ph:"例：1500"}
+];
+const yen = v => Math.round(v).toLocaleString("ja-JP");
+function effCalc(){
+  const e=state.eff, num=k=>{const v=parseFloat(String(e[k]??"").replace(/[^\d.]/g,"")); return isFinite(v)&&v>=0?v:null;};
+  const n=num("n"), h=num("h"), w=num("w"), s0=num("s");
+  if(n===null||h===null||w===null||s0===null) return `<p class="empty">4つすべてを入れると、ここに結果が出ます。数字は、その場で伺って入れます。</p>`;
+  const s1=Math.min(s0,h), hours=n*h, cost=hours*w, back=n*s1;
+  return `<div class="stats">
+      <div class="stat"><span class="label">アプリに任せられる時間（年間）</span><div class="num">${yen(back)}<small>時間</small></div><span class="delta">今は年 ${yen(hours)}時間 教えている</span></div>
+      <div class="stat"><span class="label">金額にすると（年間）</span><div class="num">${yen(back*w)}<small>円</small></div><span class="delta">今は年 ${yen(cost)}円</span></div>
+    </div>
+    <dl class="kv" style="margin-top:12px"><dt>今の負担</dt><dd>${yen(n)}人 × ${yen(h)}時間 × ${yen(w)}円 ＝ 年 ${yen(cost)}円</dd>
+    <dt>任せる分</dt><dd>${yen(n)}人 × 同じ説明 ${yen(s1)}時間 ＝ 年 ${yen(back)}時間（${yen(back*w)}円分）。先輩はこの時間を、実技を教えることやお客様の対応に使えます</dd></dl>
+    ${s0>h?`<p class="note">同じ説明の時間が、教える時間より長く入っています。教える時間と同じとして計算しました。</p>`:""}`;
+}
+function effect(){
+  return `
+  <section class="card">
+    <span class="label">その場で伺って計算します</span>
+    <h2>教える時間が、どれだけ戻るか</h2>
+    <p class="empty">担当の方に4つ伺って、数字を入れます。結果はすぐ下に出ます。</p>
+    <div class="row"><button class="btn ghost small" id="effhint">分からないとき：同じ説明を「教える時間の3割」で入れる</button></div>
+  </section>
+  <section class="card">
+    <span class="label">溜まった質問から</span>
+    <h3>質問係が答えた回数 ${allQs().filter(q=>q.result==="answer").length}回</h3>
+    <p class="empty">先輩が同じ説明をしなくて済んだ回数です。1回5分とすると、約${Math.round(allQs().filter(q=>q.result==="answer").length*5/6)/10}時間になります。</p>
+  </section>
+  <section class="card">
+    ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k]??"")}">${f.note?`<span class="note">${f.note}</span>`:""}</label>`).join("")}
+  </section>
+  <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div></section>
+  <section class="card"><p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。辞める人が減る効果は、ここには入れていません。</p></section>`;
+}
+
+/* ======================= 管理：ヒアリングメモ ======================= */
+function memo(){
+  const m=state.memo, done=memoQs.filter((_,i)=>m[i]&&m[i].ok).length;
+  return `${windowCard()}
+  <section class="card">
+    <span class="label">訪問時に確認すること</span>
+    <h2>ヒアリングメモ ${done} / ${memoQs.length}</h2>
+    <p class="empty">ここは使う人だけが見る画面です。伺ったことを書き込み、確認できたら押して印をつけます。この端末の中だけに残ります。</p>
+  </section>
+  <section class="card">
+    <h3>このデモの情報のもと</h3>
+    <ol class="steps">${(D.memoSources||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+    ${D.memoSourcesNote?`<p class="note">${esc(D.memoSourcesNote)}</p>`:""}
+  </section>
+  ${memoQs.map((q,i)=>`<section class="card">
+    <div class="todo"><button data-memo="${i}" class="${m[i]&&m[i].ok?"done":""}" aria-pressed="${!!(m[i]&&m[i].ok)}"><span class="box" aria-hidden="true">${m[i]&&m[i].ok?"✓":""}</span><span class="t">${i+1}. ${esc(q)}</span></button></div>
+    <textarea data-memotext="${i}" aria-label="${esc(q)}のメモ" placeholder="伺った内容">${esc(m[i]?.text||"")}</textarea>
+  </section>`).join("")}`;
+}
+
+/* ======================= 顔写真 ======================= */
+function openPerson(i){
+  const s=staff[i], box=$("#modal");
+  box.innerHTML=`<div class="sheet-bg" id="sheetbg"><div class="sheet-card" role="dialog" aria-modal="true" aria-label="${s.name}">
+    <div class="portrait">${face(s)}</div>
+    <h2>${s.name}</h2><span class="empty">${s.role} ・ ${s.where}</span>
+    <p class="say">${s.msg}</p>
+    <label class="upload">デモ用：写真を選んで差し替える<input type="file" id="photoin" accept="image/*"></label>
+    <p class="tap">実際のサービスでは、本人の同意を得て撮影した写真を使います。</p>
+    <button class="btn" id="closep" style="width:100%">閉じる</button></div></div>`;
+  box.hidden=false; $("#closep").focus();
+  $("#closep").onclick=closeModal;
+  $("#sheetbg").onclick=e=>{if(e.target.id==="sheetbg")closeModal()};
+  $("#photoin").onchange=e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+    r.onload=()=>{s.photo=r.result; openPerson(i); render(); toast("写真を差し替えました")}; r.readAsDataURL(f)};
+}
+function closeModal(){const box=$("#modal"); box.hidden=true; box.innerHTML=""}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+/* ======================= イベント ======================= */
+function bind(){
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+  document.querySelectorAll("[data-person]").forEach(b=>b.onclick=()=>openPerson(+b.dataset.person));
+  document.querySelectorAll("[data-floor]").forEach(b=>b.onclick=()=>{state.floor=+b.dataset.floor;render()});
+  document.querySelectorAll("[data-prep]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.prep; if(k==="lessons") return go("learn"); if(k==="quiz") return go("quiz");
+    state.prep[k]=!state.prep[k]; render(); });
+  document.querySelectorAll("[data-lesson]").forEach(b=>b.onclick=()=>{state.lesson=b.dataset.lesson;render();window.scrollTo(0,0)});
+  const back=$("#back"); if(back) back.onclick=()=>{state.lesson=null;render()};
+  const L = state.lesson && lessons().find(l=>l.id===state.lesson);
+  const pl=$("#play"); if(pl&&L) pl.onclick=()=>playVideo(L);
+  if(L && state.lang!=="ja" && !state.tr[L.id+":"+state.lang] && aiOK() && !trBusy) translateLesson(L);
+  document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const a=(state.steps[L.id] ||= []); a[+b.dataset.step]=!a[+b.dataset.step]; render()});
+  const md=$("#markdone"); if(md) md.onclick=()=>{state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
+  const tq=$("#toquiz"); if(tq) tq.onclick=()=>{state.quizLesson=state.lesson; go("quiz")};
+  document.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>say(b.dataset.say));
+  const f=$("#composer"); if(f) f.onsubmit=e=>{e.preventDefault();const v=$("#askinput").value.trim();if(v)say(v)};
+  if(askCtl){ const sb=$("#sendbtn"); if(sb) sb.disabled=true; }
+  document.querySelectorAll("[data-ql]").forEach(b=>b.onclick=()=>{state.quizLesson=b.dataset.ql;render()});
+  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
+    const id=state.quizLesson, ans=(state.quiz[id] ||= {}); ans[b.dataset.q]=+b.dataset.o;
+    const Lq=lessons().find(l=>l.id===id);
+    if(Object.keys(ans).length===Lq.quiz.length){ state.scores[id]=`${Lq.quiz.filter((q,i)=>ans[i]===q.a).length}/${Lq.quiz.length}`; }
+    render()});
+  const qd=$("#qdone"); if(qd) qd.onclick=()=>{
+    const id=state.quizLesson; (state.qdone ||= {})[id]=true; state.done[id]=true;
+    const withQuiz=lessons().filter(l=>l.quiz&&l.quiz.length);
+    const next=withQuiz.find(l=>!(state.qdone[l.id]));
+    if(next){ state.quizLesson=next.id; toast("完了しました。次は「"+next.title+"」のテストです"); render(); window.scrollTo(0,0); }
+    else { toast("すべての確認テストが完了しました"); go("sheet"); } };
+  const r2=$("#retry2"); if(r2) r2.onclick=()=>{state.quiz[state.quizLesson]={};render();window.scrollTo(0,0)};
+  const r=$("#retry"); if(r) r.onclick=()=>{state.quiz[state.quizLesson]={};render();window.scrollTo(0,0)};
+  document.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.cv.split(":").map(Number); state.checkin.text=($("#ctext")||{}).value??state.checkin.text; state.checkin.vals[i]=v; render()});
+  const ct=$("#ctext"); if(ct) ct.oninput=()=>{state.checkin.text=ct.value; save()};
+  document.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{ state.checkin.text=($("#ctext")||{}).value??state.checkin.text; state.checkin.to=b.dataset.to; render(); });
+  const ca=$("#canon"); if(ca) ca.onchange=()=>{ state.checkin.anon=ca.checked; save(); };
+  const cs=$("#csend"); if(cs) cs.onclick=async()=>{ state.checkin.text=$("#ctext").value; cs.disabled=true;
+    const ok=await sendVoice(state.checkin); if(!ok){ cs.disabled=false; return; }
+    state.checkin.sent=true; render(); toast(state.checkin.to==="outside"&&state.checkin.text.trim()?"外部の相談窓口に送りました":"教育担当に送りました"); };
+  document.querySelectorAll("[data-relay]").forEach(b=>b.onclick=async()=>{ const i=b.dataset.relay, v=voicesOut()[+i]; if(!v) return;
+    const t=document.getElementById("relay-"+i).value.trim(); if(!t){ toast("施設に伝える文を入れてください"); return; }
+    const rec={text:t, urgent:!!v.urgent, at:Date.now(), when:todayText()};
+    if(live){ try{ await db.collection("relays").add(rec); const ref=db.doc("voices/"+v.uid), snap=await ref.get();
+        const items=((snap.exists&&(snap.data()||{}).items)||[]).map(x=>x.at===v.at?{...x, status:"relayed"}:x); await ref.set({items}); toast("施設に伝えました"); }
+      catch(e){ toast(dbMsg(e)); } return; }
+    (state.relays ||= []).unshift({id:"r"+rec.at, ...rec}); const o=(state.voices||[]).find(x=>x.at===v.at); if(o) o.status="relayed"; toast("施設に伝えました"); render(); });
+  document.querySelectorAll("[data-rdraft]").forEach(b=>b.onclick=async()=>{ const v=voicesOut()[+b.dataset.rdraft]; if(!v) return; b.disabled=true; b.textContent="作っています…";
+    try{ const {text}=await sample(`旅館で働く新人スタッフから、外部の相談窓口に届いた声です。施設の担当者に伝える文に書き直してください。
+ルール：
+1. 名前、出身、勤務日など、本人が分かる言葉を外す。
+2. 施設や人を責める言い方にしない。事実と、本人が困っていることと、施設にお願いしたいことを、やさしい日本語で3文以内にする。
+3. 書き直した文だけを返す。
+届いた声：${v.text}`,{modelTier:"quick"}); (state.relayDraft ||= {})[v.at]=String(text||"").trim(); }
+    catch(e){ const m=aiErr(e); if(m) toast(m); }
+    render(); });
+  const rc=$("#recheck"); if(rc) rc.onclick=()=>{state.checkin.sent=false; render()};
+  document.querySelectorAll("[data-nb]").forEach(b=>b.onclick=()=>{state.newbieView=b.dataset.nb;render();window.scrollTo(0,0)});
+  document.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>{ const k=b.dataset.pp, p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{prep:{[k]:!(p.prep&&p.prep[k])}}); });
+  const ob=$("#ojtby"); if(ob) ob.onchange=()=>{ state.ojtBy=ob.value; save(); };
+  document.querySelectorAll("[data-oj]").forEach(b=>b.onclick=()=>{ const k=b.dataset.oj, p=people().find(x=>x.id===state.newbieView); if(!p) return;
+    const on=!(p.ojt&&p.ojt[k]&&p.ojt[k].done);
+    patchPerson(p.id,{ojt:{[k]:on?{done:true, by:state.ojtBy, at:todayText()}:{done:false, by:"", at:""}}}); if(on) toast(`${state.ojtBy}が教えた記録を残しました`); });
+  const ps=$("#pnotesave"); if(ps) ps.onclick=()=>{ const p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{note:$("#pnote").value.trim()}); toast("引き継ぎメモを残しました"); };
+  const cl=$("#copyline"); if(cl) cl.onclick=async()=>{ const t=$("#linetext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました。LINEに貼りつけてください"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
+  const ns=$("#nsend"); if(ns) ns.onclick=async()=>{ const t=$("#ntext").value.trim(); if(!t){ toast("連絡を入力してください"); return; }
+    const rec={text:t, at:Date.now(), when:todayText()+" "+new Date().toTimeString().slice(0,5)};
+    if(live){ try{ await db.collection("notices").add(rec); toast("新人の画面に出しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    state.notices.unshift({id:"n"+Date.now(), ...rec}); toast("新人の画面に出しました"); render(); };
+  document.querySelectorAll("[data-ndel]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.ndel;
+    if(live){ try{ await db.doc("notices/"+id).delete(); }catch(e){ toast(dbMsg(e)); } return; }
+    state.notices=state.notices.filter(n=>n.id!==id); render(); });
+  const lg=$("#lang"); if(lg) lg.onchange=()=>{ state.lang=lg.value; render(); const Lx=lessons().find(l=>l.id===state.lesson); if(Lx) translateLesson(Lx); };
+  const nb=$("#nback"); if(nb) nb.onclick=()=>{state.newbieView=null;render()};
+  document.querySelectorAll("[data-reply]").forEach(b=>b.onclick=async()=>{
+    const q=openQs().find(x=>x.id==b.dataset.reply); if(!q) return;
+    const txt=document.getElementById("reply-"+q.id).value.trim();
+    if(!txt){toast("回答を入力してください");return}
+    if(live){
+      b.disabled=true;
+      try{ await db.doc("questions/"+q.id).update({status:"answered", answer:txt, answeredBy:"admin", answeredAt:Date.now()});
+        await db.collection("learned").add({k:keywords(q.q), a:txt, src:"女将の回答", q:q.q, at:Date.now()});
+        toast("資料に追加しました。次からは質問係が答えます"); }
+      catch(e){ toast(dbMsg(e)); b.disabled=false; }
+      return;
+    }
+    q.answered=true; q.reply=txt;
+    const lg=state.log.find(x=>x.status==="open"&&x.q===q.q); if(lg){ lg.status="answered"; lg.answer=txt; lg.answeredBy="admin"; }
+    state.learned.push({k:keywords(q.q), a:txt, src:"女将の回答"});
+    state.chat.push({who:"bot", text:`「${q.q}」への${HOST}からの回答です。\n${txt}`, src:"担当者からの回答"});
+    toast("資料に追加しました。次からは質問係が答えます"); render()});
+  document.querySelectorAll("[data-draft]").forEach(b=>b.onclick=async()=>{
+    const q=openQs().find(x=>x.id==b.dataset.draft); if(!q) return; b.disabled=true; b.textContent="作っています…";
+    try{ const {text}=await sample(`旅館「${INN}」の女将として、新人スタッフの質問への回答案を2文で書いてください。宿の資料にない固有名詞（商品名や店名）は「◯◯」と伏せ字にし、女将が埋められるようにしてください。回答文だけを返してください。\n宿の資料：\n${kbText()}\n質問：${q.q}`,{modelTier:"quick"}); state.drafts[q.id]=text.trim(); }
+    catch(e){ const m=aiErr(e); if(m) toast(m); }
+    render()});
+  document.querySelectorAll("[data-done]").forEach(b=>b.onclick=async()=>{const q=openQs().find(x=>x.id==b.dataset.done); if(!q) return;
+    if(live){ try{ await db.doc("questions/"+q.id).update({status:"handled", answeredAt:Date.now()}); toast("対応済みにしました"); }catch(e){ toast(dbMsg(e)); } return; }
+    q.answered=true; toast("対応済みにしました");render()});
+  const mp=$("#mkprops"); if(mp) mp.onclick=makeProps;
+  document.querySelectorAll("[data-adopt]").forEach(b=>b.onclick=()=>setProp(b.dataset.adopt,"adopted"));
+  document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=()=>setProp(b.dataset.reject,"rejected"));
+  const wp=$("#wipe"); if(wp) wp.onclick=wipeLive;
+  const ds=$("#dorm-save"); if(ds) ds.onclick=async()=>{
+    const rec={address:$("#dorm-addr").value.trim(), steps:$("#dorm-steps").value.split("\n").map(x=>x.trim()).filter(Boolean), at:Date.now()};
+    if(live){ try{ await db.doc("settings/dorm").set(rec); toast("道案内を保存しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    state.dorm=rec; toast("道案内を保存しました"); render(); };
+  const gs=$("#gosheet"); if(gs) gs.onclick=()=>{ const t=$("#daysheet"); if(t) t.closest(".card").scrollIntoView({behavior:"smooth",block:"start"}); };
+  document.querySelectorAll("[data-fb]").forEach(b=>b.onclick=async()=>{ const [v,i]=b.dataset.fb.split(":"); const m=state.chat[+i]; if(!m||m.fb) return;
+    m.fb=v; render(); scrollChat();
+    if(v!=="bad") return;
+    if(live){ const q=liveQs.find(x=>x.key===m.fbKey); if(q){ try{ await db.doc("questions/"+q.id).update({status:"open", fb:"bad"}); state.mine[q.id]=1; save(); }catch(e){ toast(dbMsg(e)); } } return; }
+    const lg=state.log.find(x=>x.key===m.fbKey); if(lg){ lg.status="open"; lg.fb="bad"; }
+    state.queue.unshift({id:Date.now(), q:m.q, by:state.profile.name+"さん", risk:false, answered:false, reply:"", fb:"bad", answer:m.text}); save(); render(); });
+  const mw=$("#mkweekly"); if(mw) mw.onclick=()=>{ state.weekly=true; render(); };
+  const cw=$("#closeweekly"); if(cw) cw.onclick=()=>{ state.weekly=false; render(); };
+  const cpw=$("#copyweekly"); if(cpw) cpw.onclick=async()=>{ const t=$("#weeklytext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
+  const fq=$("#findq"); if(fq) fq.oninput=()=>{ const o=$("#findout"); o.innerHTML=findHTML(fq.value);
+    o.querySelectorAll("[data-flesson]").forEach(b=>b.onclick=()=>{ state.tab="learn"; state.lesson=b.dataset.flesson; render(); window.scrollTo(0,0); });
+    o.querySelectorAll("[data-fgo]").forEach(b=>b.onclick=()=>go(b.dataset.fgo)); };
+  const si=$("#sosinline"); if(si) si.onclick=()=>openSOS();
+  const eh=$("#effhint"); if(eh) eh.onclick=()=>{ const h=parseFloat(String(state.eff.h||"").replace(/[^\d.]/g,"")); if(!isFinite(h)||h<=0){ toast("先に「先輩が教える時間」を入れてください"); return; }
+    state.eff.s=String(Math.round(h*3)/10); render(); toast("3割を目安として入れました。あとで直せます"); };
+  document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{ const a=b.dataset.tour; if(a==="close") setTour(null); else if(a==="prev") setTour(state.tour-1); else setTour(state.tour+1>=TOUR.length?null:state.tour+1); });
+  document.querySelectorAll("details[data-fold]").forEach(d=>d.ontoggle=()=>{ (state.open ||= {})[d.dataset.fold]=d.open; save(); });
+  document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ const k=b.dataset.next;
+    if(k==="lessons") return go("learn"); if(k==="quiz") return go("quiz");
+    const t = k==="sheet" ? ($("#daysheet")&&$("#daysheet").closest(".card")) : $("#bringcard"); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  const g=$("#gen"); if(g) g.onclick=generate;
+  const rg=$("#regen"); if(rg) rg.onclick=()=>{state.gen=null;render()};
+  const pb=$("#publish"); if(pb) pb.onclick=()=>{
+    const gg=state.gen;
+    state.profile={name:gg.name,type:gg.type,job:gg.job,date:gg.date,time:gg.time,meet:D.profile.meet,host:gg.host,schedule:gg.schedule,bring:gg.bring,welcome:gg.welcome};
+    upsertPerson({name:gg.name, type:gg.type, job:gg.job, start:gg.date, startISO:parseStart(gg.date), host:gg.host});
+    state.gen=null; setRole("new"); toast(`${gg.name}さんに初日シートを送りました`)};
+  const ml=$("#mklesson"); if(ml) ml.onclick=makeLesson;
+  document.querySelectorAll("[data-qm]").forEach(b=>b.onclick=()=>{ state.quizMode=b.dataset.qm; render(); });
+  document.querySelectorAll("[data-cc]").forEach(b=>b.onclick=()=>{ state.cardCat=b.dataset.cc; state.cardIdx=0; state.cardShow=false; render(); });
+  const csh=$("#cshow"); if(csh) csh.onclick=()=>{ state.cardShow=true; render(); };
+  const curCard=()=>{ const list=allCards().filter(c=>state.cardCat==="all"||c.cat===state.cardCat); const rest=list.filter(c=>!state.known[c.id]); const pool=rest.length?rest:list; return pool.length?pool[state.cardIdx%pool.length]:null; };
+  const ckn=$("#cknow"); if(ckn) ckn.onclick=()=>{ const c=curCard(); if(c) state.known[c.id]=1; state.cardShow=false; render(); };
+  const cag=$("#cagain"); if(cag) cag.onclick=()=>{ state.cardIdx++; state.cardShow=false; render(); };
+  const crs=$("#creset"); if(crs) crs.onclick=()=>{ allCards().filter(c=>state.cardCat==="all"||c.cat===state.cardCat).forEach(c=>delete state.known[c.id]); state.cardIdx=0; render(); };
+  const ac=$("#addcard"); if(ac) ac.onclick=async()=>{ const f=$("#c-front").value.trim(), bk=$("#c-back").value.trim(); if(!f||!bk){ toast("表と裏の両方を入れてください"); return; }
+    const rec={front:f, back:bk, cat:$("#c-cat").value, at:Date.now()};
+    if(live){ try{ await db.collection("cards").add(rec); toast("カードを足しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    state.cards.push({id:"c"+Date.now(), ...rec}); toast("カードを足しました"); render(); };
+  document.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.cdel;
+    if(live){ try{ await db.doc("cards/"+id).delete(); }catch(e){ toast(dbMsg(e)); } return; }
+    state.cards=state.cards.filter(c=>c.id!==id); render(); });
+  document.querySelectorAll("[data-eff]").forEach(inp=>inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); save()});
+  document.querySelectorAll("[data-memo]").forEach(b=>b.onclick=()=>{const i=b.dataset.memo; const m=(state.memo[i] ||= {ok:false,text:""}); m.ok=!m.ok; render()});
+  document.querySelectorAll("[data-memotext]").forEach(t=>t.oninput=()=>{const i=t.dataset.memotext; const m=(state.memo[i] ||= {ok:false,text:""}); m.text=t.value; save()});
+  const sn=$("#seenew"); if(sn) sn.onclick=()=>{setRole("new"); go("learn")};
+}
+function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
+  $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
+$("#innnote").textContent = D.note || "";
+$("#tourbtn").onclick=()=>setTour(0);
+$("#sosbtn").onclick=()=>openSOS();
+$("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };
+$("#role-new").onclick=()=>setRole("new");
+$("#role-admin").onclick=()=>setRole("admin");
+$("#reset").onclick=()=>{ try{localStorage.removeItem(KEY)}catch(e){} state=fresh(); staff.forEach(s=>delete s.photo); applyBig(); setRole("new"); toast(live?"この端末の表示を最初に戻しました。共有データは質問の画面から消せます":"デモを最初の状態に戻しました"); setLiveBadge(); };
+$("#role-new").setAttribute("aria-pressed",state.role==="new");$("#role-admin").setAttribute("aria-pressed",state.role==="admin");
+applyBig();
+render();
+</script>
