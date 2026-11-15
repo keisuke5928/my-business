@@ -407,6 +407,35 @@ nav.tabs button .ic{font-size:1.1rem}
 nav.tabs button[aria-current="page"] .ic{background:var(--ai);color:var(--surface)}
 .sos{width:50px;height:50px;padding:0;justify-content:center;font-size:0;border:2px solid var(--surface);box-shadow:0 6px 18px rgba(27,36,48,.22)}
 .sos::before{width:auto;height:auto;background:none;color:var(--surface);font-family:var(--display);font-size:1.35rem;line-height:1}
+.mtable{display:flex;flex-direction:column;font-variant-numeric:tabular-nums}
+.mrow{display:grid;grid-template-columns:3em repeat(3,1fr);gap:6px;padding:7px 0;border-top:1px solid var(--line);text-align:right;font-size:.95rem}
+.mrow span:first-child{text-align:left}
+.mhead{border-top:0;font-size:.7rem;color:var(--muted);align-items:end}
+.report{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 18px;display:flex;flex-direction:column;gap:16px}
+.report header{display:flex;flex-direction:column;gap:2px;border-bottom:2px solid var(--ai);padding-bottom:12px}
+.rp-brand{font-family:var(--display);color:var(--ai);font-size:.85rem;letter-spacing:.08em}
+.report h2{font-size:1.35rem}.report h3{font-size:1rem;color:var(--ai);margin-bottom:6px}
+.rp-inn{font-family:var(--display);font-size:1.1rem}.rp-meta{font-size:.8rem;color:var(--muted)}
+.rp-lead{font-size:.9rem}
+.report table{width:100%;border-collapse:collapse;font-size:.86rem;font-variant-numeric:tabular-nums}
+.report th,.report td{border-top:1px solid var(--line);padding:7px 4px;text-align:left;vertical-align:top;font-weight:500}
+.report thead th{border-top:0;font-size:.7rem;color:var(--muted)}
+.report tbody th{font-weight:700;width:34%}
+.rp-big{font-family:var(--display);font-size:1.8rem;color:var(--moss);line-height:1.2;font-variant-numeric:tabular-nums}
+.report ol{margin:4px 0 0;padding-left:1.3em;font-size:.88rem;display:flex;flex-direction:column;gap:3px}
+.report small{color:var(--muted)}
+.rp-two{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}
+.rp-two b{font-family:var(--display);font-size:1.3rem;color:var(--ai);margin-right:4px}
+.report footer{font-size:.72rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+@media (max-width:400px){.rp-two{grid-template-columns:1fr}}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff!important;padding:0!important;font-size:11pt}
+  header.top,nav.tabs,.sos,.toast,.noprint,#modal{display:none!important}
+  .app{max-width:none}
+  .report{border:0;padding:0;gap:14pt;color:#000}
+  .rp-two{grid-template-columns:1fr 1.4fr}
+}
 .batable{display:flex;flex-direction:column}
 .barow{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding:10px 0;align-items:flex-start}
 .barow:first-child{border-top:0}
@@ -1427,9 +1456,31 @@ async function setProp(id, status){
   else { const p=state.props.find(x=>x.id===id); if(p) p.status=status; }
   toast(status==="adopted"?"教材に入れました。新人の画面で見られます":"見送りました"); render();
 }
+/* 月ごとの数。質問係が答えた、担当者に回った、担当者の回答が資料に貯まった。答えない話題は種類ごとの件数だけ（中身は出さない）。 */
+function monthStats(months){
+  const key=t=>{ const d=new Date(t); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
+  const m=new Map(), get=k=>{ if(!m.has(k)) m.set(k,{k, auto:0, staff:0, learned:0}); return m.get(k); };
+  allQs().forEach(q=>{ if(!q.at) return; const r=get(key(q.at)); if(q.result==="answer") r.auto++; else r.staff++; });
+  (live?liveLearned:state.learned).forEach(l=>{ if(l.at) get(key(l.at)).learned++; });
+  return [...m.values()].sort((a,b)=>b.k.localeCompare(a.k)).slice(0, months||6);
+}
+function kindCounts(sinceMs){
+  const c={}; allQs().forEach(q=>{ if(!q.risk || (sinceMs && (q.at||0)<sinceMs)) return; const k=kindOf(q); c[k]=(c[k]||0)+1; });
+  return RISK_KINDS.map(([k,t])=>[t, c[k]||0]).filter(([,n])=>n>0);
+}
+function monthsCard(){
+  const ms=monthStats(6), kc=kindCounts(0);
+  if(!ms.length) return "";
+  return `<section class="card"><span class="label">月ごとの数</span><h3>質問係と、担当者の回答</h3>
+    <div class="mtable"><div class="mrow mhead"><span>月</span><span>質問係が答えた</span><span>担当者に回った</span><span>資料に貯まった</span></div>
+    ${ms.map(r=>`<div class="mrow"><span>${+r.k.slice(5)}月</span><span>${r.auto}</span><span>${r.staff}</span><span>${r.learned}</span></div>`).join("")}</div>
+    <p class="note">担当者が答えた内容は資料に貯まり、次からは質問係が答えます。</p>
+    ${kc.length?`<h3>答えずに、担当者に回した話題</h3><div class="row">${kc.map(([t,n])=>`<span class="tag risk">${t} ${n}件</span>`).join("")}</div><p class="note">安全やお客様に関わる話題は、質問係は答えを作りません。件数だけを出しています。</p>`:""}
+  </section>`;
+}
 function queue(){
   const open = openQs(), done = doneQs();
-  return `${insights()}
+  return `${insights()}${monthsCard()}
   <section class="card">
     <span class="label">質問係が答えなかった質問</span>
     <h2>回答を待っている質問 ${open.length}件</h2>
@@ -1646,6 +1697,7 @@ function effCalc(){
     ${s0>h?`<p class="note">同じ説明の時間が、教える時間より長く入っています。教える時間と同じとして計算しました。</p>`:""}`;
 }
 function effect(){
+  if(state.report) return reportView();
   { const sh=mget("_eff"); if(live && Object.keys(sh).length && !typing()) state.eff={...state.eff, ...sh}; }
   return `
   <section class="card">
@@ -1687,7 +1739,7 @@ function baRows(dept){
   return {st, b, a, rows:[
     {t:"新人1人に先輩が教えた時間", b:bh===null?"":bh+"時間", a:ah===null?"":ah+"時間", d:diff(bh,ah,"時間"), good:bh!==null&&ah!==null&&ah<bh},
     {t:"一人立ちまでの日数", b:bd===null?"":bd+"日", a:ad===null?"":ad+"日"+(st.days!==null?`（${st.soloN}人の平均）`:""), d:diff(bd,ad,"日"), good:bd!==null&&ad!==null&&ad<bd},
-    {t:"2週間以内に辞めた人", b:bq===null?"":`${bq}人`+(pct(bq,bn)!==null?`（${bn}人中、${pct(bq,bn)}%）`:""), a:st.n?`${st.quit}人（${st.n}人中、${pct(st.quit,st.n)}%）`:"", d:(pct(bq,bn)!==null&&st.n)?diff(pct(bq,bn),pct(st.quit,st.n),"ポイント"):"", good:pct(bq,bn)!==null&&st.n>0&&pct(st.quit,st.n)<pct(bq,bn)}
+    {t:"2週間以内に辞めた人", b:bq===null?"":`${bq}人`+(pct(bq,bn)!==null?`（${bn}人中、${pct(bq,bn)}%）`:""), a:st.n?(st.n>=3?`${st.quit}人（${st.n}人中、${pct(st.quit,st.n)}%）`:`${st.quit}人（${st.n}人中）`):"", d:(pct(bq,bn)!==null&&st.n>=3)?diff(pct(bq,bn),pct(st.quit,st.n),"ポイント"):"", good:pct(bq,bn)!==null&&st.n>=3&&pct(st.quit,st.n)<pct(bq,bn)}
   ]};
 }
 function beforeAfterCard(){
@@ -1704,7 +1756,54 @@ function beforeAfterCard(){
     ${st.days===null?`<label class="field">一人立ちまでの日数（日）。一人立ちチェックがすべて終わると自動で出ます<input id="ma-days" data-ma="days" inputmode="decimal" placeholder="例：7" value="${esc(a.days??"")}"></label>`:""}
     <div class="batable">${r.rows.map(x=>`<div class="barow"><b>${x.t}</b><div class="bav"><span><small>導入前</small>${x.b||"未入力"}</span><span aria-hidden="true">→</span><span><small>導入後</small>${x.a||"まだ"}</span></div>${x.d?`<span class="tag ${x.good?"ok":""}">${x.d}</span>`:""}</div>`).join("")}</div>
     <p class="note">人数が少ないうちは、数字が大きく動きます。3か月ほど続けてから比べるのがおすすめです。</p>
+    <div class="row"><button class="btn small" id="mkreport">この部署の、1枚のレポートを作る</button></div>
   </section>`;
+}
+/* ---- 1枚の成果レポート。数字だけを載せ、個人が分かる情報は載せない。宿の名前を伏せた版も出せる。 ---- */
+const canPrint = () => PROD || !window.claude;
+function reportData(dept, anon){
+  const r=baRows(dept), st=r.st, b=r.b, v=costVals(), e=state.eff;
+  const name = anon ? (D.anon||"宿の名前は伏せています") : INN, mask = t => anon ? String(t).split(INN).join("この宿") : String(t);
+  const since = st.from ? new Date(st.from+"T00:00:00").getTime() : 0;
+  const qs=allQs().filter(q=>(q.at||0)>=since), auto=qs.filter(q=>q.result==="answer").length, staffN=qs.length-auto;
+  const ls=learnStats(), hard=ls.hard.slice(0,3).map(h=>({text:mask(h.text), title:mask(h.title), n:h.n, w:h.w}));
+  const bh=numOf(b.h), ah=numOf((r.a||{}).h), w=numOf(e.w), h=numOf(e.h), bn=numOf(b.n), bq=numOf(b.quit);
+  const back=[]; 
+  if(bh!==null&&ah!==null&&w!==null&&st.n&&bh>ah) back.push({t:"教える時間が減った分", v:(bh-ah)*st.n*w, how:`${r1(bh-ah)}時間 × ${st.n}人 × ${yen(w)}円`});
+  if(bn&&bq!==null&&st.n>=3&&h!==null&&w!==null){ const teach=h*w;
+    const one={ref:v.salary!==null&&v.feeRate!==null?v.salary*10000*v.feeRate/100+teach:null, ad:v.ad!==null?v.ad+teach:null, haken:v.hakenBill!==null?h*v.hakenBill+teach:null, spot:v.spotWage!==null&&v.spotRate!==null?h*v.spotWage*(1+v.spotRate/100)+teach:null}[v.channel];
+    const fewer=bq/bn*st.n-st.quit;
+    if(one&&fewer>0) back.push({t:"早く辞める人が減った分", v:fewer*one, how:`${r1(fewer)}人 × ${yen(one)}円`}); }
+  return {name, dept:dept==="all"?"全館":dept, basePeriod:b.period||"", afterPeriod:st.from?`${mdText(st.from)}〜${mdText(todayISO())}`:"", n:st.n, rows:r.rows, back, auto, staffN, hard, sample:ls.sample, made:todayISO()};
+}
+function reportText(d){
+  const L=[`【新人教育の成果レポート】${d.name}`, `対象：${d.dept}${d.afterPeriod?`　期間：${d.afterPeriod}（着任 ${d.n}人）`:""}`, d.basePeriod?`導入前の期間：${d.basePeriod}`:"", ""];
+  d.rows.forEach((x,i)=>L.push(`${i+1}. ${x.t}：導入前 ${x.b||"未入力"} → 導入後 ${x.a||"まだ"}${x.d?`（${x.d}）`:""}`));
+  if(d.back.length){ L.push("", "取り戻せた費用（目安）"); d.back.forEach((x,i)=>L.push(`${i+1}. ${x.t}：約${yen(x.v)}円（${x.how}）`)); }
+  L.push("", `質問係が答えた ${d.auto}件、担当者に回った ${d.staffN}件`);
+  if(d.hard.length){ L.push("", "つまずきやすい所"); d.hard.forEach((h,i)=>L.push(`${i+1}. ${h.text}（${h.title}）`)); }
+  L.push("", "数字は目安です。個人が分かる情報は載せていません。");
+  return L.filter(x=>x!==null).join("\n").replace(/\n\n\n+/g,"\n\n");
+}
+function reportView(){
+  const rp=state.report, d=reportData(rp.dept, rp.anon), total=d.back.reduce((a,x)=>a+x.v,0);
+  return `<div class="noprint"><button class="back" id="rpback">← 効果の画面へ</button>
+    <section class="card"><div class="row"><button class="btn ghost small" id="rpanon" aria-pressed="${!!rp.anon}">${rp.anon?"宿の名前を出す":"宿の名前を伏せる"}</button>${canPrint()?`<button class="btn small" id="rpprint">印刷・PDFにする</button>`:""}<button class="btn ghost small" id="rpcopy">文章をコピー</button></div>
+    <p class="note">${canPrint()?"印刷の画面で「PDFに保存」を選ぶと、PDFになります。":"この公開ページからは印刷できません。本番のページでは、印刷とPDFが使えます。"}宿の名前を伏せた版は、ほかの宿に見せるときに使います。</p></section></div>
+  <article class="report" id="report">
+    <header><span class="rp-brand">宿のはじめて帳</span><h2>新人教育の成果レポート</h2>
+      <p class="rp-inn">${esc(d.name)}</p>
+      <p class="rp-meta">対象 ${esc(d.dept)}${d.afterPeriod?` ・ ${esc(d.afterPeriod)}（着任 ${d.n}人）`:""}${d.basePeriod?` ・ 導入前 ${esc(d.basePeriod)}`:""}</p></header>
+    <p class="rp-lead">今ある教え方と知識を1つにそろえ、新人がいつでも見返せるようにした結果です。</p>
+    <section><h3>導入前と導入後</h3>
+      <table><thead><tr><th></th><th>導入前</th><th>導入後</th><th>変化</th></tr></thead><tbody>
+      ${d.rows.map(x=>`<tr><th>${x.t}</th><td>${x.b||"未入力"}</td><td>${x.a||"まだ"}</td><td>${x.d||""}</td></tr>`).join("")}</tbody></table></section>
+    ${d.back.length?`<section><h3>取り戻せた費用（目安）</h3><p class="rp-big">約${yen(total)}円</p>
+      <ol>${d.back.map(x=>`<li>${x.t} 約${yen(x.v)}円<small>（${x.how}）</small></li>`).join("")}</ol></section>`:""}
+    <section class="rp-two"><div><h3>質問係</h3><p><b>${d.auto}</b>件 質問係が答えた</p><p><b>${d.staffN}</b>件 担当者に回った</p></div>
+      <div><h3>つまずきやすい所${d.sample?"（見本）":""}</h3>${d.hard.length?`<ol>${d.hard.map(h=>`<li>${esc(h.text)}<small>（${esc(h.title)}）</small></li>`).join("")}</ol>`:`<p>まだ記録がありません</p>`}</div></section>
+    <footer>数字は目安です。人数が少ないうちは大きく動きます。個人が分かる情報は載せていません。作成 ${mdText(d.made)}</footer>
+  </article>`;
 }
 /* ---- 採用と入れ替わりの費用と比べる ---- */
 const COST_F = [
@@ -1893,7 +1992,7 @@ function bind(){
     }
     q.answered=true; q.reply=txt;
     const lg=state.log.find(x=>x.status==="open"&&x.q===q.q); if(lg){ lg.status="answered"; lg.answer=txt; lg.answeredBy="admin"; }
-    state.learned.push({k:keywords(q.q), a:txt, src:"女将の回答"});
+    state.learned.push({k:keywords(q.q), a:txt, src:"女将の回答", at:Date.now()});
     state.chat.push({who:"bot", text:`「${q.q}」への${HOST}からの回答です。\n${txt}`, src:"担当者からの回答"});
     toast("資料に追加しました。次からは質問係が答えます"); render()});
   document.querySelectorAll("[data-draft]").forEach(b=>b.onclick=async()=>{
@@ -1977,6 +2076,11 @@ function bind(){
     state.cards=state.cards.filter(c=>c.id!==id); render(); });
   document.querySelectorAll("[data-eff]").forEach(inp=>{ inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); const co=$("#costout"); if(co) co.innerHTML=costCalc(); save()};
     inp.onchange=()=>{ if(live) mset("_eff", {...state.eff}); }; });
+  { const mr=$("#mkreport"); if(mr) mr.onclick=()=>{ state.report={dept:state.effDept, anon:false}; render(); window.scrollTo(0,0); };
+    const rb=$("#rpback"); if(rb) rb.onclick=()=>{ state.report=null; render(); };
+    const ra=$("#rpanon"); if(ra) ra.onclick=()=>{ state.report.anon=!state.report.anon; render(); };
+    const rpp=$("#rpprint"); if(rpp) rpp.onclick=()=>window.print();
+    const rc2=$("#rpcopy"); if(rc2) rc2.onclick=async()=>{ const t=reportText(reportData(state.report.dept, state.report.anon)); try{ await navigator.clipboard.writeText(t); toast("コピーしました"); }catch(e){ toast("コピーできませんでした"); } }; }
   document.querySelectorAll("[data-dept]").forEach(b=>b.onclick=()=>{ state.effDept=b.dataset.dept; render(); });
   document.querySelectorAll("[data-mb]").forEach(inp=>inp.onchange=()=>{ const id=deptId(state.effDept), m=mget(id); mset(id,{base:{...(m.base||{}), [inp.dataset.mb]:inp.value.trim()}}).then(()=>setTimeout(render,0)); });
   document.querySelectorAll("[data-ma]").forEach(inp=>inp.onchange=()=>{ const id=deptId(state.effDept), m=mget(id); mset(id,{after:{...(m.after||{}), [inp.dataset.ma]:inp.value.trim()}}).then(()=>setTimeout(render,0)); });
