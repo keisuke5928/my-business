@@ -35,6 +35,13 @@ service cloud.firestore {
         allow read: if member(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings', 'relays'];
         allow write: if admin(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings'];
       }
+      // 人手の見通しと人材の依頼：管理者と運営者だけ。スタッフは読めない
+      match /staffing/{id} {
+        allow read, write: if admin(inn);
+      }
+      match /orders/{id} {
+        allow read, write: if admin(inn);
+      }
       // 外部の相談窓口から施設へ伝える文は、運営者だけが書く
       match /relays/{id} {
         allow write: if isOperator();
