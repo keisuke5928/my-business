@@ -1,0 +1,328 @@
+<title>Oiyo.inc</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Oiyo.inc は、旅館の新人教育アプリ「宿のはじめて帳」を主な事業に、採用代行、営業代行、WEB制作を行っています。">
+<meta name="oiyo-contact" content="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Shippori+Mincho:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 1080pxまでの1カラム。最初に会社の言葉と事業の目次、次に主力の事業を藍色の大きな面で、ほかの事業は罫線で区切った行で静かに並べる。 */
+:root{
+  --bg:#f2f4f5; --surface:#ffffff; --ink:#15202b; --muted:#56626e; --line:#d7dde3;
+  --ai:#1f3f6b; --ai-soft:#e2e9f2; --mark:#d39a1c; --mark-ink:#855a05;
+  --panel:#1b3558; --panel-ink:#ffffff; --panel-soft:#c5d3e8; --panel-line:rgba(255,255,255,.2); --panel-card:#fffdf9; --panel-card-ink:#1b2430; --panel-card-muted:#5c5f5a; --panel-card-line:#e2dccd; --moss:#557532; --moss-soft:#e7eedc;
+  --latin:"Bricolage Grotesque","Zen Kaku Gothic New",system-ui,sans-serif;
+  --body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  --mincho:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#172029; --ink:#e7ecf0; --muted:#9aa6b1; --line:#2a3541;
+  --ai:#9dbbe3; --ai-soft:#1f2e45; --mark:#e3b24a; --mark-ink:#e3b24a;
+  --panel:#162944; --panel-ink:#eef3fa; --panel-soft:#a9bcd8; --panel-line:rgba(255,255,255,.16); --panel-card:#1a212b; --panel-card-ink:#e6eaee; --panel-card-muted:#9aa4ae; --panel-card-line:#2b3440; --moss:#a6c47c; --moss-soft:#26321c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#172029; --ink:#e7ecf0; --muted:#9aa6b1; --line:#2a3541;
+  --ai:#9dbbe3; --ai-soft:#1f2e45; --mark:#e3b24a; --mark-ink:#e3b24a;
+  --panel:#162944; --panel-ink:#eef3fa; --panel-soft:#a9bcd8; --panel-line:rgba(255,255,255,.16); --panel-card:#1a212b; --panel-card-ink:#e6eaee; --panel-card-muted:#9aa4ae; --panel-card-line:#2b3440; --moss:#a6c47c; --moss-soft:#26321c; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.85}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+h1,h2,h3,p,dl,dd{margin:0}
+h1,h2,h3{font-weight:700;line-height:1.5;letter-spacing:.03em;text-wrap:balance;word-break:auto-phrase}
+a{color:var(--ai)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:8px 20px;padding-block:12px;flex-wrap:wrap}
+.logo{font-family:var(--latin);font-weight:700;font-size:1.35rem;letter-spacing:-.01em;color:var(--ink);text-decoration:none;line-height:1}
+.logo i{font-style:normal;color:var(--mark)}
+.top nav{display:flex;gap:2px 20px;flex-wrap:wrap;font-size:.88rem}
+.top nav a{color:var(--ink);text-decoration:none;padding:6px 0}
+.top nav a:hover{color:var(--ai);text-decoration:underline;text-underline-offset:5px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 24px;border-radius:6px;border:1px solid var(--ai);background:var(--ai);color:var(--bg);font-weight:700;letter-spacing:.05em;text-decoration:none;cursor:pointer;transition:transform .08s,filter .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--ai);border-color:var(--ai)}
+.btn:disabled{opacity:.45;cursor:default}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+
+.label{font-family:var(--latin);font-weight:500;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mark-ink)}
+.lead{color:var(--muted);max-width:38em}
+
+/* 最初の画面 */
+.hero{padding-block:72px 64px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:56px;align-items:end}
+.hero-copy{display:flex;flex-direction:column;gap:22px;min-width:0}
+.hero h1{font-size:clamp(2rem,5.4vw,3.4rem);line-height:1.35;letter-spacing:.02em}
+.hero h1 span{display:inline-block}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 68%,var(--mark) 68%,var(--mark) 92%,transparent 92%)}
+.index{border-top:2px solid var(--ink);min-width:0}
+.index a{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:baseline;padding:13px 2px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.index a:hover b{color:var(--ai);text-decoration:underline;text-underline-offset:5px}
+.index b{font-weight:700}
+.index small{font-size:.78rem;color:var(--muted)}
+.index .main small{color:var(--mark-ink);font-weight:700;letter-spacing:.08em}
+.index .main b{font-size:1.15rem}
+
+.sec{padding-block:64px;border-top:1px solid var(--line)}
+.sec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.sec h2{font-size:clamp(1.5rem,3.6vw,2rem)}
+
+/* 主力の事業 */
+.feature{background:var(--panel);color:var(--panel-ink);border-radius:14px;padding:44px 40px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:44px;align-items:center}
+.feature .label{color:var(--panel-soft)}
+.f-copy{display:flex;flex-direction:column;gap:18px;min-width:0}
+.f-name{font-family:var(--mincho);font-weight:600;font-size:clamp(1.9rem,4.6vw,2.7rem);letter-spacing:.08em;line-height:1.3}
+.f-copy>p{color:var(--panel-soft)}
+.f-goals{list-style:none;margin:0;padding:0;border-top:1px solid var(--panel-line)}
+.f-goals li{padding:11px 0;border-bottom:1px solid var(--panel-line);display:grid;grid-template-columns:1.4em 1fr;gap:8px}
+.f-goals li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--mark);margin-top:.72em}
+.feature .btn{background:var(--panel-ink);color:var(--panel);border-color:var(--panel-ink);align-self:flex-start}
+.phone{justify-self:center;width:min(290px,100%);border-radius:28px;background:var(--panel-card);color:var(--panel-card-ink);padding:12px;display:flex;flex-direction:column;gap:10px;font-size:.8rem;line-height:1.6;box-shadow:0 30px 50px -28px rgba(0,0,0,.6)}
+.ph-bar{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 2px;font-family:var(--mincho);font-weight:600;letter-spacing:.06em}
+.ph-bar i{font-style:normal;font-family:var(--body);font-size:.66rem;border:1px solid var(--panel-card-line);border-radius:999px;padding:1px 8px;color:var(--panel-card-muted);letter-spacing:0}
+.ph-sheet{background:var(--panel);color:var(--panel-ink);border-radius:12px;padding:16px 14px;display:flex;flex-direction:column;gap:8px}
+.ph-sheet small{color:var(--panel-soft);letter-spacing:.1em;font-size:.68rem}
+.ph-sheet strong{font-family:var(--mincho);font-size:1.5rem;font-weight:600;line-height:1.3;font-variant-numeric:tabular-nums}
+.ph-sheet dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;border-top:1px solid var(--panel-line);padding-top:8px}
+.ph-sheet dt{color:var(--panel-soft);font-size:.7rem;align-self:center}
+.ph-next{background:var(--moss-soft);border:1px solid var(--moss);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.ph-next small{color:var(--moss);letter-spacing:.1em;font-size:.68rem}
+.ph-chat{display:flex;flex-direction:column;gap:6px;padding:2px}
+.ph-chat span{max-width:88%;padding:7px 11px;border-radius:12px}
+.ph-chat .me{align-self:flex-end;background:var(--panel);color:var(--panel-ink);border-bottom-right-radius:3px}
+.ph-chat .bot{align-self:flex-start;border:1px solid var(--panel-card-line);border-bottom-left-radius:3px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 32px;margin-top:36px;counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;border-top:2px solid var(--ink);padding:14px 0 6px;display:flex;flex-direction:column;gap:4px}
+.steps li::before{content:"0" counter(s);font-family:var(--latin);font-weight:700;color:var(--mark-ink);font-size:.9rem;letter-spacing:.06em}
+.steps b{font-size:1.05rem}
+.steps span{color:var(--muted);font-size:.93rem}
+
+/* ほかの事業 */
+.rows{border-top:2px solid var(--ink)}
+.row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr) minmax(0,1fr);gap:12px 36px;padding:30px 2px;border-bottom:1px solid var(--line);align-items:start}
+.row h3{font-size:1.4rem}
+.row h3 small{display:block;font-family:var(--latin);font-weight:500;font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mark-ink);margin-bottom:2px}
+.row p{color:var(--muted);font-size:.96rem;min-width:0}
+.row ul{margin:0;padding:0;list-style:none;font-size:.92rem;min-width:0}
+.row li{padding:5px 0 5px 16px;position:relative}
+.row li::before{content:"";position:absolute;left:0;top:1.05em;width:7px;height:1px;background:var(--ink)}
+.after{margin-top:22px;color:var(--muted);font-size:.93rem}
+
+/* つながり */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.flow div{padding:26px 24px;display:flex;flex-direction:column;gap:8px;border-left:1px solid var(--line);min-width:0}
+.flow div:first-child{border-left:0}
+.flow strong{font-size:1.5rem;letter-spacing:.06em}
+.flow small{font-size:.78rem;color:var(--mark-ink);font-weight:700;letter-spacing:.06em}
+.flow p{color:var(--muted);font-size:.93rem}
+
+/* 会社のこと */
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px}
+.about dl{border-top:2px solid var(--ink)}
+.about dl div{display:grid;grid-template-columns:6.5em 1fr;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line)}
+.about dt{color:var(--muted);font-size:.9rem}
+.msg{display:flex;flex-direction:column;gap:12px}
+.msg h3{font-size:1.2rem}
+
+/* 相談 */
+form{display:flex;flex-direction:column;gap:14px;max-width:760px;position:relative}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:.88rem;color:var(--muted);min-width:0}
+.field input,.field textarea,.field select{width:100%;min-height:46px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--surface);color:var(--ink);font-size:1rem}
+.field textarea{min-height:120px;resize:vertical}
+.err{color:var(--mark-ink);font-size:.9rem;font-weight:700}
+.okbox{background:var(--ai-soft);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--body);font-size:.9rem;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;max-height:260px;overflow:auto}
+
+.foot{border-top:1px solid var(--line);padding-block:28px 40px;font-size:.82rem;color:var(--muted)}
+.foot .wrap{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+
+@media (max-width:860px){
+  .hero{padding-block:44px 48px}
+  .hero .wrap,.feature,.about{grid-template-columns:1fr;gap:36px}
+  .feature{padding:32px 22px}
+  .sec{padding-block:48px}
+  .row{grid-template-columns:1fr;padding:24px 2px}
+  .flow{grid-template-columns:1fr}
+  .flow div{border-left:0;border-top:1px solid var(--line)}
+  .flow div:first-child{border-top:0}
+}
+</style>
+
+<header class="top"><div class="wrap">
+  <a class="logo" href="#top">Oiyo<i>.</i>inc</a>
+  <nav aria-label="ページの中の案内">
+    <a href="#yado">宿のはじめて帳</a><a href="#services">そのほかの事業</a><a href="#about">会社のこと</a><a href="#contact">相談する</a>
+  </nav>
+</div></header>
+
+<main id="top">
+<section class="hero"><div class="wrap">
+  <div class="hero-copy">
+    <span class="label">Oiyo.inc</span>
+    <h1><span>人が入れ替わる現場に、</span><span><em>続く仕組み</em>を。</span></h1>
+    <p class="lead">Oiyo.inc は、旅館の新人教育アプリ「宿のはじめて帳」を主な事業にしています。あわせて、採用、営業、WEBの仕事もお手伝いします。</p>
+    <div class="btns">
+      <a class="btn" href="#yado">宿のはじめて帳を見る</a>
+      <a class="btn ghost" href="#contact">相談する</a>
+    </div>
+  </div>
+  <nav class="index" aria-label="事業の一覧">
+    <a class="main" href="#yado"><b>宿のはじめて帳</b><small>主な事業</small></a>
+    <a href="#saiyo"><b>採用代行</b><small>採用の実務</small></a>
+    <a href="#eigyo"><b>営業代行</b><small>新しいお客様づくり</small></a>
+    <a href="#web"><b>WEB制作</b><small>ホームページ、採用ページ</small></a>
+  </nav>
+</div></section>
+
+<section class="sec" id="yado"><div class="wrap">
+  <div class="feature">
+    <div class="f-copy">
+      <span class="label">Main service　新人教育アプリ</span>
+      <h2 class="f-name">宿のはじめて帳</h2>
+      <p>派遣、パート、短期のスタッフが入るたびに、同じ説明をくり返していませんか。現場に入ってその宿だけの新人教育を作り、使われ続けるところまで面倒を見るサービスです。</p>
+      <ul class="f-goals">
+        <li>新人に教える時間を減らす</li>
+        <li>一人立ちまでの日数を短くする</li>
+        <li>早く辞める人を減らす</li>
+      </ul>
+      <a class="btn" href="#contact">導入について相談する</a>
+    </div>
+    <div class="phone" role="img" aria-label="アプリの画面の見本。初日シートに、集合の時間と場所、次にやること、質問係とのやりとりが出ている。">
+      <div class="ph-bar">宿のはじめて帳<i>見本</i></div>
+      <div class="ph-sheet">
+        <small>初日シート</small>
+        <strong>5:30 に集合</strong>
+        <dl><dt>集合場所</dt><dd>従業員入口</dd><dt>迎え</dt><dd>朝食の教育担当</dd></dl>
+      </div>
+      <div class="ph-next"><small>次にやること</small><b>着任前の教材を1本見る（3分）</b></div>
+      <div class="ph-chat">
+        <span class="me">卵アレルギーの料理は？</span>
+        <span class="bot">大事なことなので、私からは答えません。板場の責任者に確かめてください。</span>
+      </div>
+    </div>
+  </div>
+  <ol class="steps">
+    <li><b>現場診断（2〜3日）</b><span>現場に入り、仕事の流れと、今の教え方を見せていただきます。</span></li>
+    <li><b>構築（2〜4週間）</b><span>初日シート、教材、質問係の資料を、その宿の内容で作ります。1つの部署からでも始められます。</span></li>
+    <li><b>運用（毎月）</b><span>月に1回、届いた質問や声をもとに中身を直します。作って終わりにしません。</span></li>
+  </ol>
+</div></section>
+
+<section class="sec" id="services"><div class="wrap">
+  <div class="sec-head"><span class="label">Other services</span><h2>そのほかの事業</h2>
+    <p class="lead">人手が足りない会社の、手が回らない仕事を引き受けます。宿泊業のほかの業種でもご相談ください。</p></div>
+  <div class="rows">
+    <div class="row" id="saiyo">
+      <h3><small>Recruiting</small>採用代行</h3>
+      <p>求人を出してから入社が決まるまでの実務を、代わりに進めます。現場の方は、会って決めることに集中できます。</p>
+      <ul><li>求人の文章づくり</li><li>応募した方への連絡</li><li>面接の日程の調整</li></ul>
+    </div>
+    <div class="row" id="eigyo">
+      <h3><small>Sales</small>営業代行</h3>
+      <p>新しいお客様との最初の接点を作ります。宿泊業向けの営業の経験をもとに、商談の場までをお渡しします。</p>
+      <ul><li>訪問先、連絡先のリストづくり</li><li>最初の連絡と資料の送付</li><li>商談の日程の設定</li></ul>
+    </div>
+    <div class="row" id="web">
+      <h3><small>Web</small>WEB制作</h3>
+      <p>スマホで読みやすく、あとから自分たちで直しやすいページを作ります。公開したあとの更新もお手伝いします。</p>
+      <ul><li>ホームページ</li><li>採用ページ</li><li>サービスの紹介ページ</li></ul>
+    </div>
+  </div>
+  <p class="after">ここにない仕事も、まずはお話を聞かせてください。</p>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-head"><span class="label">Why together</span><h2>採る、育てる、届ける。ひとつながりで考えます。</h2>
+    <p class="lead">採用だけ、教育だけでは、人手の悩みは片づきません。入ってから定着するまでを、同じ担当が見ます。</p></div>
+  <div class="flow">
+    <div><small>採用代行</small><strong>採る</strong><p>その現場に合う人に、仕事の中身が正しく伝わる求人を出します。</p></div>
+    <div><small>宿のはじめて帳</small><strong>育てる</strong><p>入った人が、早く一人で動けるようにします。教える側の負担も減らします。</p></div>
+    <div><small>営業代行、WEB制作</small><strong>届ける</strong><p>会社の良さを、お客様と、これから働く人に伝えます。</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="about"><div class="wrap">
+  <div class="sec-head"><span class="label">About</span><h2>会社のこと</h2></div>
+  <div class="about">
+    <dl>
+      <div><dt>名称</dt><dd>Oiyo.inc</dd></div>
+      <div><dt>代表</dt><dd>吉田 圭佑</dd></div>
+      <div><dt>事業の内容</dt><dd>新人教育アプリ「宿のはじめて帳」の提供、採用代行、営業代行、WEB制作</dd></div>
+      <div><dt>お問い合わせ</dt><dd><a href="#contact">このページのフォーム</a>から</dd></div>
+    </dl>
+    <div class="msg">
+      <h3>代表より</h3>
+      <p class="lead">宿泊業向けの人材サービスで、営業を担当してきました。人が入っても、教える時間がとれない。慣れる前に辞めてしまう。そうした現場を多く見てきました。</p>
+      <p class="lead">現場に入るところから毎月の更新まで、代表本人が担当します。</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="sec" id="contact"><div class="wrap">
+  <div class="sec-head"><span class="label">Contact</span><h2>お気軽にご相談ください。</h2>
+    <p class="lead">まだ内容が決まっていなくても大丈夫です。まずはお話を聞かせてください。</p></div>
+  <form id="contact-form" novalidate>
+    <div class="fgrid">
+      <label class="field">ご相談の種類<select id="c-kind">
+        <option>宿のはじめて帳（新人教育アプリ）</option><option>採用代行</option><option>営業代行</option><option>WEB制作</option><option>そのほか</option>
+      </select></label>
+      <label class="field">会社、宿のお名前<input id="c-org" autocomplete="organization" required></label>
+      <label class="field">お名前<input id="c-name" autocomplete="name" required></label>
+      <label class="field">ご連絡先（メールか電話）<input id="c-contact" autocomplete="email" required></label>
+    </div>
+    <label class="field">ご相談の内容（任意）<textarea id="c-body" placeholder="例：朝食の部署で、短期スタッフの受け入れに時間がかかっています。"></textarea></label>
+    <label class="hp" aria-hidden="true">この欄は空のままにしてください<input id="c-site" tabindex="-1" autocomplete="off"></label>
+    <p class="err" id="c-err" hidden></p>
+    <div class="btns"><button class="btn" id="c-send" type="submit">送る</button></div>
+    <div class="okbox" id="c-done" hidden></div>
+  </form>
+</div></section>
+</main>
+
+<footer class="foot"><div class="wrap"><span class="logo">Oiyo<i>.</i>inc</span><span>&copy; 2026 Oiyo.inc</span></div></footer>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  // 送り先は meta に入れる。空のとき（Claudeのアーティファクトなど）は、内容をコピーできる形で出す。
+  const endpoint = (document.querySelector('meta[name="oiyo-contact"]') || {}).content || "";
+  const form = $("#contact-form"), err = $("#c-err"), done = $("#c-done"), send = $("#c-send");
+  function showCopy(text){
+    done.hidden = false; done.textContent = "";
+    const p = document.createElement("p"); p.textContent = "送信の受付は準備中です。下の内容を控えておいてください。";
+    const pre = document.createElement("pre"); pre.className = "copy"; pre.textContent = text;
+    const b = document.createElement("button"); b.type = "button"; b.className = "btn ghost"; b.textContent = "内容をコピーする";
+    b.onclick = () => { navigator.clipboard.writeText(text).then(() => { b.textContent = "コピーしました"; }).catch(() => { const r = document.createRange(); r.selectNodeContents(pre); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = "選びました。コピーしてください"; }); };
+    done.append(p, pre, b);
+  }
+  // 事業の「相談する」から来たときに、種類を合わせておく
+  document.querySelector(".feature .btn").addEventListener("click", () => { $("#c-kind").selectedIndex = 0; });
+  form.addEventListener("submit", async e => {
+    e.preventDefault(); err.hidden = true; done.hidden = true;
+    const kind = $("#c-kind").value, org = $("#c-org").value.trim(), name = $("#c-name").value.trim(), contact = $("#c-contact").value.trim(), body = $("#c-body").value.trim();
+    if(!org || !name || !contact){ err.textContent = "会社か宿のお名前、お名前、ご連絡先を入れてください。"; err.hidden = false; return; }
+    const full = "【" + kind + "】" + (body ? "\n" + body : "");
+    const text = "ご相談の種類：" + kind + "\n会社、宿のお名前：" + org + "\nお名前：" + name + "\nご連絡先：" + contact + (body ? "\n\n" + body : "");
+    if(!endpoint){ showCopy(text); return; }
+    send.disabled = true; send.textContent = "送っています…";
+    try{
+      // 受け口は「宿のはじめて帳」と同じ形（inn、name、contact、body、site）
+      const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ inn: org, name: name, contact: contact, body: full, site: $("#c-site").value }) });
+      if(!r.ok) throw new Error(String(r.status));
+      done.hidden = false; done.textContent = "受け付けました。ありがとうございます。数日のうちに、こちらからご連絡します。";
+      form.querySelectorAll("input,textarea").forEach(el => { el.value = ""; });
+    }catch(e2){
+      err.textContent = "送れませんでした。少し待ってから、もう一度お試しください。"; err.hidden = false;
+    }
+    send.disabled = false; send.textContent = "送る";
+  });
+})();
+</script>
