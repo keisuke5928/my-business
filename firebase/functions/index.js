@@ -4,7 +4,7 @@
 //   whoami      : ログインした人の役割を返す。運営者のメールアドレスなら運営者にする
 //   grantAdmin  : 運営者が、メールアドレスを指定して宿の管理者を追加する
 //   invite      : 管理者と運営者が、スタッフ用の招待リンクを見る、作り直す
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret, defineString, defineInt } = require("firebase-functions/params");
 const { initializeApp } = require("firebase-admin/app");
@@ -165,6 +165,28 @@ exports.ai = onCall({ secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, memory:
     tokensOut: FieldValue.increment(res.usage.output_tokens || 0) }, { merge: true });
   if (!json) return { text, truncated: res.stop_reason === "max_tokens" };
   return { value: parseJson(text) };
+});
+
+// ---------- ホームページの相談フォーム ----------
+// 送るもの: { inn, name, contact, body, site }。site は人には見えない欄で、入っていたら機械の書き込みとして捨てる。
+// leads に残す。読めるのはサーバー側だけ（運営者は Firebase の画面で見る）。1日の件数に上限をつける。
+exports.contact = onRequest({ cors: false, memory: "256MiB" }, async (req, res) => {
+  if (req.method !== "POST") { res.status(405).json({ error: "POST only" }); return; }
+  const b = (req.body && typeof req.body === "object") ? req.body : {};
+  const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const lead = { inn: str(b.inn, 100), name: str(b.name, 100), contact: str(b.contact, 200), body: str(b.body, 4000) };
+  if (str(b.site, 10)) { res.json({ ok: true }); return; }
+  if (!lead.inn || !lead.name || !lead.contact) { res.status(400).json({ error: "missing" }); return; }
+  const day = db().doc(`site/leads_${today()}`);
+  const n = await db().runTransaction(async (tx) => {
+    const s = await tx.get(day);
+    const c = (s.exists ? s.get("n") : 0) + 1;
+    tx.set(day, { n: c }, { merge: true });
+    return c;
+  });
+  if (n > 100) { res.status(429).json({ error: "busy" }); return; }
+  await db().collection("leads").add({ ...lead, at: Date.now() });
+  res.json({ ok: true });
 });
 
 function parseJson(text) {

@@ -3,6 +3,7 @@
     "public": "public",
     "ignore": ["**/.*"],
     "cleanUrls": true,
+    "rewrites": [{ "source": "/api/contact", "function": { "functionId": "contact", "region": "asia-northeast1" } }],
     "headers": [
       { "source": "**/*.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
       { "source": "**", "headers": [

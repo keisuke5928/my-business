@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>新人教育かんたん診断</title>
+<meta name="description" content="12の質問で、旅館の新人教育の今を確かめる診断です。宿のはじめて帳。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="site.css">
+<style>
+/* 診断だけのスタイル。720pxの1カラム。質問は4つの分野に分け、答えると下の結果がその場で変わる。 */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.narrow{max-width:720px}
+.intro{padding-block:40px 28px;display:flex;flex-direction:column;gap:14px}
+.intro h1{font-size:clamp(1.6rem,5vw,2.2rem);color:var(--ai)}
+.area{padding-block:28px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:16px}
+.area h2{font-size:1.25rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.q p{font-weight:500}
+.q .n{font-family:var(--display);color:var(--ai);font-weight:700;margin-right:8px;font-variant-numeric:tabular-nums}
+.opts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.opts button{min-height:46px;border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 4px;font-size:.84rem;cursor:pointer;line-height:1.35;transition:background .15s,border-color .15s}
+.opts button[aria-pressed="true"]{background:var(--ai);border-color:var(--ai);color:var(--surface);font-weight:700}
+@media (max-width:460px){.opts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.progress{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.progress .wrap{display:flex;align-items:center;gap:12px;padding-block:10px;font-size:.84rem;color:var(--muted)}
+.track{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--moss);transition:width .25s}
+.nums-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.result{padding-block:36px 56px;border-top:2px solid var(--ai);display:flex;flex-direction:column;gap:22px}
+.result h2{font-size:1.5rem;color:var(--ai)}
+.total{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.total b{font-family:var(--display);font-size:2.6rem;color:var(--ai);line-height:1.1;font-variant-numeric:tabular-nums}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.92rem}
+.bar .v{font-variant-numeric:tabular-nums;color:var(--muted)}
+.bar .track{grid-column:1/-1;height:10px;border-radius:5px}
+.bar .track i{background:var(--ai)}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.block h3{font-size:1.1rem}
+.good li{padding:6px 0 6px 1.6em;position:relative;border-top:1px solid var(--line);font-size:.94rem}
+.good li:first-child{border-top:0}
+.good li::before{content:"";position:absolute;left:.2em;top:.95em;width:.7em;height:.38em;border-left:2px solid var(--moss);border-bottom:2px solid var(--moss);transform:rotate(-45deg)}
+.next b{display:block}
+.next .tip{display:block;color:var(--ink);font-size:.92rem;margin-top:2px}
+.next .svc{display:block;color:var(--moss);font-size:.86rem;margin-top:4px}
+.money{background:var(--moss-soft);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:4px}
+.money b{font-family:var(--display);font-size:1.7rem;color:var(--moss);font-variant-numeric:tabular-nums;line-height:1.3}
+.waiting{color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:20px}
+.linkish{border:0;background:none;color:var(--ai);text-decoration:underline;text-underline-offset:4px;cursor:pointer;padding:0;font-size:.88rem}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html">宿のはじめて帳</a>
+  <nav aria-label="案内"><a href="index.html">ホーム</a><a href="index.html#contact">相談する</a></nav>
+</div></header>
+
+<div class="progress" aria-live="polite"><div class="wrap narrow"><span id="pg-text">0 / 12 問</span><span class="track"><i id="pg-bar"></i></span></div></div>
+
+<main class="wrap narrow">
+  <section class="intro">
+    <span class="eyebrow">3分でできます</span>
+    <h1>新人教育かんたん診断</h1>
+    <p class="lead">12の質問に答えると、今できていることと、最初に手をつけるとよいところが分かります。答えはこの端末の中だけに残り、どこにも送られません。</p>
+    <label class="field" style="max-width:340px">宿のお名前（任意。結果に入ります）<input id="inn" autocomplete="organization"></label>
+  </section>
+
+  <div id="areas"></div>
+
+  <section class="area">
+    <span class="eyebrow">任意</span>
+    <h2>数字が分かれば、教えてください</h2>
+    <p class="note">毎回同じ説明に使っている時間を、1年分にして出します。分かる範囲で大丈夫です。</p>
+    <div class="nums-grid">
+      <label class="field">1年に入ってくる新人の人数<input id="n-people" inputmode="numeric" placeholder="例 30"></label>
+      <label class="field">新人1人に、先輩が教える時間（時間）<input id="n-hours" inputmode="decimal" placeholder="例 12"></label>
+      <label class="field">そのうち、毎回同じ説明の時間（時間）<input id="n-repeat" inputmode="decimal" placeholder="例 4"></label>
+      <label class="field">教える先輩の時給（円）<input id="n-wage" inputmode="numeric" placeholder="例 1300"></label>
+    </div>
+    <div><button class="linkish" id="n-third" type="button">同じ説明の時間が分からないときは、教える時間の3割で入れる</button></div>
+  </section>
+
+  <section class="result" id="result" aria-live="polite"></section>
+</main>
+
+<footer class="foot"><div class="wrap"><span>宿のはじめて帳</span><span>この診断は目安です。くわしくは現場で確かめます。</span></div></footer>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const KEY = "yado-shindan-v1";
+  // tip は宿が自分でできる小さな一歩。svc は宿のはじめて帳でできること。
+  const AREAS = [
+    { name: "着任の前と初日", qs: [
+      { t: "着任の前に、集合の時間と場所、持ち物が、文章で本人に届いている。", s: "着任前の案内", tip: "いま口頭や電話で伝えていることを、1通の文章にまとめて送るだけでも変わります。", svc: "初日シートが、本人のスマホに届きます。" },
+      { t: "初日にだれが迎えて、何をするかが決まっている。", s: "初日の流れ", tip: "初日の流れを、時間と場所で5行ほどに書き出してみてください。", svc: "当日の流れと迎える人が、初日シートに出ます。" },
+      { t: "寮、食事、買い物など、生活の案内がまとまっている。", s: "生活の案内", tip: "新人が最初の夜に困ることを、先輩に3つ聞いてみてください。", svc: "寮までの道、食事、周りのお店を、いつでも見られます。" } ] },
+    { name: "教える仕組み", qs: [
+      { t: "部署ごとの手順が、紙や動画など、あとで見返せる形になっている。", s: "見返せる手順", tip: "まず1つの仕事だけ、手順を5つに分けて書いてみてください。", svc: "仕事ごとの3分の教材と、手順のチェックを作ります。" },
+      { t: "教える人が変わっても、同じ内容を伝えられる。", s: "教える内容がそろっている", tip: "先輩どうしで「最初の日に必ず伝えること」を出し合うと、そろえやすくなります。", svc: "現場で聞き取り、宿としての1つの形にまとめます。" },
+      { t: "外国人スタッフや短期の人にも伝わる、やさしい説明がある。", s: "やさしい説明", tip: "よく使う言葉を10個えらび、やさしい言い方を横に書いてみてください。", svc: "教材を6つの言葉に訳せます。宿の言葉の説明もつきます。" } ] },
+    { name: "聞ける、相談できる", qs: [
+      { t: "忙しい時間でも、新人が分からないことを確かめる方法がある。", s: "忙しいときの確かめ方", tip: "「これだけは聞いてよい人」を1人決めて、新人に伝えてください。", svc: "質問係が、宿の資料からその場で答えます。" },
+      { t: "よく聞かれる質問と答えが、どこかにまとまっている。", s: "質問と答えの蓄積", tip: "1週間だけ、聞かれた質問をメモに残してみてください。", svc: "質問と担当の方の答えが、自動で資料に貯まります。" },
+      { t: "アレルギーやけがなど、必ず担当者に回すことが、新人に伝わっている。", s: "担当者に回す決まり", tip: "「自分で答えないこと」を紙1枚にして、最初の日に渡してください。", svc: "質問係は安全に関わることに答えず、必ず人につなぎます。" } ] },
+    { name: "一人立ちと記録", qs: [
+      { t: "何ができたら一人でまかせるか、基準が決まっている。", s: "一人立ちの基準", tip: "1つの仕事について「これができたら一人で入れる」を5つ書いてみてください。", svc: "仕事ごとの一人立ちチェックで、教えた人と日付が残ります。" },
+      { t: "入って1〜2週間のうちに、新人の様子を聞く機会がある。", s: "様子を聞く機会", tip: "3日目と7日目に、5分だけ話を聞く時間をとってみてください。", svc: "1分のふりかえりで、声をかけたほうがよい人が分かります。" },
+      { t: "教えるのにかかった時間や、早く辞めた人数を記録している。", s: "時間と人数の記録", tip: "まず今月だけ、新人1人に付いた時間をざっくり書き残してください。", svc: "導入の前と後を、数字で比べてお伝えします。" } ] }
+  ];
+  const OPTS = [["できている", 2], ["一部できている", 1], ["まだ", 0], ["分からない", -1]];
+  const ALL = AREAS.flatMap((a, ai) => a.qs.map((q, qi) => ({ ...q, ai, id: ai * 3 + qi })));
+  let st = { a: {}, inn: "", people: "", hours: "", repeat: "", wage: "" };
+  try{ const s = JSON.parse(localStorage.getItem(KEY) || "null"); if(s && typeof s === "object") st = Object.assign(st, s); }catch(e){}
+  const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; };
+  const pts = v => (v > 0 ? v : 0);
+  const num = v => { const n = parseFloat(String(v).replace(/[,，\s]/g, "").replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))); return isFinite(n) && n >= 0 ? n : null; };
+  const yen = n => Math.round(n).toLocaleString("ja-JP");
+
+  // 質問を描く
+  const areas = $("#areas");
+  AREAS.forEach((a, ai) => {
+    const sec = el("section", "area");
+    sec.append(el("span", "eyebrow", "分野 " + (ai + 1) + " / 4"), el("h2", null, a.name));
+    a.qs.forEach((q, qi) => {
+      const id = ai * 3 + qi, box = el("div", "q"), p = el("p");
+      p.append(el("span", "n", String(id + 1)), document.createTextNode(q.t));
+      const opts = el("div", "opts"); opts.setAttribute("role", "group"); opts.setAttribute("aria-label", "質問" + (id + 1));
+      OPTS.forEach(([label, val]) => {
+        const b = el("button", null, label); b.type = "button"; b.dataset.q = id; b.dataset.v = val;
+        b.setAttribute("aria-pressed", String(st.a[id] === val));
+        b.onclick = () => { st.a[id] = val; opts.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); save(); draw(); };
+        opts.append(b);
+      });
+      box.append(p, opts); sec.append(box);
+    });
+    areas.append(sec);
+  });
+
+  // 入力欄
+  const bindIn = (sel, key) => { const i = $(sel); i.value = st[key] || ""; i.addEventListener("input", () => { st[key] = i.value; save(); draw(); }); };
+  bindIn("#inn", "inn"); bindIn("#n-people", "people"); bindIn("#n-hours", "hours"); bindIn("#n-repeat", "repeat"); bindIn("#n-wage", "wage");
+  $("#n-third").onclick = () => { const h = num(st.hours); if(h == null || h === 0){ $("#n-hours").focus(); return; } st.repeat = String(Math.round(h * 3) / 10); $("#n-repeat").value = st.repeat; save(); draw(); };
+
+  function summary(r){
+    const L = [];
+    if(st.inn.trim()) L.push(st.inn.trim() + " 様");
+    L.push("新人教育かんたん診断の結果（" + new Date().toLocaleDateString("ja-JP") + "）");
+    L.push("全体 " + r.total + " / 24点。" + r.head);
+    AREAS.forEach((a, i) => L.push((i + 1) + ". " + a.name + " " + r.area[i] + " / 6点"));
+    if(r.good.length) L.push("", "できていること", ...r.good.map((q, i) => (i + 1) + ". " + q.s));
+    if(r.next.length) L.push("", "最初に手をつけるとよいところ", ...r.next.map((q, i) => (i + 1) + ". " + q.s + "。" + q.tip));
+    if(r.unknown.length) L.push("", "現場で確かめたいこと", ...r.unknown.map((q, i) => (i + 1) + ". " + q.s));
+    if(r.money) L.push("", "毎回同じ説明に使っている時間は、1年で約" + yen(r.money.hours) + "時間" + (r.money.yen != null ? "（約" + yen(r.money.yen) + "円）" : "") + "。");
+    L.push("", "この診断は目安です。");
+    return L.join("\n");
+  }
+  function compute(){
+    const done = ALL.filter(q => st.a[q.id] != null).length;
+    const area = AREAS.map((a, ai) => ALL.filter(q => q.ai === ai).reduce((s, q) => s + pts(st.a[q.id] ?? 0), 0));
+    const total = area.reduce((s, v) => s + v, 0);
+    const head = total >= 18 ? "土台ができています。今ある形を保ち、更新していく段階です。"
+      : total >= 10 ? "できているところと、先輩の力で支えているところが混ざっています。"
+      : "いまは、先輩の方の力で支えている状態です。少しずつ形にしていけます。";
+    const good = ALL.filter(q => st.a[q.id] === 2);
+    const next = ALL.filter(q => st.a[q.id] === 0).concat(ALL.filter(q => st.a[q.id] === 1)).slice(0, 3);
+    const unknown = ALL.filter(q => st.a[q.id] === -1);
+    const p = num(st.people), rp = num(st.repeat), w = num(st.wage);
+    const money = (p && rp) ? { hours: p * rp, yen: w ? p * rp * w : null } : null;
+    return { done, area, total, head, good, next, unknown, money };
+  }
+  function draw(){
+    const r = compute(), box = $("#result");
+    $("#pg-text").textContent = r.done + " / 12 問"; $("#pg-bar").style.width = (r.done / 12 * 100) + "%";
+    box.textContent = "";
+    box.append(el("span", "eyebrow", "結果"));
+    if(r.done < 12){
+      box.append(el("h2", null, "答えると、ここに結果が出ます"));
+      box.append(el("p", "waiting", "あと " + (12 - r.done) + " 問です。全体の点数、分野ごとの様子、最初に手をつけるとよいところが出ます。"));
+      try{ localStorage.removeItem("yado-shindan-summary"); }catch(e){}
+      return;
+    }
+    box.append(el("h2", null, (st.inn.trim() ? st.inn.trim() + " の" : "") + "新人教育の今"));
+    const tot = el("div", "total"), b = el("b", null, String(r.total)); tot.append(b, el("span", "lead", "/ 24点")); box.append(tot);
+    box.append(el("p", null, r.head));
+    const bars = el("div", "bars");
+    AREAS.forEach((a, i) => { const row = el("div", "bar"); row.append(el("span", null, a.name), el("span", "v", r.area[i] + " / 6")); const t = el("span", "track"), f = el("i"); f.style.width = (r.area[i] / 6 * 100) + "%"; t.append(f); row.append(t); bars.append(row); });
+    box.append(bars);
+    if(r.good.length){ const g = el("div", "block"); g.append(el("h3", null, "できていること")); const ul = el("ul", "plain good"); r.good.forEach(q => ul.append(el("li", null, q.s))); g.append(ul); box.append(g); }
+    if(r.next.length){
+      const n = el("div", "block"); n.append(el("h3", null, "最初に手をつけるとよいところ")); const ol = el("ol", "plain nums next");
+      r.next.forEach(q => { const li = el("li"); li.append(el("b", null, q.s)); const wrap = el("span"); wrap.append(el("span", "tip", q.tip), el("span", "svc", "宿のはじめて帳では　" + q.svc)); li.append(wrap); ol.append(li); });
+      n.append(ol); box.append(n);
+    }
+    if(r.unknown.length){ const u = el("div", "block"); u.append(el("h3", null, "現場で確かめたいこと")); u.append(el("p", "note", "「分からない」と答えた項目です。現場の方に聞くと、様子が分かります。")); const ol = el("ol", "plain nums"); r.unknown.forEach(q => { const li = el("li"); li.append(el("b", null, q.s)); ol.append(li); }); u.append(ol); box.append(u); }
+    if(r.money){
+      const m = el("div", "money"); m.append(el("span", "note", "毎回同じ説明に使っている時間（1年）"), el("b", null, "約" + yen(r.money.hours) + "時間" + (r.money.yen != null ? "　約" + yen(r.money.yen) + "円" : "")));
+      m.append(el("span", "note", "人数 × 同じ説明の時間" + (r.money.yen != null ? " × 時給" : "") + " で出しています。入れた数字からの目安です。")); box.append(m);
+    }
+    const text = summary(r);
+    try{ localStorage.setItem("yado-shindan-summary", text); }catch(e){}
+    const btns = el("div", "btns");
+    const copy = el("button", "btn ghost", "結果をコピーする"); copy.type = "button"; copy.id = "copy";
+    const pre = el("pre", "copy", text); pre.hidden = true;
+    copy.onclick = () => { navigator.clipboard.writeText(text).then(() => { copy.textContent = "コピーしました"; }).catch(() => { pre.hidden = false; const rg = document.createRange(); rg.selectNodeContents(pre); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rg); copy.textContent = "下の文を選びました"; }); };
+    const go = el("a", "btn", "この結果で相談する"); go.href = "index.html#contact";
+    btns.append(go, copy); box.append(btns, pre);
+    const again = el("button", "linkish", "答えを消して、最初からやり直す"); again.type = "button"; again.id = "again";
+    again.onclick = () => { st = { a: {}, inn: "", people: "", hours: "", repeat: "", wage: "" }; save(); try{ localStorage.removeItem("yado-shindan-summary"); }catch(e){} document.querySelectorAll(".opts button").forEach(x => x.setAttribute("aria-pressed", "false")); ["#inn", "#n-people", "#n-hours", "#n-repeat", "#n-wage"].forEach(s => { $(s).value = ""; }); draw(); scrollTo(0, 0); };
+    box.append(el("p", "note", "この診断は目安です。点数は良い悪いを決めるものではありません。くわしくは、現場を見せていただいて確かめます。"), again);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

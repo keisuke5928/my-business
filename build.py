@@ -90,11 +90,29 @@ def build_firebase(cfg_path, inns, app):
         out.mkdir(exist_ok=True)
         (out / "index.html").write_text(render(app, inn, f"宿のはじめて帳 {inn['name']}", runtime), encoding="utf-8")
         print(f"firebase/public/{iid}/index.html を作りました（{inn['name']}）")
-    (pub / "index.html").write_text(
-        "<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">"
-        "<title>宿のはじめて帳</title><body style=\"font-family:system-ui,sans-serif;padding:24px;line-height:1.7\">"
-        "<h1 style=\"font-size:1.3rem\">宿のはじめて帳</h1><p>旅館から届いたリンクを開いてください。</p></body>",
-        encoding="utf-8")
+    build_site(pub, "/api/contact")
+
+
+SITE = ROOT / "site"
+SITE_HEAD = ('<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
+             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+             '<style>body{margin:0}[hidden]{display:none!important}</style>\n')
+
+
+def build_site(out, contact=""):
+    """ホームページ（site/index.html）と診断（site/shindan.html）を out に置く。
+    site/index.html は Claude のアーティファクト用に、doctype や head のない形で書いてある。ここで足す。
+    contact は相談フォームの送り先。空のときは「準備中」の表示になる。"""
+    page = (SITE / "index.html").read_text(encoding="utf-8")
+    mark = '<meta name="yado-contact" content="">'
+    if page.count(mark) != 1:
+        sys.exit("site/index.html に yado-contact の meta がちょうど1つ必要です")
+    page = page.replace(mark, f'<meta name="yado-contact" content="{contact}">')
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "index.html").write_text(SITE_HEAD + page, encoding="utf-8")
+    for name in ("site.css", "shindan.html"):
+        (out / name).write_text((SITE / name).read_text(encoding="utf-8"), encoding="utf-8")
+    print(f"{out.relative_to(ROOT)}/ にホームページと診断を作りました")
 
 
 def main():

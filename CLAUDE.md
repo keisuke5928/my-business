@@ -45,6 +45,13 @@
     4. `firebase/firestore.rules` で、宿のデータは `inns/<宿のid>/` の下に分け、他の宿から読めない。
     5. ビルドは `python3 build.py --firebase firebase/config.json`（`firebase/config.example.json` を写して本物の設定を入れる。config.json はコミットしない）。
     6. テストは、エミュレーターを `firebase emulators:start --project demo-yado --only auth,firestore,functions,hosting`（functions/.env.local に `AI_FAKE=1`）で動かし、`python3 build.py --firebase firebase/config.emulator.json` のあと `cd firebase && node tests/e2e.js`。
+11. ホームページと診断（`site/`、11月15日）。サービス名は「宿のはじめて帳」で確定。
+    1. `site/index.html` がホームページ、`site/shindan.html` が「新人教育かんたん診断」（12問、4分野、24点。数字を入れると、同じ説明に使う時間と金額も出る）、`site/site.css` が共通のスタイル。見た目はアプリと同じ色と書体。
+    2. 圭佑の決定。診断はホームページと訪問の両方で使う。料金は載せない。問い合わせはフォーム。運営者は名前と短い経歴を載せる（会社名は出さない）。
+    3. `site/index.html` は Claude のアーティファクト用に、doctype や head のない形で書く。`python3 build.py --firebase ...` が `firebase/public/` に本番用を作り、フォームの送り先（`/api/contact`）を入れる。アーティファクトでは送り先が空で、「準備中」と内容のコピーが出る。
+    4. フォームの受け口は functions の `contact`。Firestore の `leads` に残す（運営者が Firebase の画面で見る。メールでの知らせはまだない）。
+    5. 診断の答えは端末の中だけ（`yado-shindan-v1`）。結果の文は「この結果で相談する」でフォームに入る。
+    6. エミュレーターで `/api/contact` を試すときは、プロキシの環境変数を外して起動する（`env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy firebase emulators:start ...`）。
 
 ## 1. 目的と期限
 1. 旅館の新人教育（派遣・パート・アルバイト・新人社員）をAIで仕組み化するサービスの営業デモを作っている。
