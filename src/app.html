@@ -860,6 +860,11 @@ function sheet(){
     ${D.rulesNote?`<p class="note">${esc(D.rulesNote)}</p>`:""}
   </details>
   ${dormCard()}
+  ${(D.nearby||[]).length?`<details class="card fold" data-fold="nearby" ${state.open&&state.open.nearby?"open":""}>
+    <summary><h2>近くのお店と施設</h2></summary>
+    <div>${D.nearby.map(n=>`<div class="fac"><b>${esc(n.name)}</b>${n.note?`<span>${esc(n.note)}</span>`:""}</div>`).join("")}</div>
+    ${D.areaName?`<p class="note">${esc(D.areaName)}の案内です。</p>`:""}
+  </details>`:""}
   <details class="card fold" data-fold="words" ${state.open&&state.open.words?"open":""}>
     <summary><h2>この宿の言葉</h2></summary>
     <div>${terms.map(([t,d])=>`<details class="term"><summary>${t}</summary><p>${d}</p></details>`).join("")}</div>
@@ -918,7 +923,7 @@ function learn(){
   </section>
   <div class="lesson-list">${all.map(l=>`
     <button class="lesson" data-lesson="${l.id}"><div><b>${esc(l.title)}</b><span>動画 ${esc(l.time)} ・ 手順${l.steps.length}つ${l.faq&&l.faq.length?` ・ 質問から追加 ${l.faq.length}`:""}${state.scores[l.id]?` ・ テスト ${state.scores[l.id]}`:""}</span></div>
-    <span class="status ${state.done[l.id]?"done":(l.kind==="共通"?"":"own")}">${state.done[l.id]?"見た":(l.kind==="共通"?"未視聴":"この宿だけ")}</span></button>`).join("")}</div>`;
+    <span class="status ${state.done[l.id]?"done":(l.kind==="共通"?"":"own")}">${state.done[l.id]?"見た":(l.kind==="共通"?"未視聴":esc(l.kind||"この宿だけ"))}</span></button>`).join("")}</div>`;
 }
 function trBlock(L){
   if(state.lang==="ja") return "";

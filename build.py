@@ -51,6 +51,36 @@ def check(inn, path):
             sys.exit(f"{path.name}: {key} の教材 id「{inn[key]}」が lessons にありません")
 
 
+AREAS = ROOT / "areas"
+
+
+def apply_area(inn):
+    """温泉地（エリア）で共通の中身を、宿のデータに重ねる。
+    宿のデータに "area": "<id>" があると、areas/<id>.json の kb、lessons、cards、nearby、terms を足す。
+    同じ id のものが宿にあれば、宿のものを使う（上書き）。"areaHide" に id を書くと、その宿では出さない。
+    重ねるのはビルドのときだけ。宿の新人や質問のデータは、エリアやほかの宿からは見えない。"""
+    aid = inn.get("area")
+    if not aid:
+        return inn
+    path = AREAS / f"{aid}.json"
+    if not path.exists():
+        sys.exit(f"inns/{inn.get('id')}.json: areas/{aid}.json がありません")
+    area = json.loads(path.read_text(encoding="utf-8"))
+    hide = set(inn.get("areaHide", []))
+    out = dict(inn)
+    for key in ("kb", "lessons", "cards", "nearby"):
+        own = list(inn.get(key, []))
+        own_ids = {x.get("id") for x in own if isinstance(x, dict) and x.get("id")}
+        extra = [x for x in area.get(key, []) if x.get("id") not in own_ids and x.get("id") not in hide]
+        if own or extra:
+            out[key] = own + extra
+    own_terms = list(inn.get("terms", []))
+    seen = {t[0] for t in own_terms}
+    out["terms"] = own_terms + [t for t in area.get("terms", []) if t[0] not in seen and t[0] not in hide]
+    out["areaName"] = area.get("name", "")
+    return out
+
+
 def render(app, inn, title, runtime=""):
     data = json.dumps(inn, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     if app.count("<!--__RUNTIME__-->") != 1:
@@ -132,7 +162,7 @@ def main():
     paths = sorted(INNS.glob("*.json"))
     inns = {}
     for p in paths:
-        inn = json.loads(p.read_text(encoding="utf-8"))
+        inn = apply_area(json.loads(p.read_text(encoding="utf-8")))
         check(inn, p)
         if inn["id"] != p.stem:
             sys.exit(f"{p.name}: id は ファイル名と同じ「{p.stem}」にしてください")
