@@ -499,7 +499,7 @@ let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[];
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[], liveLearn=[];
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
@@ -509,6 +509,15 @@ const innVoices = () => live ? liveInnVoices : (state.innvoices||[]);
 const relays = () => live ? liveRelays : (state.relays||[]);
 const needs = () => (live ? (liveNeeds && liveNeeds.needs) : state.needs) || {};
 const orders = () => live ? liveOrders : (state.orders||[]);
+/* 学習の記録。だれの記録かは残さない（名前も番号もつけない）。教材を直すためと、成果を数えるためだけに使う。
+   t は done（教材を見終わった）、quiz（テストに答えた）、card（覚えるカード）。 */
+const learnLog = () => live ? liveLearn : (state.learnlog||[]);
+function logLearn(rec){
+  if(state.role!=="new") return;
+  const r={...rec, at:Date.now()};
+  if(live){ try{ db.collection("learnlog").add(r).catch(()=>{}); }catch(e){} return; }
+  (state.learnlog ||= []).push(r); if(state.learnlog.length>600) state.learnlog.shift();
+}
 async function sendVoice(c){
   const text=String(c.text||"").trim(); if(!text) return true;
   const urgent = danger.some(d=>text.includes(d)) || /いじめ|怖い|こわい|やめたい|辞めたい/.test(text);
@@ -615,6 +624,7 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   db.collection("notices").orderBy("at","desc").limit(20).onSnapshot(snap=>{ liveNotices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("innvoices").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveInnVoices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("relays").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveRelays = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
+  db.collection("learnlog").orderBy("at","desc").limit(600).onSnapshot(snap=>{ liveLearn = snap.docs.map(d=>d.data()); rerender(); }, ()=>{});
   db.doc("staffing/needs").onSnapshot(snap=>{ liveNeeds = snap.exists ? snap.data() : null; rerender(); }, ()=>{});
   db.collection("orders").orderBy("at","desc").limit(30).onSnapshot(snap=>{ liveOrders = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   try{ const u = await window.claude?.use?.("user"); if(u){ me = await u.id(); isOwnerV = !!(await u.isOwner()); } }catch(e){}
@@ -898,7 +908,7 @@ function playVideo(L){
     $("#vtime").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")} / ${L.time}`;
     $("#vsub").textContent = L.steps[Math.min(L.steps.length-1, Math.floor(r*L.steps.length))];
     if(r>=1){ stopVideo(); $("#playicon").textContent="↻"; $("#vsub").textContent="見終わりました。手順を押して確認しましょう";
-      if(!state.done[L.id]){ state.done[L.id]=true; save(); toast("見終わった記録を残しました"); const b=$("#markdone"); if(b){b.disabled=true;b.textContent="見終わりました";} } }
+      if(!state.done[L.id]){ state.done[L.id]=true; logLearn({t:"done", l:L.id}); save(); toast("見終わった記録を残しました"); const b=$("#markdone"); if(b){b.disabled=true;b.textContent="見終わりました";} } }
   },100);
 }
 
@@ -1285,7 +1295,8 @@ function weeklyText(all){
 3. よく聞かれた質問：${top.length?top.map(([q,n],i)=>`${i+1}）${q}（${n}回）`).join(" "):"まだありません"}
 4. 声かけが必要な人：${alerts}名（ふりかえりで低い点がありました）
 5. 質問から教材に足した内容：${adopted}件
-6. スタッフから届いた声：${voicesN}件`;
+6. スタッフから届いた声：${voicesN}件${(()=>{ const lg=learnLog().filter(e=>(e.at||0)>=now-7*86400000), q=lg.filter(e=>e.t==="quiz"); return lg.length?`
+7. 学習：教材を見終わった ${lg.filter(e=>e.t==="done").length}回。テストの答え ${q.length}回${q.length?`（正解 ${Math.round(q.filter(e=>e.ok).length/q.length*100)}%）`:""}`:""; })()}`;
 }
 function todayText(){ const d=new Date(); return `${d.getMonth()+1}月${d.getDate()}日`; }
 
@@ -1372,8 +1383,9 @@ async function setProp(id, status){
   toast(status==="adopted"?"教材に入れました。新人の画面で見られます":"見送りました"); render();
 }
 async function wipeLive(){
-  if(!live||!confirm("溜めた質問、資料に足した回答、反映案、今日の連絡、スタッフの声をすべて消します（受け入れの一覧は残ります）。元に戻せません。消しますか？")) return;
-  for(const c of ["questions","learned","proposals","notices","innvoices","relays","voices"]){
+  if(!live) return;
+  const wb=$("#wipe"); if(wb && wb.dataset.sure!=="1"){ wb.dataset.sure="1"; wb.textContent="元に戻せません。もう一度押すと消します"; setTimeout(()=>{ const b=$("#wipe"); if(b){ b.dataset.sure=""; b.textContent="溜めた質問と案をすべて消す"; } }, 6000); return; }
+  for(const c of ["questions","learned","proposals","notices","innvoices","relays","voices","learnlog","orders"]){
     try{ const snap=await db.collection(c).get(); for(const d of snap.docs){ await db.doc(c+"/"+d.id).delete(); } }
     catch(e){ toast(dbMsg(e)); return; }
   }
@@ -1492,8 +1504,40 @@ scheduleは集合から終業まで6〜8行。`;
 
 /* ======================= 管理：教材づくり ======================= */
 const sampleTranscript = "はい、じゃあ浴衣のたたみ方ね。まず浴衣を広げて、背中の縫い目を真ん中にして置きます。次に右の脇の線で折って、左の身ごろを重ねる。そう、それで袖をそろえて。袖は内側に折り込んでね、外に出すとだらしなく見えるから。それから裾から三つ折り。帯は上にのせて、サイズが分かるように置いてね。あと、汚れがあるのは絶対に棚に戻さないで、別のかごに分けてください。";
+/* つまずきやすい所。学習の記録から、まちがいの多い問題と、覚えにくいカードを出す。 */
+function sampleLearn(){
+  const out=[], ls=lessons().filter(l=>l.quiz&&l.quiz.length).slice(0,4), wrong=[1,5,2,0,4,1,3,0];
+  ls.forEach((l,li)=>{ for(let i=0;i<[7,6,4,3][li];i++) out.push({t:"done", l:l.id});
+    l.quiz.forEach((q,qi)=>{ const w=wrong[(li*3+qi)%wrong.length]; for(let i=0;i<8;i++) out.push({t:"quiz", l:l.id, q:qi, ok:i>=w}); }); });
+  allCards().slice(0,3).forEach((c,ci)=>{ for(let i=0;i<6;i++) out.push({t:"card", c:c.id, ok:i>=[4,2,1][ci]}); });
+  return out;
+}
+function learnStats(){
+  let log=learnLog(), sample=false;
+  if(!log.length && !PROD){ log=sampleLearn(); sample=true; }
+  const ls=lessons(), qm=new Map(), cm=new Map(); let qn=0, qok=0, done=0;
+  log.forEach(e=>{
+    if(e.t==="done") done++;
+    else if(e.t==="quiz"){ qn++; if(e.ok) qok++; const k=e.l+"|"+e.q, v=qm.get(k)||{l:e.l, q:e.q, n:0, w:0}; v.n++; if(!e.ok) v.w++; qm.set(k,v); }
+    else if(e.t==="card"){ const v=cm.get(e.c)||{c:e.c, n:0, w:0}; v.n++; if(!e.ok) v.w++; cm.set(e.c,v); }
+  });
+  const hard=[...qm.values()].filter(v=>v.w>0).map(v=>{ const L=ls.find(l=>l.id===v.l), q=L&&L.quiz&&L.quiz[v.q]; return q?{...v, title:L.title, text:q.q}:null; }).filter(Boolean).sort((a,b)=>b.w/b.n-a.w/a.n||b.n-a.n).slice(0,5);
+  const cards=[...cm.values()].filter(v=>v.w>0).map(v=>{ const c=allCards().find(x=>x.id===v.c); return c?{...v, front:c.front}:null; }).filter(Boolean).sort((a,b)=>b.w-a.w).slice(0,3);
+  return {sample, qn, qok, done, hard, cards, any:log.length>0};
+}
+function stumbleCard(){
+  const r=learnStats();
+  if(!r.any) return `<section class="card"><span class="label">学習の記録から</span><h2>つまずきやすい所</h2><p class="empty">まだ記録がありません。新人の方が教材を見たり、テストに答えたりすると、ここに出ます。だれの記録かは残しません。</p></section>`;
+  return `<section class="card"><span class="label">学習の記録から${r.sample?" ・ 見本の数字":""}</span><h2>つまずきやすい所</h2>
+    <div class="stats"><div class="stat"><span class="label">テストの正解</span><div class="num">${r.qn?Math.round(r.qok/r.qn*100):0}<small>%</small></div><span class="note">答え ${r.qn}回</span></div>
+      <div class="stat"><span class="label">教材を見終わった</span><div class="num">${r.done}<small>回</small></div></div></div>
+    ${r.hard.length?`<h3>まちがいの多い問題</h3><div class="lbars">${r.hard.map(h=>`<div class="lb"><span><b>${esc(h.text)}</b></span><span class="v">${h.n}回中 ${h.w}回</span><div class="track"><div class="fill" style="width:${Math.round(h.w/h.n*100)}%"></div></div><div style="grid-column:1/-1" class="note">${esc(h.title)}</div></div>`).join("")}</div>`:`<p class="empty">まちがいの多い問題は、まだありません。</p>`}
+    ${r.cards.length?`<h3>覚えにくいカード</h3><ol class="steps">${r.cards.map(c=>`<li>${esc(c.front)}（「もう一度」${c.w}回）</li>`).join("")}</ol>`:""}
+    <p class="note">まちがいの多い問題は、教材の説明を足すか、現場で一言そえると覚えやすくなります。だれが答えたかは記録していません。${r.sample?"いまは見本の数字です。実際の記録が入ると、入れ替わります。":""}</p>
+  </section>`;
+}
 function author(){
-  return `
+  return `${stumbleCard()}
   <section class="card">
     <span class="label">その宿だけの手順を、教材にする</span>
     <h2>ベテランの説明から教材を作る</h2>
@@ -1647,15 +1691,16 @@ function bind(){
   const pl=$("#play"); if(pl&&L) pl.onclick=()=>playVideo(L);
   if(L && state.lang!=="ja" && !state.tr[L.id+":"+state.lang] && aiOK() && !trBusy) translateLesson(L);
   document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const a=(state.steps[L.id] ||= []); a[+b.dataset.step]=!a[+b.dataset.step]; render()});
-  const md=$("#markdone"); if(md) md.onclick=()=>{state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
+  const md=$("#markdone"); if(md) md.onclick=()=>{ if(!state.done[state.lesson]) logLearn({t:"done", l:state.lesson}); state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
   const tq=$("#toquiz"); if(tq) tq.onclick=()=>{state.quizLesson=state.lesson; go("quiz")};
   document.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>say(b.dataset.say));
   const f=$("#composer"); if(f) f.onsubmit=e=>{e.preventDefault();const inp=$("#askinput"), v=inp.value.trim(); if(!v||askCtl) return; inp.value=""; say(v)};
   if(askCtl){ const sb=$("#sendbtn"); if(sb) sb.disabled=true; }
   document.querySelectorAll("[data-ql]").forEach(b=>b.onclick=()=>{state.quizLesson=b.dataset.ql;render()});
   document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
-    const id=state.quizLesson, ans=(state.quiz[id] ||= {}); ans[b.dataset.q]=+b.dataset.o;
+    const id=state.quizLesson, ans=(state.quiz[id] ||= {}), first=ans[b.dataset.q]===undefined; ans[b.dataset.q]=+b.dataset.o;
     const Lq=lessons().find(l=>l.id===id);
+    if(first && Lq && Lq.quiz[+b.dataset.q]) logLearn({t:"quiz", l:id, q:+b.dataset.q, ok:+b.dataset.o===Lq.quiz[+b.dataset.q].a});
     if(Object.keys(ans).length===Lq.quiz.length){ state.scores[id]=`${Lq.quiz.filter((q,i)=>ans[i]===q.a).length}/${Lq.quiz.length}`; }
     render()});
   const qd=$("#qdone"); if(qd) qd.onclick=()=>{
@@ -1793,8 +1838,8 @@ function bind(){
   document.querySelectorAll("[data-cc]").forEach(b=>b.onclick=()=>{ state.cardCat=b.dataset.cc; state.cardIdx=0; state.cardShow=false; render(); });
   const csh=$("#cshow"); if(csh) csh.onclick=()=>{ state.cardShow=true; render(); };
   const curCard=()=>{ const list=allCards().filter(c=>state.cardCat==="all"||c.cat===state.cardCat); const rest=list.filter(c=>!state.known[c.id]); const pool=rest.length?rest:list; return pool.length?pool[state.cardIdx%pool.length]:null; };
-  const ckn=$("#cknow"); if(ckn) ckn.onclick=()=>{ const c=curCard(); if(c) state.known[c.id]=1; state.cardShow=false; render(); };
-  const cag=$("#cagain"); if(cag) cag.onclick=()=>{ state.cardIdx++; state.cardShow=false; render(); };
+  const ckn=$("#cknow"); if(ckn) ckn.onclick=()=>{ const c=curCard(); if(c){ state.known[c.id]=1; logLearn({t:"card", c:c.id, ok:true}); } state.cardShow=false; render(); };
+  const cag=$("#cagain"); if(cag) cag.onclick=()=>{ const c=curCard(); if(c) logLearn({t:"card", c:c.id, ok:false}); state.cardIdx++; state.cardShow=false; render(); };
   const crs=$("#creset"); if(crs) crs.onclick=()=>{ allCards().filter(c=>state.cardCat==="all"||c.cat===state.cardCat).forEach(c=>delete state.known[c.id]); state.cardIdx=0; render(); };
   const ac=$("#addcard"); if(ac) ac.onclick=async()=>{ const f=$("#c-front").value.trim(), bk=$("#c-back").value.trim(); if(!f||!bk){ toast("表と裏の両方を入れてください"); return; }
     const rec={front:f, back:bk, cat:$("#c-cat").value, at:Date.now()};

@@ -35,6 +35,13 @@ service cloud.firestore {
         allow read: if member(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings', 'relays'];
         allow write: if admin(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings'];
       }
+      // 学習の記録：スタッフは足すだけ。名前や番号は入れない。読めるのは管理者と運営者
+      match /learnlog/{id} {
+        allow create: if member(inn)
+          && request.resource.data.keys().hasOnly(['t', 'l', 'q', 'c', 'ok', 'at'])
+          && request.resource.data.t in ['done', 'quiz', 'card'];
+        allow read, delete: if admin(inn);
+      }
       // 人手の見通しと人材の依頼：管理者と運営者だけ。スタッフは読めない
       match /staffing/{id} {
         allow read, write: if admin(inn);
