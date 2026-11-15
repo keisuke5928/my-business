@@ -1382,15 +1382,6 @@ async function setProp(id, status){
   else { const p=state.props.find(x=>x.id===id); if(p) p.status=status; }
   toast(status==="adopted"?"教材に入れました。新人の画面で見られます":"見送りました"); render();
 }
-async function wipeLive(){
-  if(!live) return;
-  const wb=$("#wipe"); if(wb && wb.dataset.sure!=="1"){ wb.dataset.sure="1"; wb.textContent="元に戻せません。もう一度押すと消します"; setTimeout(()=>{ const b=$("#wipe"); if(b){ b.dataset.sure=""; b.textContent="溜めた質問と案をすべて消す"; } }, 6000); return; }
-  for(const c of ["questions","learned","proposals","notices","innvoices","relays","voices","learnlog","orders"]){
-    try{ const snap=await db.collection(c).get(); for(const d of snap.docs){ await db.doc(c+"/"+d.id).delete(); } }
-    catch(e){ toast(dbMsg(e)); return; }
-  }
-  toast("消しました");
-}
 function queue(){
   const open = openQs(), done = doneQs();
   return `${insights()}
@@ -1410,7 +1401,7 @@ function queue(){
     </div>`).join(""):`<p class="empty">いまは回答待ちの質問はありません。</p>`}</section>
   ${propCard()}
   ${done.length?`<section class="card"><h3>回答済み（宿の資料に追加）</h3>${done.map(q=>`<div class="qitem"><b>${esc(q.q)}</b><span class="empty">${esc(q.reply||q.answer||"本人に直接対応")}</span></div>`).join("")}</section>`:""}
-  ${live&&!PROD?`<section class="card"><span class="label">デモ用</span><p class="empty">訪問ごとに、溜めたデータを空にできます。</p><div class="row"><button class="btn ghost small" id="wipe">溜めた質問と案をすべて消す</button></div></section>`:""}`;
+`;
 }
 function keywords(q){
   const k = q.replace(/[？?。、！!「」]/g," ").split(/\s+/).filter(w=>w.length>=2);
@@ -1780,7 +1771,6 @@ function bind(){
   const mp=$("#mkprops"); if(mp) mp.onclick=makeProps;
   document.querySelectorAll("[data-adopt]").forEach(b=>b.onclick=()=>setProp(b.dataset.adopt,"adopted"));
   document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=()=>setProp(b.dataset.reject,"rejected"));
-  const wp=$("#wipe"); if(wp) wp.onclick=wipeLive;
   const ds=$("#dorm-save"); if(ds) ds.onclick=async()=>{
     const rec={address:$("#dorm-addr").value.trim(), steps:$("#dorm-steps").value.split("\n").map(x=>x.trim()).filter(Boolean), at:Date.now()};
     if(live){ try{ await db.doc("settings/dorm").set(rec); toast("道案内を保存しました"); }catch(e){ toast(dbMsg(e)); } return; }
