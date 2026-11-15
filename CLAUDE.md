@@ -44,6 +44,7 @@
     3. `firebase/functions/` はサーバー側（whoami、join、grantAdmin、invite、ai）。APIキーはサーバーの secret にだけ置く。AIは宿ごとに1日の上限（`AI_DAILY_LIMIT`、初期300回）。
     4. `firebase/firestore.rules` で、宿のデータは `inns/<宿のid>/` の下に分け、他の宿から読めない。
     5. ビルドは `python3 build.py --firebase firebase/config.json`（`firebase/config.example.json` を写して本物の設定を入れる。config.json はコミットしない）。
+    7. 公開は `bash scripts/deploy.sh <プロジェクトID>`（手順は docs/deploy.md。Google Cloud Shell で動かす想定）。運営者のメールアドレスは functions/.env.<プロジェクトID>、APIキーは Secret Manager（スクリプトが画面に出さずに聞く）。どちらも GitHub には入らない。
     6. テストは、エミュレーターを `firebase emulators:start --project demo-yado --only auth,firestore,functions,hosting`（functions/.env.local に `AI_FAKE=1`）で動かし、`python3 build.py --firebase firebase/config.emulator.json` のあと `cd firebase && node tests/e2e.js`。
 11. ホームページと診断（`site/`、11月15日）。サービス名は「宿のはじめて帳」で確定。
     1. `site/index.html` がホームページ、`site/shindan.html` が「新人教育かんたん診断」（12問、4分野、24点。数字を入れると、同じ説明に使う時間と金額も出る）、`site/site.css` が共通のスタイル。見た目はアプリと同じ色と書体。
