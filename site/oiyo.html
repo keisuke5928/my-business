@@ -9,7 +9,7 @@
 /* Layout: 「織る」が主題。最初の画面は藍の布の上を糸が流れ、入れ替わりながら1本の帯になる。
    事業はそれぞれ日本の文様を持つ（七宝、籠目、矢絣、格子）。罫線と余白で組む帳面のつくり。 */
 :root{
-  --paper:#eceee9; --paper-2:#e2e6df; --surface:#f7f8f4; --ink:#111c27; --muted:#56616a; --faint:#8b958f; --line:#cbd2ca;
+  --paper:#eceee9; --paper-2:#e2e6df; --surface:#f7f8f4; --ink:#111c27; --muted:#4b5660; --faint:#7d8781; --line:#cbd2ca;
   --accent:#1c3457; --accent-ink:#f3f4ef;
   --hero:#182c4b; --hero-ink:#f1f2ec; --hero-soft:#b6c3d6; --hero-line:rgba(241,242,236,.16);
   --gold:#c4932a; --gold-ink:#7a5506;
@@ -47,6 +47,8 @@ button,input,textarea{font:inherit;color:inherit}
 .wrap{max-width:1200px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .num{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:.02em}
+::selection{background:var(--gold);color:#111c27}
+section[id]{scroll-margin-top:72px}
 
 /* 進み具合の糸 */
 .progress{position:fixed;left:0;top:env(safe-area-inset-top,0px);height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--gold);z-index:40;pointer-events:none}
@@ -61,6 +63,10 @@ button,input,textarea{font:inherit;color:inherit}
 .top nav a{color:inherit;text-decoration:none;position:relative;padding:6px 0}
 .top nav a::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:100% 50%;transition:transform .4s var(--ease)}
 .top nav a:hover::after{transform:scaleX(1);transform-origin:0 50%}
+.top nav a.cta{border:1px solid currentColor;border-radius:999px;padding:6px 18px}
+.top nav a.cta::after{display:none}
+.top nav a.cta:hover{background:var(--gold);border-color:var(--gold);color:#111c27}
+.top nav{align-items:center}
 .menu-btn{display:none;background:none;border:1px solid currentColor;border-radius:999px;min-height:40px;padding:0 16px;font-size:.82rem;letter-spacing:.1em;cursor:pointer}
 .menu{position:fixed;inset:0;z-index:25;background:var(--hero);color:var(--hero-ink);display:flex;flex-direction:column;justify-content:center;gap:6px;padding:max(88px,calc(env(safe-area-inset-top,0px) + 80px)) max(28px,env(safe-area-inset-right,0px)) max(40px,env(safe-area-inset-bottom,0px)) max(28px,env(safe-area-inset-left,0px))}
 .menu a{color:inherit;text-decoration:none;font-family:var(--mincho);font-size:1.9rem;font-weight:700;padding:10px 0;border-bottom:1px solid var(--hero-line);display:flex;justify-content:space-between;align-items:baseline}
@@ -82,7 +88,7 @@ button,input,textarea{font:inherit;color:inherit}
 .h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.04em;height:.07em;background:var(--gold);transform-origin:0 50%;animation:draw 1.1s .9s var(--ease) both}
 @keyframes rise{from{transform:translateY(105%)}to{transform:none}}
 @keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.hero-lead{max-width:32em;color:var(--hero-soft);font-size:1.02rem;animation:fade 1s .5s var(--ease) both}
+.hero-lead{max-width:30em;color:var(--hero-ink);opacity:.86;font-size:1.04rem;text-wrap:pretty;animation:fade 1s .5s var(--ease) both}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .hero-foot{border-top:1px solid var(--hero-line)}
 .hero-foot .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));}
@@ -103,12 +109,12 @@ button,input,textarea{font:inherit;color:inherit}
 
 /* 節 */
 .sec{padding-block:clamp(80px,12vw,160px)}
-.sec-label{display:flex;align-items:baseline;gap:16px;font-size:.78rem;letter-spacing:.2em;color:var(--muted);margin-bottom:28px}
+.sec-label{display:flex;align-items:baseline;gap:16px;font-size:.82rem;letter-spacing:.12em;color:var(--muted);margin-bottom:28px}
 .sec-label .num{font-size:1.35rem;color:var(--gold-ink);letter-spacing:0}
 .sec-label::after{content:"";flex:1;height:1px;background:var(--line);align-self:center}
 
 /* ひとこと */
-.statement #fill{font-family:var(--mincho);font-weight:700;font-size:clamp(1.55rem,3.9vw,3.1rem);line-height:1.7;letter-spacing:.04em;max-width:22em}
+.statement #fill{font-family:var(--mincho);font-weight:700;font-size:clamp(1.45rem,3.3vw,2.7rem);line-height:1.7;letter-spacing:.04em;max-width:22em}
 .statement .c{color:var(--faint);transition:color .5s}
 .statement .c.on{color:var(--ink)}
 .statement .c.g.on{color:var(--gold-ink)}
@@ -117,11 +123,11 @@ button,input,textarea{font:inherit;color:inherit}
 
 /* 主な事業 */
 .yado{background:var(--paper-2)}
-.yado-grid{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,.9fr);gap:56px;align-items:start}
-.v-title{writing-mode:vertical-rl;font-family:var(--mincho);font-weight:800;font-size:clamp(3rem,6vw,5.2rem);letter-spacing:.14em;line-height:1;color:var(--ink);margin:0;position:sticky;top:110px;display:flex;gap:.4em}
-.v-title small{font-family:var(--body);font-size:.8rem;letter-spacing:.3em;font-weight:500;color:var(--gold-ink)}
-.yado-copy{display:flex;flex-direction:column;gap:28px;min-width:0;padding-top:8px}
-.yado-copy h3{font-size:clamp(1.4rem,2.6vw,2rem)}
+.yado-grid{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,.85fr);gap:clamp(32px,4.5vw,64px);align-items:start}
+.v-title{writing-mode:vertical-rl;font-family:var(--mincho);font-weight:800;font-size:clamp(3rem,6vw,5.2rem);letter-spacing:.14em;line-height:1;color:var(--ink);margin:0;display:flex;gap:.4em;align-items:flex-start}
+.v-title small{font-family:var(--serif);font-style:italic;font-size:1rem;letter-spacing:.08em;font-weight:400;font-weight:500;color:var(--gold-ink)}
+.yado-copy{display:flex;flex-direction:column;gap:28px;min-width:0}
+.yado-copy h3{font-size:clamp(1.5rem,2.6vw,2.1rem);line-height:1.5}
 .yado-copy .lead{color:var(--muted);max-width:30em}
 .goals{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink)}
 .goals li{display:grid;grid-template-columns:3.2em 1fr;align-items:baseline;gap:8px;padding:18px 0;border-bottom:1px solid var(--line)}
@@ -141,12 +147,12 @@ button,input,textarea{font:inherit;color:inherit}
 .btns{display:flex;gap:12px;flex-wrap:wrap}
 
 /* 動く見本 */
-.demo{position:sticky;top:100px;display:flex;flex-direction:column;align-items:center;gap:18px;min-width:0}
+.demo{position:sticky;top:96px;display:flex;flex-direction:column;align-items:center;gap:18px;min-width:0}
 .modes{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .modes button{border:1px solid var(--line);background:var(--surface);border-radius:999px;min-height:40px;padding:0 16px;font-size:.84rem;cursor:pointer;color:var(--muted);transition:all .3s var(--ease)}
 .modes button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
-.phone{width:min(320px,100%);border-radius:40px;padding:12px;background:var(--ink);box-shadow:0 50px 80px -40px rgba(10,20,35,.55),0 0 0 1px var(--line)}
-.screen{border-radius:30px;background:var(--ph-bg);color:var(--ph-ink);overflow:hidden;display:flex;flex-direction:column;height:560px;font-size:.84rem;line-height:1.65}
+.phone{width:min(320px,100%);border-radius:40px;padding:12px;background:#0b1118;box-shadow:0 50px 80px -40px rgba(10,20,35,.55),0 0 0 1px var(--line)}
+.screen{border-radius:30px;background:var(--ph-bg);color:var(--ph-ink);overflow:hidden;display:flex;flex-direction:column;height:500px;font-size:.84rem;line-height:1.65}
 .s-bar{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 10px;font-family:var(--mincho);font-weight:700;letter-spacing:.06em}
 .s-bar i{font-style:normal;font-family:var(--body);font-weight:500;font-size:.66rem;border:1px solid var(--ph-line);border-radius:999px;padding:1px 9px;color:var(--ph-muted);letter-spacing:.04em}
 .s-sheet{margin:0 12px;background:var(--hero);color:var(--hero-ink);border-radius:16px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;position:relative;overflow:hidden}
@@ -154,6 +160,10 @@ button,input,textarea{font:inherit;color:inherit}
 .s-sheet small{color:var(--hero-soft);font-size:.66rem;letter-spacing:.12em;grid-column:1/-1}
 .s-sheet strong{font-family:var(--mincho);font-size:1.45rem;line-height:1.3;font-variant-numeric:tabular-nums}
 .s-sheet span{align-self:end;font-size:.72rem;color:var(--hero-soft)}
+.s-next{margin:8px 12px 0;border:1px solid var(--ph-line);border-radius:14px;padding:9px 14px;display:grid;grid-template-columns:1fr auto;align-items:center;font-size:.8rem}
+.s-next small{grid-column:1;color:var(--moss);font-size:.64rem;letter-spacing:.12em;font-weight:700}
+.s-next b{grid-column:1;font-weight:500}
+.s-next i{grid-row:1/3;grid-column:2;font-style:normal;color:var(--ph-muted)}
 .chat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:14px 12px 6px;overflow:hidden}
 .b{max-width:86%;padding:9px 13px;border-radius:16px;animation:pop .45s var(--ease) both}
 .b.me{align-self:flex-end;background:var(--hero);color:var(--hero-ink);border-bottom-right-radius:4px}
@@ -183,16 +193,18 @@ button,input,textarea{font:inherit;color:inherit}
 .svc-head h2{font-size:clamp(2rem,4.6vw,3.6rem);font-weight:800}
 .svc-head p{color:var(--muted)}
 .svc{border-top:1px solid var(--ink)}
-.svc-row{display:grid;grid-template-columns:5rem minmax(0,1.05fr) minmax(0,1.25fr) 180px;gap:32px;padding:40px 0;border-bottom:1px solid var(--line);align-items:start;position:relative}
+.svc-row{display:grid;grid-template-columns:4.5rem minmax(0,1fr) minmax(0,1.2fr) minmax(0,.75fr);gap:32px;padding:44px 0;border-bottom:1px solid var(--line);align-items:stretch;position:relative}
 .svc-row .num{font-size:2rem;line-height:1.1;color:var(--gold-ink)}
 .svc-row h3{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;line-height:1.3}
 .svc-row h3 small{display:block;font-family:var(--serif);font-style:italic;font-weight:400;font-size:1rem;letter-spacing:.02em;color:var(--muted);margin-top:6px}
 .svc-row p{color:var(--muted);font-size:.96rem}
 .svc-row ul{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .svc-row li{border:1px solid var(--line);border-radius:999px;padding:3px 14px;font-size:.84rem;background:var(--surface)}
-.swatch{height:120px;border-radius:4px;background:var(--paper-2);color:var(--accent);position:relative;overflow:hidden}
+.swatch{min-height:170px;display:flex;flex-direction:column;gap:8px}
+.swatch>div{flex:1;border-radius:4px;background:var(--paper-2);color:var(--accent);position:relative;overflow:hidden}
 .swatch .pat{position:absolute;inset:-40px;opacity:.55;transition:transform 1.2s var(--ease),opacity .6s}
-.swatch figcaption{position:absolute;left:10px;bottom:8px;font-size:.72rem;letter-spacing:.14em;color:var(--ink);background:var(--paper-2);padding:0 6px;border-radius:2px}
+.swatch figcaption{font-size:.8rem;letter-spacing:.12em;color:var(--muted);display:flex;justify-content:space-between}
+.swatch figcaption i{font-family:var(--serif);font-size:.95rem;letter-spacing:0}
 .svc-row:hover .swatch .pat{transform:translate(18px,-12px);opacity:.85}
 .svc-more{margin-top:28px;color:var(--muted);font-size:.94rem}
 
@@ -205,9 +217,12 @@ button,input,textarea{font:inherit;color:inherit}
 .flow-sec .lead{color:var(--hero-soft);max-width:32em;margin-top:20px}
 .flow{position:relative;margin-top:72px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
 .flow svg{position:absolute;left:0;top:0;width:100%;height:120px;overflow:visible;pointer-events:none}
-.flow path{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round}
+.flow path{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round}
 .flow .node{position:relative;padding-top:132px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.flow .node::before{content:"";position:absolute;top:52px;left:0;width:14px;height:14px;border-radius:50%;background:var(--hero);border:2px solid var(--gold)}
+.flow .node::before{content:"";position:absolute;top:52px;left:0;width:14px;height:14px;border-radius:50%;background:var(--hero);border:2px solid var(--gold);transition:background .5s,box-shadow .5s}
+.flow .node.lit::before{background:var(--gold);box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 25%,transparent)}
+.flow .node strong{transition:color .6s}
+.flow .node:not(.lit) strong{color:color-mix(in srgb,var(--hero-ink) 55%,transparent)}
 .flow .node:nth-child(3)::before{top:28px}
 .flow .node:nth-child(4)::before{top:72px}
 .flow strong{font-family:var(--mincho);font-size:clamp(2.6rem,5vw,4rem);font-weight:800;line-height:1;letter-spacing:.06em}
@@ -233,7 +248,7 @@ button,input,textarea{font:inherit;color:inherit}
 .contact .lead{color:var(--muted);margin-top:20px;max-width:24em}
 form{display:flex;flex-direction:column;gap:26px;position:relative;min-width:0}
 fieldset{border:0;margin:0;padding:0;min-width:0}
-legend,.lab{font-size:.8rem;letter-spacing:.14em;color:var(--muted);padding:0;margin-bottom:12px;display:block}
+legend,.lab{font-size:.86rem;letter-spacing:.08em;color:var(--muted);padding:0;margin-bottom:12px;display:block}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips label{position:relative}
 .chips input{position:absolute;opacity:0;inset:0;cursor:pointer}
@@ -243,7 +258,7 @@ legend,.lab{font-size:.8rem;letter-spacing:.14em;color:var(--muted);padding:0;ma
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 28px}
 .field{display:flex;flex-direction:column;min-width:0}
 .field.wide{grid-column:1/-1}
-.field input,.field textarea{width:100%;border:0;border-bottom:1px solid var(--ink);background:transparent;padding:10px 0;font-size:1.05rem;color:var(--ink);border-radius:0;transition:border-color .3s}
+.field input,.field textarea{width:100%;min-height:48px;border:0;border-bottom:1px solid var(--ink);background:transparent;padding:10px 0;font-size:1.05rem;color:var(--ink);border-radius:0;transition:border-color .3s}
 .field input:focus,.field textarea:focus{outline:none;border-bottom-color:var(--gold);box-shadow:0 1px 0 var(--gold)}
 .field textarea{min-height:120px;resize:vertical}
 .field input::placeholder,.field textarea::placeholder{color:var(--faint)}
@@ -268,7 +283,7 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
   .demo{position:static}
   .svc-row{grid-template-columns:3.4rem minmax(0,1fr);gap:16px 20px}
   .svc-row>div:nth-of-type(2){grid-column:2}
-  .svc-row .swatch{grid-column:2;height:64px}
+  .svc-row .swatch{grid-column:2;min-height:96px}
 }
 @media (max-width:760px){
   .top nav{display:none}
@@ -305,7 +320,7 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
 <header class="top" id="top-bar"><div class="wrap">
   <a class="logo" href="#top" aria-label="Oiyo.inc ページの先頭へ">Oiyo<i>.</i>inc</a>
   <nav aria-label="ページの中の案内">
-    <a href="#yado">宿のはじめて帳</a><a href="#services">そのほかの事業</a><a href="#about">会社のこと</a><a href="#contact">相談する</a>
+    <a href="#yado">宿のはじめて帳</a><a href="#services">そのほかの事業</a><a href="#about">会社のこと</a><a class="cta" href="#contact">相談する</a>
   </nav>
   <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu">メニュー</button>
 </div></header>
@@ -365,7 +380,8 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
       <div class="phone">
         <div class="screen">
           <div class="s-bar">宿のはじめて帳<i>見本</i></div>
-          <div class="s-sheet"><small>初日シート</small><strong>5:30 に集合</strong><span>従業員入口</span><span class="pat p-shippo s-pat" aria-hidden="true"></span></div>
+          <div class="s-sheet"><small>初日シート</small><strong>5:30 に集合</strong><span>従業員入口</span></div>
+          <div class="s-next"><small>次にやること</small><b>朝食の教材を見る（3分）</b><i aria-hidden="true">→</i></div>
           <div class="chat" id="chat" aria-live="polite">
             <div class="b me">中抜けは何時から？</div>
             <div class="b bot">朝食の担当は10:30までです。そのあとの時間は、部署の先輩に確かめてください。</div>
@@ -384,7 +400,7 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
 </div></section>
 
 <section class="sec" id="services" aria-labelledby="svc-title"><div class="wrap">
-  <div class="sec-label"><span class="num">02–04</span><span>そのほかの事業</span></div>
+  <div class="sec-label"><span class="num">Other services</span><span>そのほかの事業</span></div>
   <div class="svc-head">
     <h2 id="svc-title">手が回らない仕事を、引き受けます。</h2>
     <p>人手が足りない会社の、採用、営業、WEBの実務をお手伝いします。宿泊業のほかの業種でも、ご相談ください。</p>
@@ -395,21 +411,21 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
       <div><h3>採用代行<small>Recruiting</small></h3></div>
       <div><p>求人を出してから入社が決まるまでの実務を、代わりに進めます。現場の方は、会って決めることに集中できます。</p>
         <ul><li>求人の文章づくり</li><li>応募した方への連絡</li><li>面接の日程の調整</li></ul></div>
-      <figure class="swatch"><span class="pat p-kagome" aria-hidden="true"></span><figcaption>籠目</figcaption></figure>
+      <figure class="swatch"><div><span class="pat p-kagome" aria-hidden="true"></span></div><figcaption><span>文様　籠目</span><i>Kagome</i></figcaption></figure>
     </article>
     <article class="svc-row" id="eigyo">
       <span class="num">03</span>
       <div><h3>営業代行<small>Sales</small></h3></div>
       <div><p>新しいお客様との最初の接点を作ります。宿泊業向けの営業の経験をもとに、商談の場までをお渡しします。</p>
         <ul><li>訪問先と連絡先のリストづくり</li><li>最初の連絡と資料の送付</li><li>商談の日程の設定</li></ul></div>
-      <figure class="swatch"><span class="pat p-yagasuri" aria-hidden="true"></span><figcaption>矢絣</figcaption></figure>
+      <figure class="swatch"><div><span class="pat p-yagasuri" aria-hidden="true"></span></div><figcaption><span>文様　矢絣</span><i>Yagasuri</i></figcaption></figure>
     </article>
     <article class="svc-row" id="web">
       <span class="num">04</span>
       <div><h3>WEB制作<small>Web</small></h3></div>
       <div><p>スマホで読みやすく、あとから自分たちで直しやすいページを作ります。公開したあとの更新もお手伝いします。</p>
         <ul><li>ホームページ</li><li>採用ページ</li><li>サービスの紹介ページ</li></ul></div>
-      <figure class="swatch"><span class="pat p-koshi" aria-hidden="true"></span><figcaption>格子</figcaption></figure>
+      <figure class="swatch"><div><span class="pat p-koshi" aria-hidden="true"></span></div><figcaption><span>文様　格子</span><i>Kōshi</i></figcaption></figure>
     </article>
   </div>
   <p class="svc-more">ここにない仕事も、まずはお話を聞かせてください。</p>
@@ -563,7 +579,7 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
   /* 4. 1本の糸をたどる */
   const fp = $("#flow-path"), flow = $("#flow"); let fl = 0;
   try{ fl = fp.getTotalLength(); fp.style.strokeDasharray = fl; fp.style.strokeDashoffset = fl * .7; }catch(e){}
-  let ticking = false, lastOn = -1;
+  let ticking = false, lastOn = -1; const nodes = [...flow.querySelectorAll(".node")];
   function onScroll(){
     ticking = false;
     const sy = scrollY, vh = innerHeight, max = document.documentElement.scrollHeight - vh;
@@ -572,7 +588,7 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
     const r = fill.getBoundingClientRect(), p = Math.max(0, Math.min(1, (vh * .82 - r.top) / (r.height + vh * .3)));
     const on = reduce ? chars.length : Math.round(p * chars.length);
     if(on !== lastOn){ chars.forEach((c, i) => c.classList.toggle("on", i < on)); lastOn = on; }
-    if(fl){ const fr = flow.getBoundingClientRect(), q = Math.max(.3, Math.min(1, (vh * .9 - fr.top) / (vh * .55))); fp.style.strokeDashoffset = reduce ? 0 : fl * (1 - q); }
+    if(fl){ const fr = flow.getBoundingClientRect(), q = Math.max(.3, Math.min(1, (vh * .9 - fr.top) / (vh * .55))); fp.style.strokeDashoffset = reduce ? 0 : fl * (1 - q); nodes.forEach((n, i) => n.classList.toggle("lit", reduce || q >= [.3, .62, .95][i] || innerWidth <= 760)); }
   }
   addEventListener("scroll", () => { if(!ticking){ ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
   onScroll();
@@ -608,7 +624,7 @@ pre.copy{margin:0;align-self:stretch;white-space:pre-wrap;overflow-wrap:anywhere
     if(auto && !instant) at(t + 3200, () => { if(demoSeen) show((cur + 1) % scenes.length); });
   }
   btns.forEach((b, i) => b.addEventListener("click", () => { auto = false; show(i, reduce); }));
-  new IntersectionObserver(es => { const v = es[0].isIntersecting; if(v && !demoSeen && auto){ demoSeen = true; show(cur); } demoSeen = v; if(!v) clear(); else if(auto && !timers.length) show(cur); }, { threshold: .35 }).observe(chat);
+  new IntersectionObserver(es => { const v = es[0].isIntersecting; if(v && !demoSeen && auto){ demoSeen = true; show(cur); } demoSeen = v; if(!v){ clear(); show(cur, true); } else if(auto && !timers.length) show(cur); }, { threshold: .35 }).observe(chat);
 
   /* 7. 相談フォーム。送り先は meta。空のとき（Claudeのアーティファクトなど）は、内容をコピーできる形で出す */
   const endpoint = (document.querySelector('meta[name="oiyo-contact"]') || {}).content || "";
