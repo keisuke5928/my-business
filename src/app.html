@@ -535,7 +535,7 @@ let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[], liveLearn=[];
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[], liveLearn=[], liveWork=[];
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
@@ -555,6 +555,7 @@ async function mset(id, patch){
   if(live){ liveMetrics[id]=cur; try{ await db.doc("metrics/"+id).set(cur); }catch(e){ toast(dbMsg(e)); } return; }
   (state.metrics ||= {})[id]=cur; save();
 }
+const workLog = () => (live ? liveWork : (state.worklog||[])).slice().sort((a,b)=>(b.at||0)-(a.at||0));
 const learnLog = () => live ? liveLearn : (state.learnlog||[]);
 function logLearn(rec){
   if(state.role!=="new") return;
@@ -669,6 +670,7 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   db.collection("innvoices").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveInnVoices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("relays").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveRelays = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("learnlog").orderBy("at","desc").limit(600).onSnapshot(snap=>{ liveLearn = snap.docs.map(d=>d.data()); rerender(); }, ()=>{});
+  db.collection("worklog").onSnapshot(snap=>{ liveWork = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("metrics").onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>{ m[d.id]=d.data(); }); liveMetrics=m; rerender(); }, ()=>{});
   db.doc("staffing/needs").onSnapshot(snap=>{ liveNeeds = snap.exists ? snap.data() : null; rerender(); }, ()=>{});
   db.collection("orders").orderBy("at","desc").limit(30).onSnapshot(snap=>{ liveOrders = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
@@ -1863,9 +1865,23 @@ function operatorCard(){
     <div class="row"><button class="btn ghost small" id="op-rotate">招待リンクを作り直す（前のリンクは使えなくなります）</button></div>
   </section>`;
 }
+/* 運営者の作業時間。1人で15〜20館を見られるかを確かめるための記録。運営者だけが見る。 */
+function workCard(){
+  const log=workLog(), goalB=(MARKET.workBuild||{}).v||40, goalM=(MARKET.workMonthly||{}).v||5, ym=todayISO().slice(0,7);
+  const build=r1(log.filter(x=>x.kind==="build").reduce((a,x)=>a+(+x.hours||0),0)), month=r1(log.filter(x=>x.kind==="update"&&String(x.date||"").slice(0,7)===ym).reduce((a,x)=>a+(+x.hours||0),0));
+  const bar=(v,g)=>`<div class="prog" aria-hidden="true"><i style="width:${Math.min(100,v/g*100)}%;${v>g?"background:var(--warn)":""}"></i></div>`;
+  return `<section class="card"><span class="label">運営者だけの画面</span><h2>この宿にかけた時間</h2>
+    <div class="stats"><div class="stat"><span class="label">構築</span><div class="num">${build}<small>時間</small></div><span class="note">目標 ${goalB}時間以内${build>goalB?"。超えています":""}</span>${bar(build,goalB)}</div>
+      <div class="stat"><span class="label">今月の更新</span><div class="num">${month}<small>時間</small></div><span class="note">目標 月${goalM}時間以内${month>goalM?"。超えています":""}</span>${bar(month,goalM)}</div></div>
+    <div class="grid2"><label class="field">種類<select id="wk-kind"><option value="build">構築</option><option value="update">月の更新</option></select></label><label class="field">時間<input id="wk-hours" inputmode="decimal" placeholder="例：2.5"></label></div>
+    <label class="field">何をしたか（任意）<input id="wk-note" placeholder="例：朝食ホールの教材を直した"></label>
+    <div class="row"><button class="btn small" id="wk-add">記録する</button></div>
+    ${log.length?`<div class="faq">${log.slice(0,5).map(x=>`<div><b>${x.kind==="build"?"構築":"月の更新"} ${esc(String(x.hours))}時間</b><span class="note">${mdText(x.date)}${x.note?" ・ "+esc(x.note):""}</span></div>`).join("")}</div>`:""}
+  </section>`;
+}
 function memo(){
   const m=state.memo, done=memoQs.filter((_,i)=>m[i]&&m[i].ok).length;
-  return `${windowCard()}${isOperator() ? ordersCard() : ""}${PROD && isOperator() ? operatorCard() : ""}
+  return `${windowCard()}${isOperator() ? ordersCard() : ""}${isOperator() ? workCard() : ""}${PROD && isOperator() ? operatorCard() : ""}
   <section class="card">
     <span class="label">訪問時に確認すること</span>
     <h2>ヒアリングメモ ${done} / ${memoQs.length}</h2>
@@ -2076,6 +2092,10 @@ function bind(){
     state.cards=state.cards.filter(c=>c.id!==id); render(); });
   document.querySelectorAll("[data-eff]").forEach(inp=>{ inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); const co=$("#costout"); if(co) co.innerHTML=costCalc(); save()};
     inp.onchange=()=>{ if(live) mset("_eff", {...state.eff}); }; });
+  { const wa=$("#wk-add"); if(wa) wa.onclick=async()=>{ const h=numOf($("#wk-hours").value); if(h===null||h<=0){ toast("時間を入れてください"); return; }
+      const rec={kind:$("#wk-kind").value, hours:h, note:$("#wk-note").value.trim(), date:todayISO(), at:Date.now()};
+      if(live){ try{ await db.collection("worklog").add(rec); }catch(e){ toast(dbMsg(e)); return; } } else { (state.worklog ||= []).push({id:"w"+Date.now(), ...rec}); save(); }
+      $("#wk-hours").value=""; $("#wk-note").value=""; toast("記録しました"); render(); }; }
   { const mr=$("#mkreport"); if(mr) mr.onclick=()=>{ state.report={dept:state.effDept, anon:false}; render(); window.scrollTo(0,0); };
     const rb=$("#rpback"); if(rb) rb.onclick=()=>{ state.report=null; render(); };
     const ra=$("#rpanon"); if(ra) ra.onclick=()=>{ state.report.anon=!state.report.anon; render(); };
