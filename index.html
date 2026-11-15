@@ -464,6 +464,71 @@ body.kiosk .role,body.kiosk #tourbtn,body.kiosk #reset,body.kiosk #agdemo{displa
 .needin input{width:4em;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--ink);font:inherit;text-align:right;font-variant-numeric:tabular-nums}
 html.big .brand h1{font-size:1rem}
 @media (max-width:359px){.brand h1{font-size:1rem;letter-spacing:.02em}.bar .role button{padding:4px 9px}}
+
+/* ---- UI v15: 仕上げ。宿帳らしい見せ場（初日シート、判子のメニュー、はなまる）と、意味のある動き。
+   色の役割（藍、苔、赤茶）と1カラムは同じ。動きは、画面が変わったときと、押した所だけ。 ---- */
+:root{--ease:cubic-bezier(.2,.7,.2,1);interpolate-size:allow-keywords}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,.label,.btn,.tag,.status,nav.tabs button,.hero .when,.score,.stat .num,.lesson b{font-feature-settings:"palt" 1}
+p,li,dd{line-break:strict}
+.card h2{font-size:1.28rem;line-height:1.45}
+.empty{line-height:1.8}
+.brand h1::before{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--hero-ink) 38%,transparent)}
+/* 初日シート：時刻を主役に。右下に朝日のような円、その上に宿の名前を縦書きで */
+.hero{padding:22px 20px 20px;background:linear-gradient(165deg,var(--hero) 0%,var(--hero) 52%,color-mix(in srgb,var(--hero) 80%,#000) 100%)}
+.hero::before{content:"";position:absolute;right:-72px;bottom:-96px;width:250px;height:250px;border-radius:50%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.17) 0%,rgba(255,255,255,.06) 58%,rgba(255,255,255,0) 60%)}
+.hero .when{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.hero .wd{font-size:1.02rem;letter-spacing:.1em;color:var(--hero-soft);font-weight:500}
+.hero .wt{font-size:clamp(3.1rem,16.5vw,4.1rem);line-height:1;font-weight:600;letter-spacing:.02em}
+.hero .hero-inn{position:absolute;right:18px;bottom:18px;writing-mode:vertical-rl;font-family:var(--display);font-size:.78rem;letter-spacing:.34em;color:var(--hero-soft);z-index:1}
+.hero .count{box-shadow:0 2px 8px rgba(0,0,0,.18)}
+/* 次にやること：栞 */
+.nextcard{position:relative;overflow:hidden}
+.nextcard::after{content:"";position:absolute;top:0;right:22px;width:14px;height:26px;background:var(--moss);clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%)}
+/* 下のメニュー：今いる画面は、角のある判子 */
+nav.tabs button .ic{width:34px;height:34px;padding:0;display:grid;place-items:center;border-radius:9px;font-size:1.08rem}
+nav.tabs button[aria-current="page"] .ic{border-radius:9px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--surface) 34%,transparent),0 3px 10px color-mix(in srgb,var(--ai) 28%,transparent)}
+nav.tabs .dot{right:calc(50% - 24px)}
+/* ボタン */
+.btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 2px rgba(27,36,48,.14)}
+.btn.ghost{box-shadow:inset 0 0 0 1px var(--ai-soft)}
+/* 開くカード：なめらかに開く（対応しているブラウザだけ） */
+details.card.fold::details-content{block-size:0;overflow:hidden;transition:block-size .36s var(--ease),content-visibility .36s allow-discrete}
+details.card.fold[open]::details-content{block-size:auto}
+/* はなまる */
+.scorewrap{display:flex;align-items:center;gap:14px}
+.hanamaru{width:84px;height:84px;flex:none;color:var(--warn);transform:rotate(-8deg);margin:-10px 0}
+.hanamaru path{fill:none;stroke:currentColor;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0}
+/* 回答を待つあいだ */
+.msg.bot.wait{display:inline-flex;align-items:center;gap:8px}
+.msg.bot.wait::after{content:"";width:26px;height:6px;flex:none;background:radial-gradient(circle 2.6px,currentColor 96%,transparent) 0 50%/9px 6px repeat-x;opacity:.7}
+.sos{transition:transform .3s var(--ease),opacity .3s}
+body.scrolling .sos{transform:translateY(24px) scale(.6);opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){
+  .view{animation:none}
+  .view.enter>*{animation:rise .55s var(--ease) backwards}
+  .view.enter>*:nth-child(2){animation-delay:50ms}.view.enter>*:nth-child(3){animation-delay:100ms}.view.enter>*:nth-child(4){animation-delay:150ms}
+  .view.enter>*:nth-child(5){animation-delay:200ms}.view.enter>*:nth-child(6){animation-delay:250ms}.view.enter>*:nth-child(n+7){animation-delay:300ms}
+  .view.enter .ring .pg{animation:ringdraw .9s var(--ease) .3s backwards}
+  .view.enter .hero .wt{animation:rise .7s var(--ease) .12s backwards}
+  .view.enter .hero::before{animation:sun 1.4s var(--ease) backwards}
+  .view.enter .prog i,.view.enter .lb .fill{animation:grow .8s var(--ease) .25s backwards}
+  nav.tabs button.stamp .ic{animation:stamp .42s var(--ease)}
+  .just .box,.just>.n{animation:pop .38s var(--ease)}
+  .opt.just{animation:pop .3s var(--ease)}
+  .hanamaru.draw .swirl{animation:draw .9s ease-out backwards}
+  .hanamaru.draw .petal{animation:draw .8s ease-out .75s backwards}
+  .msg.bot.wait::after{animation:dots 1.1s steps(4,jump-none) infinite}
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes ringdraw{from{stroke-dasharray:0 157}}
+@keyframes sun{from{transform:translateY(46px);opacity:0}}
+@keyframes grow{from{width:0}}
+@keyframes stamp{0%{transform:scale(1.45) rotate(-9deg);opacity:0}60%{transform:scale(.93) rotate(1deg);opacity:1}100%{transform:none}}
+@keyframes pop{0%{transform:scale(.8)}55%{transform:scale(1.12)}100%{transform:none}}
+@keyframes draw{from{stroke-dashoffset:1}}
+@keyframes dots{0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0 0 0)}}
 </style>
 
 <div class="app">
@@ -803,6 +868,9 @@ function renderTabs(){
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
 /* 描き直しても、入力途中の文と、入力中の場所（フォーカス）は残す。送ったときに消すのは、それぞれの送る処理で行う。 */
+let lastVKey=null, tapSel=null, celebrate=false;
+document.addEventListener("click", e=>{ const b=e.target.closest && e.target.closest("#main button"); if(!b) return;
+  const d=Object.entries(b.dataset); tapSel = d.length ? "button"+d.map(([k,v])=>`[data-${k.replace(/[A-Z]/g,m=>"-"+m.toLowerCase())}="${CSS.escape(v)}"]`).join("") : null; }, true);
 function render(){
   const kept={}, act=document.activeElement, focusId = act && main.contains(act) && act.id ? act.id : null;
   let caret=null; try{ if(focusId && typeof act.selectionStart==="number") caret=[act.selectionStart, act.selectionEnd]; }catch(e){}
@@ -814,9 +882,13 @@ function render(){
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo,agency:agencyView};
-  main.innerHTML = `${kioskBar()}${tourBar()}<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
+  const vkey=[state.role,state.tab,state.lesson||"",state.newbieView??"",state.report?"r":"",state.quizMode||""].join("/"), entering=vkey!==lastVKey; lastVKey=vkey;
+  if(entering){ const t=$("#tabs [aria-current]"); if(t) t.classList.add("stamp"); }
+  main.innerHTML = `${kioskBar()}${tourBar()}<div class="view${entering?" enter":""}">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
   for(const id in kept){ const el=document.getElementById(id); if(el && main.contains(el) && !el.readOnly && el.value===el.defaultValue) el.value=kept[id]; }
   bind(); save();
+  if(tapSel){ try{ const el=main.querySelector(tapSel); if(el) el.classList.add("just"); }catch(e){} tapSel=null; }
+  if(celebrate){ const h=main.querySelector(".hanamaru"); if(h) h.classList.add("draw"); celebrate=false; }
   if(focusId){ const el=document.getElementById(focusId); if(el && main.contains(el) && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)){ try{ el.focus({preventScroll:true}); if(caret && typeof el.setSelectionRange==="function") el.setSelectionRange(caret[0], caret[1]); }catch(e){} } }
 }
 const TOUR = [
@@ -901,6 +973,8 @@ function bindKiosk(){
   const off=$("#kdemooff"); if(off) off.onclick=()=>{ state.kiosk=false; state.kioskPerson=null; state.profile=fresh().profile; save(); render(); };
 }
 ["pointerdown","keydown","scroll"].forEach(ev=>addEventListener(ev, ()=>kioskPoke(), {passive:true, capture:true}));
+{ let st=null, lastY=scrollY; addEventListener("scroll", ()=>{ const y=scrollY; if(y>lastY+4) document.body.classList.add("scrolling"); lastY=y;
+    clearTimeout(st); st=setTimeout(()=>document.body.classList.remove("scrolling"), 700); }, {passive:true}); }
 function kioskAdminCard(){
   return `<section class="card"><span class="label">スマホを見られない職場に</span><h3>休憩室のタブレット</h3>
     <p class="empty">1台のタブレットを、みんなで使えます。新人は4けたの番号で入ります。終わるか、3分さわらないと、その人の質問やふりかえりは画面から消えます。</p>
@@ -933,6 +1007,12 @@ function agencyView(){
       <div class="row"><button class="btn ghost small" data-aglink="${esc(r.id)}">${links[r.id]?"リンクをコピー":"招待リンクを出す"}</button></div></div>`).join("")}</div>`
     :`<p class="empty">まだいません。上で足すと、ここに出ます。</p>`}</section>`;
 }
+/* はなまる。全問正解のときに出す印。答えた直後だけ、筆で書くように出る。 */
+function hanamaru(){
+  let d="M36 36"; for(let i=1;i<=64;i++){ const t=i/64*Math.PI*2*2.6, r=1.5+i/64*15.5; d+=` L${(36+Math.cos(t-1.2)*r).toFixed(1)} ${(36+Math.sin(t-1.2)*r).toFixed(1)}`; }
+  let f=""; for(let i=0;i<6;i++){ const a=i/6*Math.PI*2-1.2, b=(i+1)/6*Math.PI*2-1.2, R=20, x1=36+Math.cos(a)*R, y1=36+Math.sin(a)*R, x2=36+Math.cos(b)*R, y2=36+Math.sin(b)*R; f+=`${i?"":`M${x1.toFixed(1)} ${y1.toFixed(1)}`} A11.5 11.5 0 1 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`; }
+  return `<svg class="hanamaru" viewBox="0 0 72 72" role="img" aria-label="はなまる"><path class="swirl" pathLength="1" d="${d}"/><path class="petal" pathLength="1" d="${f}"/></svg>`;
+}
 function sheet(){
   const p = state.profile;
   const prepItems = [
@@ -949,10 +1029,11 @@ function sheet(){
   ${p.agencyName ? `<section class="card"><p class="note">${KT("agency").replace("{a}", esc(p.agencyName))}</p></section>` : ""}
   <section class="card hero">
     <div class="hero-top"><div><span class="label">${p.name?esc(p.name)+"さんの初日シート":"初日シート（見本）"}</span>
-      <div class="when">${esc(p.date)} ${esc(p.time)}</div></div>
+      <div class="when"><span class="wd">${esc(p.date)}</span><span class="wt">${esc(p.time)}</span></div></div>
       <div class="ring" role="img" aria-label="準備 ${prepItems.length-left} / ${prepItems.length}"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pg" cx="30" cy="30" r="25" stroke-dasharray="${(prepItems.length-left)/prepItems.length*157} 157"/></svg><b>${prepItems.length-left}/${prepItems.length}</b></div></div>
     <dl class="hero-meta"><dt>集合場所</dt><dd>${esc(p.meet)}</dd><dt>迎え</dt><dd>${esc(p.host)}</dd></dl>
     <span class="count" style="position:relative;z-index:1">${left?`着任までにやること あと${left}つ`:"準備はすべて終わりました"}</span>
+    <span class="hero-inn" aria-hidden="true">${esc(INN)}</span>
   </section>
   ${findCard()}
   ${nextCard(prepItems)}
@@ -1279,14 +1360,14 @@ function quizTests(){
   <section class="card">
     <span class="label">${esc(L.title)} ・ 確認テスト</span>
     <h2>${qs.length}問。間違えても何度でも</h2>
-    ${total===qs.length?`<div class="score">${correct} / ${qs.length}</div><p>${correct===qs.length?"全問正解です。結果は教育担当の画面に記録されました。":"解説を読んで、もう一度挑戦してみましょう。結果は教育担当の画面に記録されました。"}</p><div class="row"><button class="btn ghost" id="retry">もう一度</button></div>`:`<p class="empty">${total} / ${qs.length} 問 回答済み</p>`}
+    ${total===qs.length?`<div class="scorewrap"><div class="score">${correct} / ${qs.length}</div>${correct===qs.length?hanamaru():""}</div><p>${correct===qs.length?"全問正解です。結果は教育担当の画面に記録されました。":"解説を読んで、もう一度挑戦してみましょう。結果は教育担当の画面に記録されました。"}</p><div class="row"><button class="btn ghost" id="retry">もう一度</button></div>`:`<p class="empty">${total} / ${qs.length} 問 回答済み</p>`}
   </section>
   ${qs.map((q,i)=>`<section class="card q"><h3>${i+1}. ${esc(q.q)}</h3>
     ${q.o.map((o,j)=>{let c=""; if(ans[i]!==undefined){ if(j===q.a)c="right"; else if(j===ans[i])c="wrong";}
       return `<button class="opt ${c}" data-q="${i}" data-o="${j}" ${ans[i]!==undefined?"disabled":""}>${esc(o)}</button>`}).join("")}
     ${ans[i]!==undefined&&q.why?`<p class="why">${ans[i]===q.a?"正解。":"正しくは「"+esc(q.o[q.a])+"」。"}${esc(q.why)}</p>`:""}
   </section>`).join("")}
-  ${total===qs.length?`<section class="card"><span class="label">${esc(L.title)} ・ 確認テストの結果</span><div class="score">${correct} / ${qs.length}</div>
+  ${total===qs.length?`<section class="card"><span class="label">${esc(L.title)} ・ 確認テストの結果</span><div class="scorewrap"><div class="score">${correct} / ${qs.length}</div>${correct===qs.length?hanamaru():""}</div>
     <p class="empty">${state.qdone&&state.qdone[L.id]?"このテストは完了しています。":"解説を読んだら、完了を押してください。結果は教育担当の画面に記録されます。"}</p>
     <div class="row"><button class="btn" id="qdone">${state.qdone&&state.qdone[L.id]?"次のテストへ":"完了"}</button><button class="btn ghost" id="retry2">もう一度</button></div></section>`:""}`;
 }
@@ -2090,7 +2171,7 @@ function bind(){
     const id=state.quizLesson, ans=(state.quiz[id] ||= {}), first=ans[b.dataset.q]===undefined; ans[b.dataset.q]=+b.dataset.o;
     const Lq=lessons().find(l=>l.id===id);
     if(first && Lq && Lq.quiz[+b.dataset.q]) logLearn({t:"quiz", l:id, q:+b.dataset.q, ok:+b.dataset.o===Lq.quiz[+b.dataset.q].a});
-    if(Object.keys(ans).length===Lq.quiz.length){ state.scores[id]=`${Lq.quiz.filter((q,i)=>ans[i]===q.a).length}/${Lq.quiz.length}`; }
+    if(Object.keys(ans).length===Lq.quiz.length){ const okN=Lq.quiz.filter((q,i)=>ans[i]===q.a).length; state.scores[id]=`${okN}/${Lq.quiz.length}`; if(first && okN===Lq.quiz.length) celebrate=true; }
     render()});
   const qd=$("#qdone"); if(qd) qd.onclick=()=>{
     const id=state.quizLesson; (state.qdone ||= {})[id]=true; state.done[id]=true; pushProgress();
