@@ -139,7 +139,7 @@ const badge = (page) => page.$eval("#livebadge", (e) => e.textContent);
   await appReady(adm);
   await adm.waitForFunction(() => !document.querySelector(".role").hidden, null, { timeout: 30000 });
   const admTabs = await adm.$$eval("#tabs button", (bs) => bs.map((b) => b.dataset.tab));
-  ok("管理者には効果とメモが出ない", !admTabs.includes("effect") && !admTabs.includes("memo"), admTabs.join(","));
+  ok("管理者には効果が出て、メモは出ない", admTabs.includes("effect") && !admTabs.includes("memo"), admTabs.join(","));
   const admVoices = await adm.evaluate(async () => { const db = await window.claude.use("db"); try { const s = await db.collection("voices").get(); return "読めた " + s.size; } catch (e) { return e.code; } });
   ok("管理者は外部窓口の声を読めない", admVoices === "invalid_argument", admVoices);
   await adm.click('#tabs [data-tab="queue"]');

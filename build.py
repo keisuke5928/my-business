@@ -56,6 +56,11 @@ def render(app, inn, title, runtime=""):
     if app.count("<!--__RUNTIME__-->") != 1:
         sys.exit("src/app.html に <!--__RUNTIME__--> がちょうど1つ必要です")
     app = app.replace("<!--__RUNTIME__-->", runtime)
+    market = json.loads((ROOT / "config" / "market.json").read_text(encoding="utf-8"))
+    market.pop("_note", None)
+    if app.count("/*__MARKET__*/null") != 1:
+        sys.exit("src/app.html に /*__MARKET__*/null がちょうど1つ必要です")
+    app = app.replace("/*__MARKET__*/null", json.dumps(market, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
     for mark in ("/*__INN_DATA__*/null", "/*__TITLE__*/"):
         if app.count(mark) != 1:
             sys.exit(f"src/app.html に {mark} がちょうど1つ必要です")

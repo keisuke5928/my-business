@@ -407,6 +407,12 @@ nav.tabs button .ic{font-size:1.1rem}
 nav.tabs button[aria-current="page"] .ic{background:var(--ai);color:var(--surface)}
 .sos{width:50px;height:50px;padding:0;justify-content:center;font-size:0;border:2px solid var(--surface);box-shadow:0 6px 18px rgba(27,36,48,.22)}
 .sos::before{width:auto;height:auto;background:none;color:var(--surface);font-family:var(--display);font-size:1.35rem;line-height:1}
+.batable{display:flex;flex-direction:column}
+.barow{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding:10px 0;align-items:flex-start}
+.barow:first-child{border-top:0}
+.bav{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.bav span{display:flex;flex-direction:column;font-size:.95rem}
+.bav small{font-size:.7rem;color:var(--muted)}
 .needs{display:flex;flex-direction:column}
 #orderform .field{min-width:0}
 #orderform input{min-width:0;max-width:100%}
@@ -451,6 +457,7 @@ html.big .brand h1{font-size:1rem}
 /* ======================= データ ======================= */
 /* 宿ごとのデータは inns/<id>.json にある。build.py がここに埋め込む。アプリ本体には宿の事実を書かない。 */
 const D = /*__INN_DATA__*/null;
+const MARKET = /*__MARKET__*/null || {};
 /* 本番（Firebase）で動くときは、つなぎの部品が window.YADO_RUNTIME を用意する。デモ（Claudeのアーティファクトやファイル）では null。 */
 const RT = window.YADO_RUNTIME || null;
 const PROD = !!RT;
@@ -511,6 +518,14 @@ const needs = () => (live ? (liveNeeds && liveNeeds.needs) : state.needs) || {};
 const orders = () => live ? liveOrders : (state.orders||[]);
 /* 学習の記録。だれの記録かは残さない（名前も番号もつけない）。教材を直すためと、成果を数えるためだけに使う。
    t は done（教材を見終わった）、quiz（テストに答えた）、card（覚えるカード）。 */
+/* 効果の数字（導入前の基準値、導入後の手入力、費用の設定）。本番では管理者と運営者だけが読み書きする。 */
+let liveMetrics={};
+const mget = id => (live ? liveMetrics[id] : (state.metrics||{})[id]) || {};
+async function mset(id, patch){
+  const cur={...mget(id), ...patch};
+  if(live){ liveMetrics[id]=cur; try{ await db.doc("metrics/"+id).set(cur); }catch(e){ toast(dbMsg(e)); } return; }
+  (state.metrics ||= {})[id]=cur; save();
+}
 const learnLog = () => live ? liveLearn : (state.learnlog||[]);
 function logLearn(rec){
   if(state.role!=="new") return;
@@ -625,13 +640,14 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   db.collection("innvoices").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveInnVoices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("relays").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveRelays = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("learnlog").orderBy("at","desc").limit(600).onSnapshot(snap=>{ liveLearn = snap.docs.map(d=>d.data()); rerender(); }, ()=>{});
+  db.collection("metrics").onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>{ m[d.id]=d.data(); }); liveMetrics=m; rerender(); }, ()=>{});
   db.doc("staffing/needs").onSnapshot(snap=>{ liveNeeds = snap.exists ? snap.data() : null; rerender(); }, ()=>{});
   db.collection("orders").orderBy("at","desc").limit(30).onSnapshot(snap=>{ liveOrders = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   try{ const u = await window.claude?.use?.("user"); if(u){ me = await u.id(); isOwnerV = !!(await u.isOwner()); } }catch(e){}
   if(isOwnerV) db.collection("voices").onSnapshot(snap=>{ liveVoices = snap.docs.flatMap(d=>((d.data()||{}).items||[]).map(it=>({...it, uid:d.id}))); rerender(); }, ()=>{});
 })();
 async function logQ(o){
-  const rec={q:o.q, result:o.result, risk:!!o.risk, status:o.result==="answer"?"auto":"open", answer:o.answer||"", source:o.source||"",
+  const rec={q:o.q, result:o.result, risk:!!o.risk, kind:o.risk?riskKind(o.q):"", status:o.result==="answer"?"auto":"open", answer:o.answer||"", source:o.source||"",
     by:state.profile.name+"さん", at:Date.now(), lesson:guessLesson(o.q), key:o.key||""};
   if(live){
     try{ const ref = await db.collection("questions").add(rec); state.mine[ref.id]=1; save(); return; }
@@ -693,7 +709,7 @@ const TABS = {
 };
 function renderTabs(){
   if(state.role==="admin" && !canAdmin()) state.role="new";
-  const tabs = TABS[state.role].filter(([id])=>!(PROD && !isOperator() && (id==="effect"||id==="memo")));
+  const tabs = TABS[state.role].filter(([id])=>!(PROD && !isOperator() && id==="memo"));
   if(!tabs.some(([id])=>id===state.tab)) state.tab = tabs[0][0];
   $("#tabs").innerHTML = tabs.map(([id,ic,l]) => {
     let dot=""; if(id==="queue"&&openQueue()) dot=`<span class="dot">${openQueue()}</span>`;
@@ -1177,6 +1193,12 @@ function dash(){
       <div class="ojt">${items.map(([k,t])=>{const o=n.ojt&&n.ojt[k]; const on=o&&o.done; return `<button data-oj="${k}" class="${on?"done":""}" aria-pressed="${!!on}"><span class="box ${on?"on":""}" aria-hidden="true">${on?"✓":""}</span><span>${esc(t)}${on?`<span class="who">${esc(o.at||"")} ${esc(o.by||"")}</span>`:""}</span></button>`;}).join("")}</div>
       ${n.ojtDone===n.ojtAll?`<p class="tag ok" style="align-self:flex-start">一人立ちできます。シフトに一人で入れられます</p>`:`<p class="note">あと${n.ojtAll-n.ojtDone}つで一人立ちです。</p>`}
     </section>
+    <section class="card"><h3>着任の終わり</h3>
+      ${n.end?`<p>${n.end.kind==="quit"?"途中で辞めた":"満了した"}（${esc(mdText(n.end.iso))}）</p><div class="row"><button class="btn ghost small" id="endundo">記録を取り消す</button></div>`
+      :`<p class="empty">働き終えたら記録します。一人立ちの人数や、早く辞めた人数の集計に使います。</p>
+      <label class="field">終わった日<input id="endiso" type="date" value="${todayISO()}"></label>
+      <div class="row"><button class="btn ghost small" data-end="done">満了した</button><button class="btn ghost small" data-end="quit">途中で辞めた</button></div>`}
+    </section>
     <section class="card"><h3>教える人どうしの引き継ぎメモ</h3>
       <textarea id="pnote" aria-label="引き継ぎメモ" placeholder="例：布団は2人で運ぶよう伝えた。部屋番号はもう一度教える">${esc(n.note||"")}</textarea>
       <div class="row"><button class="btn small ghost" id="pnotesave">メモを残す</button></div>
@@ -1214,7 +1236,7 @@ function dash(){
     <div class="nlist">${all.map(n=>`<button class="nrow" data-nb="${n.id}">
       <div class="avatar" aria-hidden="true">${face({hair:"#3a2a22", robe:n.me?"#557532":"#4d6b8a", long:/美|彩|子/.test(n.name)})}</div>
       <div><b>${esc(n.name)} <span class="tag">${esc(n.type)}</span></b><span class="sub">${esc(n.job)} ・ ${esc(n.day)} ・ 準備 ${n.prepN}/${PREP.length} ・ 一人立ち ${n.ojtDone}/${n.ojtAll}</span><div class="prog"><i style="width:${n.ojtAll?n.ojtDone/n.ojtAll*100:0}%"></i></div></div>
-      <span>${n.alert?'<span class="tag risk">声かけを</span>':(n.ojtDone===n.ojtAll?'<span class="tag ok">一人立ち</span>':(n.prepN<PREP.length?'<span class="tag">準備中</span>':""))}</span></button>`).join("")}</div>
+      <span>${n.end?'<span class="tag">終了</span>':n.alert?'<span class="tag risk">声かけを</span>':(n.ojtDone===n.ojtAll?'<span class="tag ok">一人立ち</span>':(n.prepN<PREP.length?'<span class="tag">準備中</span>':""))}</span></button>`).join("")}</div>
     <p class="note">初日シートを「公開して本人に送る」と、ここに加わります。</p>
   </section>
   ${skillCard(all)}
@@ -1231,7 +1253,7 @@ function dash(){
   </section>`;
 }
 function skillCard(all){
-  const by={}; all.forEach(n=>{ (by[n.job] ||= []).push(n); });
+  const by={}; all.filter(n=>!n.end).forEach(n=>{ (by[n.job] ||= []).push(n); });
   const jobs=Object.entries(by); if(!jobs.length) return "";
   return `<section class="card"><span class="label">シフトを組むときに</span><h3>仕事ごとの一人立ち</h3>
     <div class="lbars">${jobs.map(([job,ns])=>{ const ok=ns.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length;
@@ -1255,7 +1277,7 @@ function orderText(o){
 function staffingCard(all){
   const jobs=Object.keys(JOBS); if(!jobs.length) return "";
   const nd=needs(), od=state.order, sent=orders();
-  const rows=jobs.map(job=>{ const ns=all.filter(n=>n.job===job), ok=ns.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length, need=+nd[job]||0, lack=Math.max(0, need-ns.length);
+  const rows=jobs.map(job=>{ const ns=all.filter(n=>n.job===job&&!n.end), ok=ns.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length, need=+nd[job]||0, lack=Math.max(0, need-ns.length);
     return `<div class="needrow"><div><b>${esc(job)}</b><span class="note">いま ${ns.length}名（一人で入れる ${ok}名）</span></div>
       <label class="needin">必要<input type="number" min="0" max="99" inputmode="numeric" data-need="${esc(job)}" value="${need||""}" placeholder="0" aria-label="${esc(job)}に必要な人数">名</label>
       ${lack?`<span class="tag risk">あと${lack}名</span><button class="btn small" data-order="${esc(job)}" data-lack="${lack}">依頼文を作る</button>`:`<span class="tag ${need?"ok":""}">${need?"足りている":"未入力"}</span>`}</div>`; }).join("");
@@ -1298,6 +1320,29 @@ function weeklyText(all){
 6. スタッフから届いた声：${voicesN}件${(()=>{ const lg=learnLog().filter(e=>(e.at||0)>=now-7*86400000), q=lg.filter(e=>e.t==="quiz"); return lg.length?`
 7. 学習：教材を見終わった ${lg.filter(e=>e.t==="done").length}回。テストの答え ${q.length}回${q.length?`（正解 ${Math.round(q.filter(e=>e.ok).length/q.length*100)}%）`:""}`:""; })()}`;
 }
+const isoOf = d => { const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; };
+const todayISO = () => isoOf(new Date());
+const daysBetween = (a,b) => Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000);
+/* 一人立ちチェックの日付。新しい記録は年月日（iso）を持つ。古い記録は「11月15日」の文字だけなので、着任日の年から補う。 */
+function ojtISO(o, p){
+  if(!o) return ""; if(o.iso) return o.iso;
+  const m=/^(\d{1,2})月(\d{1,2})日$/.exec(o.at||""); if(!m||!p.startISO) return "";
+  const y=+p.startISO.slice(0,4), sm=+p.startISO.slice(5,7), z=n=>String(n).padStart(2,"0");
+  return `${(+m[1]<sm)?y+1:y}-${z(m[1])}-${z(m[2])}`;
+}
+/* 担当者に回した質問の種類。中身は出さず、件数を数えるためだけに使う。 */
+const RISK_KINDS = [["allergy","アレルギー"],["body","けが・体調"],["money","お金"],["guest","お客様とのトラブル"],["harass","ハラスメント"],["disaster","災害"],["other","そのほか"]];
+function riskKind(text){
+  const t=String(text||"");
+  if(/アレルギー|卵|そば|えび|エビ|小麦|乳|落花生|ピーナッツ/.test(t)) return "allergy";
+  if(/セクハラ|パワハラ|ハラスメント|触られ/.test(t)) return "harass";
+  if(/地震|火事|災害|避難/.test(t)) return "disaster";
+  if(/けが|怪我|やけど|火傷|倒れ|救急|具合|体調|気分|熱が/.test(t)) return "body";
+  if(/クレーム|怒|酔っ|酔い|トラブル/.test(t)) return "guest";
+  if(/お金|会計|支払|返金|手当|給料|給与|時給/.test(t)) return "money";
+  return "other";
+}
+const kindOf = q => q.risk ? (q.kind || riskKind(q.q)) : "";
 function todayText(){ const d=new Date(); return `${d.getMonth()+1}月${d.getDate()}日`; }
 
 /* ======================= 管理：質問への回答 ======================= */
@@ -1601,6 +1646,7 @@ function effCalc(){
     ${s0>h?`<p class="note">同じ説明の時間が、教える時間より長く入っています。教える時間と同じとして計算しました。</p>`:""}`;
 }
 function effect(){
+  { const sh=mget("_eff"); if(live && Object.keys(sh).length && !typing()) state.eff={...state.eff, ...sh}; }
   return `
   <section class="card">
     <span class="label">その場で伺って計算します</span>
@@ -1616,8 +1662,96 @@ function effect(){
   <section class="card">
     ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k]??"")}">${f.note?`<span class="note">${f.note}</span>`:""}</label>`).join("")}
   </section>
-  <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div></section>
-  <section class="card"><p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。辞める人が減る効果は、ここには入れていません。</p></section>`;
+  <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div>
+    <p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。</p></section>
+  ${beforeAfterCard()}
+  ${costCard()}`;
+}
+/* ---- 導入前と導入後 ---- */
+const deptId = d => d==="all" ? "all" : "d-"+String(d).replace(/[\/\s.#$\[\]]/g,"_");
+const numOf = v => { const n=parseFloat(String(v??"").replace(/[,，\s]/g,"")); return isFinite(n)&&n>=0 ? n : null; };
+const r1 = v => Math.round(v*10)/10;
+function afterStats(dept){
+  const t=todayISO(), ps=people().filter(p=>(dept==="all"||p.job===dept) && p.startISO && p.startISO<=t);
+  const solo=ps.map(p=>{ const items=ojtFor(p.job); if(!items.length||!items.every(([k])=>p.ojt&&p.ojt[k]&&p.ojt[k].done)) return null;
+    const last=items.map(([k])=>ojtISO(p.ojt[k],p)).filter(Boolean).sort().pop(); return last ? Math.max(1, daysBetween(p.startISO,last)+1) : null; }).filter(v=>v!==null);
+  const quit=ps.filter(p=>p.end&&p.end.kind==="quit"&&p.end.iso&&daysBetween(p.startISO,p.end.iso)<=14).length;
+  return {n:ps.length, soloN:solo.length, days:solo.length?r1(solo.reduce((a,b)=>a+b,0)/solo.length):null, quit, from:ps.map(p=>p.startISO).sort()[0]||""};
+}
+const BASE_F = [["period","対象の期間","例：2025年11月〜2026年10月","text"],["n","入ってきた新人の人数（人）","例：30","decimal"],["h","新人1人に先輩が教えた時間（時間）","例：12","decimal"],["days","一人立ちまでの日数（日）","例：10","decimal"],["quit","2週間以内に辞めた人数（人）","例：4","decimal"]];
+function baRows(dept){
+  const m=mget(deptId(dept)), b=m.base||{}, a=m.after||{}, st=afterStats(dept);
+  const bn=numOf(b.n), bh=numOf(b.h), bd=numOf(b.days), bq=numOf(b.quit), ah=numOf(a.h), ad=st.days!==null?st.days:numOf(a.days);
+  const pct=(q,n)=>n?Math.round(q/n*100):null;
+  const diff=(x,y,u)=>{ if(x===null||y===null) return ""; const d=r1(y-x); return d===0?"変わらず":`${d>0?"+":"−"}${Math.abs(d)}${u}`; };
+  return {st, b, a, rows:[
+    {t:"新人1人に先輩が教えた時間", b:bh===null?"":bh+"時間", a:ah===null?"":ah+"時間", d:diff(bh,ah,"時間"), good:bh!==null&&ah!==null&&ah<bh},
+    {t:"一人立ちまでの日数", b:bd===null?"":bd+"日", a:ad===null?"":ad+"日"+(st.days!==null?`（${st.soloN}人の平均）`:""), d:diff(bd,ad,"日"), good:bd!==null&&ad!==null&&ad<bd},
+    {t:"2週間以内に辞めた人", b:bq===null?"":`${bq}人`+(pct(bq,bn)!==null?`（${bn}人中、${pct(bq,bn)}%）`:""), a:st.n?`${st.quit}人（${st.n}人中、${pct(st.quit,st.n)}%）`:"", d:(pct(bq,bn)!==null&&st.n)?diff(pct(bq,bn),pct(st.quit,st.n),"ポイント"):"", good:pct(bq,bn)!==null&&st.n>0&&pct(st.quit,st.n)<pct(bq,bn)}
+  ]};
+}
+function beforeAfterCard(){
+  const depts=["all"].concat(Object.keys(JOBS)); if(!depts.includes(state.effDept)) state.effDept="all";
+  const dept=state.effDept, r=baRows(dept), b=r.b, a=r.a, st=r.st;
+  return `<section class="card" id="bacard"><span class="label">成果を数字で残す</span><h2>導入前と導入後</h2>
+    <div class="picker" role="group" aria-label="部署">${depts.map(d=>`<button data-dept="${esc(d)}" aria-pressed="${d===dept}">${d==="all"?"全館":esc(d)}</button>`).join("")}</div>
+    <h3>導入前（基準の数字）</h3>
+    <p class="empty">アプリを使う前の様子を、分かる範囲で入れます。あとで比べるための数字です。</p>
+    ${BASE_F.map(([k,t,ph,mode])=>`<label class="field">${t}<input id="mb-${k}" data-mb="${k}" inputmode="${mode}" placeholder="${ph}" value="${esc(b[k]??"")}"></label>`).join("")}
+    <h3>導入後</h3>
+    <p class="empty">${st.n?`${mdText(st.from)}から今日までに着任した ${st.n}人の記録から、自動で出しています。`:"着任した人の記録が入ると、自動で出ます。"}教えた時間だけは、記録から出せないので入れてください。</p>
+    <label class="field">新人1人に先輩が教えた時間（時間）<input id="ma-h" data-ma="h" inputmode="decimal" placeholder="例：8" value="${esc(a.h??"")}"></label>
+    ${st.days===null?`<label class="field">一人立ちまでの日数（日）。一人立ちチェックがすべて終わると自動で出ます<input id="ma-days" data-ma="days" inputmode="decimal" placeholder="例：7" value="${esc(a.days??"")}"></label>`:""}
+    <div class="batable">${r.rows.map(x=>`<div class="barow"><b>${x.t}</b><div class="bav"><span><small>導入前</small>${x.b||"未入力"}</span><span aria-hidden="true">→</span><span><small>導入後</small>${x.a||"まだ"}</span></div>${x.d?`<span class="tag ${x.good?"ok":""}">${x.d}</span>`:""}</div>`).join("")}</div>
+    <p class="note">人数が少ないうちは、数字が大きく動きます。3か月ほど続けてから比べるのがおすすめです。</p>
+  </section>`;
+}
+/* ---- 採用と入れ替わりの費用と比べる ---- */
+const COST_F = [
+  ["salary","紹介で採用した人の年収（万円）","例：300",null],
+  ["feeRate","紹介手数料の割合（%）","","feeRate"],
+  ["ad","求人広告費（1人あたり、円）","","ad"],
+  ["hakenBill","派遣の請求単価（1時間、円）","例：2400",null],
+  ["spotWage","スキマバイトの時給（円）","例：1200",null],
+  ["spotRate","スキマバイトの手数料の割合（%）","","spotRate"],
+  ["planBuild","このサービスの構築の費用（円）","","planBuild"],
+  ["planMonthly","このサービスの月額（円）","","planMonthly"]
+];
+const CHANNELS = [["ref","人材紹介"],["ad","求人広告"],["haken","派遣"],["spot","スキマバイト"]];
+function costVals(){
+  const c=mget("_costs"), v={};
+  COST_F.forEach(([k,,,mk])=>{ const own=numOf(c[k]); v[k]= own!==null ? own : (mk&&MARKET[mk]? MARKET[mk].v : null); });
+  v.channel=c.channel||"haken"; return v;
+}
+function costCalc(){
+  const v=costVals(), e=state.eff, n=numOf(e.n), h=numOf(e.h), w=numOf(e.w), s0=numOf(e.s);
+  if(h===null||w===null) return `<p class="empty">上の「先輩が教える時間」と「教える先輩の時給」を入れると、ここに結果が出ます。</p>`;
+  const teach=h*w;
+  const per={ ref: v.salary!==null&&v.feeRate!==null ? v.salary*10000*v.feeRate/100+teach : null,
+    ad: v.ad!==null ? v.ad+teach : null,
+    haken: v.hakenBill!==null ? h*v.hakenBill+teach : null,
+    spot: v.spotWage!==null&&v.spotRate!==null ? h*v.spotWage*(1+v.spotRate/100)+teach : null };
+  const rows=CHANNELS.map(([k,t])=>`<div class="lb"><span>${v.channel===k?`<b>${t}</b>`:t}</span><span class="v">${per[k]===null?"数字を入れると出ます":"約"+yen(per[k])+"円"}</span></div>`).join("");
+  const one=per[v.channel];
+  let need="";
+  if(one && v.planBuild!==null && v.planMonthly!==null){
+    const y1=v.planBuild+v.planMonthly*12, y2=v.planMonthly*12, saved=(n!==null&&s0!==null)?n*Math.min(s0,h)*w:0;
+    const k=(cost)=>{ const rest=cost-saved; return rest<=0 ? "教える時間が戻る分だけで、費用と同じになります" : `早く辞める人を年に <b>${Math.ceil(rest/one*10)/10}人</b> 減らすと、費用と同じになります`; };
+    need=`<dl class="kv" style="margin-top:12px"><dt>1年目</dt><dd>費用 ${yen(y1)}円。${k(y1)}</dd><dt>2年目から</dt><dd>費用 ${yen(y2)}円。${k(y2)}</dd></dl>
+      ${saved?`<p class="note">教える時間が戻る分（年 ${yen(saved)}円）を、先に引いています。</p>`:""}`;
+  }
+  return `<h3>1人が早く辞めたときにかかる費用</h3><div class="lbars">${rows}</div>
+    <p class="note">採用にかかる費用に、教え直しの時間（${yen(h)}時間 × ${yen(w)}円）を足しています。派遣とスキマバイトは、教わっている時間の料金です。</p>${need}`;
+}
+function costCard(){
+  const c=mget("_costs"), v=costVals();
+  return `<section class="card" id="costcard"><span class="label">採用の費用と並べる</span><h2>何人減れば、費用を取り戻せるか</h2>
+    <p class="empty">新人が早く辞めると、採用と教え直しの費用がもう一度かかります。数字は目安です。宿の実際の数字に直してください。</p>
+    <label class="field">おもな採用の方法<select id="mc-channel">${CHANNELS.map(([k,t])=>`<option value="${k}" ${v.channel===k?"selected":""}>${t}</option>`).join("")}</select></label>
+    ${COST_F.map(([k,t,ph,mk])=>{ const m=mk&&MARKET[mk], own=numOf(c[k])!==null;
+      return `<label class="field">${t}<input id="mc-${k}" data-mc="${k}" inputmode="decimal" placeholder="${ph}" value="${esc(own?c[k]:(m?m.v:""))}">${m?`<span class="note">${own&&numOf(c[k])!==m.v?"宿で変更。":""}初期値 ${yen(m.v)}。${esc(m.src)}${m.year?"、"+esc(m.year):""}</span>`:""}</label>`; }).join("")}
+    <div id="costout">${costCalc()}</div>
+  </section>`;
 }
 
 /* ======================= 管理：ヒアリングメモ ======================= */
@@ -1731,7 +1865,9 @@ function bind(){
   const ob=$("#ojtby"); if(ob) ob.onchange=()=>{ state.ojtBy=ob.value; save(); };
   document.querySelectorAll("[data-oj]").forEach(b=>b.onclick=()=>{ const k=b.dataset.oj, p=people().find(x=>x.id===state.newbieView); if(!p) return;
     const on=!(p.ojt&&p.ojt[k]&&p.ojt[k].done);
-    patchPerson(p.id,{ojt:{[k]:on?{done:true, by:state.ojtBy, at:todayText()}:{done:false, by:"", at:""}}}); if(on) toast(`${state.ojtBy}が教えた記録を残しました`); });
+    patchPerson(p.id,{ojt:{[k]:on?{done:true, by:state.ojtBy, at:todayText(), iso:todayISO()}:{done:false, by:"", at:""}}}); if(on) toast(`${state.ojtBy}が教えた記録を残しました`); });
+  document.querySelectorAll("[data-end]").forEach(b=>b.onclick=()=>{ const p=people().find(x=>x.id===state.newbieView); if(!p) return; const iso=($("#endiso")||{}).value||todayISO(); patchPerson(p.id,{end:{kind:b.dataset.end, iso}}); toast("記録しました"); });
+  const eu=$("#endundo"); if(eu) eu.onclick=()=>{ const p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{end:null}); };
   const ps=$("#pnotesave"); if(ps) ps.onclick=()=>{ const p=people().find(x=>x.id===state.newbieView); if(!p) return; patchPerson(p.id,{note:$("#pnote").value.trim()}); toast("引き継ぎメモを残しました"); };
   const cl=$("#copyline"); if(cl) cl.onclick=async()=>{ const t=$("#linetext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました。LINEに貼りつけてください"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
   const ns=$("#nsend"); if(ns) ns.onclick=async()=>{ const t=$("#ntext").value.trim(); if(!t){ toast("連絡を入力してください"); return; }
@@ -1839,7 +1975,13 @@ function bind(){
   document.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.cdel;
     if(live){ try{ await db.doc("cards/"+id).delete(); }catch(e){ toast(dbMsg(e)); } return; }
     state.cards=state.cards.filter(c=>c.id!==id); render(); });
-  document.querySelectorAll("[data-eff]").forEach(inp=>inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); save()});
+  document.querySelectorAll("[data-eff]").forEach(inp=>{ inp.oninput=()=>{state.eff[inp.dataset.eff]=inp.value; $("#effout").innerHTML=effCalc(); const co=$("#costout"); if(co) co.innerHTML=costCalc(); save()};
+    inp.onchange=()=>{ if(live) mset("_eff", {...state.eff}); }; });
+  document.querySelectorAll("[data-dept]").forEach(b=>b.onclick=()=>{ state.effDept=b.dataset.dept; render(); });
+  document.querySelectorAll("[data-mb]").forEach(inp=>inp.onchange=()=>{ const id=deptId(state.effDept), m=mget(id); mset(id,{base:{...(m.base||{}), [inp.dataset.mb]:inp.value.trim()}}).then(()=>setTimeout(render,0)); });
+  document.querySelectorAll("[data-ma]").forEach(inp=>inp.onchange=()=>{ const id=deptId(state.effDept), m=mget(id); mset(id,{after:{...(m.after||{}), [inp.dataset.ma]:inp.value.trim()}}).then(()=>setTimeout(render,0)); });
+  document.querySelectorAll("[data-mc]").forEach(inp=>inp.onchange=()=>{ mset("_costs",{[inp.dataset.mc]:inp.value.trim()}).then(()=>setTimeout(render,0)); });
+  { const ch=$("#mc-channel"); if(ch) ch.onchange=()=>{ mset("_costs",{channel:ch.value}).then(()=>setTimeout(render,0)); }; }
   document.querySelectorAll("[data-memo]").forEach(b=>b.onclick=()=>{const i=b.dataset.memo; const m=(state.memo[i] ||= {ok:false,text:""}); m.ok=!m.ok; render()});
   document.querySelectorAll("[data-memotext]").forEach(t=>t.oninput=()=>{const i=t.dataset.memotext; const m=(state.memo[i] ||= {ok:false,text:""}); m.text=t.value; save()});
   const sn=$("#seenew"); if(sn) sn.onclick=()=>{setRole("new"); go("learn")};
