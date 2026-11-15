@@ -7,7 +7,7 @@
 /* Layout: phone-width app column, role switch on top, tab bar at the bottom (five for staff, six for admin).
    Indigo (藍) ink on a pale washi grey; moss green is the one accent; rust is reserved for "ask a person". */
 :root{
-  --bg:#f3f5f2; --surface:#ffffff; --ink:#1b2430; --muted:#5d6670; --line:#dde2dc;
+  --bg:#f4f1e9; --surface:#fffdf9; --ink:#1b2430; --muted:#5c5f5a; --line:#e2dccd;
   --ai:#24426a; --ai-soft:#e4eaf3; --moss:#557532; --moss-soft:#e7eedc;
   --warn:#a5461f; --warn-soft:#f7e6dc; --scrim:rgba(10,14,20,.55); --skin:#f0cfb4; --skin2:#e3bb9c; --collar:#f4f2ec;
   --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
@@ -336,21 +336,102 @@ textarea:focus-visible,.field input:focus-visible,.field select:focus-visible{ou
 @keyframes riseT{from{transform:translate(-50%,14px);opacity:.6}to{transform:translate(-50%,0);opacity:1}}
 @keyframes rise{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
 html.big .ring{width:66px;height:66px}
+
+/* ---- UI v14: 旅館らしい上品さ。色の役割は同じ（藍が主役、苔がアクセント、赤茶は「人に聞く」だけ）。
+   和紙の地、細い罫線、明朝の見出し、七宝の地紋。上の部分は1行。「困ったら」は小さな丸。 ---- */
+body{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .36 0 0 0 0 .24 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+header.top{padding-block:12px 4px;gap:6px}
+.bar{display:flex;align-items:center;gap:8px;position:relative}
+.bar .brand{flex:1;min-width:0;flex-wrap:nowrap}
+.brand h1{font-size:1.12rem;gap:8px;white-space:nowrap;letter-spacing:.06em}
+.brand h1::before{border-radius:4px;width:1.55em;height:1.55em;font-size:.82em}
+.bar .role{flex:none;display:inline-grid;grid-template-columns:auto auto;box-shadow:none;padding:2px;background:var(--surface)}
+.bar .role button{min-height:34px;padding:4px 13px;font-size:.82rem}
+.bar .role[hidden]{display:none}
+.morebtn{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;gap:3px;padding:0}
+.morebtn i{width:3.5px;height:3.5px;border-radius:50%;background:var(--ai)}
+.morebtn[aria-expanded="true"]{background:var(--ai-soft);border-color:transparent}
+.moremenu{position:absolute;right:0;top:calc(100% + 6px);z-index:15;min-width:190px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(27,36,48,.16);padding:6px;display:flex;flex-direction:column}
+.moremenu[hidden]{display:none}
+.moremenu button{border:0;background:none;text-align:left;padding:10px 12px;border-radius:8px;min-height:44px;font-size:.92rem}
+.moremenu button[hidden]{display:none}
+.moremenu button:active,.moremenu button:hover{background:var(--bg)}
+.subline{display:flow-root;font-size:.72rem;color:var(--muted);line-height:1.5;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.subline #innnote{min-width:0}
+.subline .badges{display:inline-flex;gap:4px;float:right;margin:0 0 0 10px}
+.subline .aibadge{line-height:1.5}
+.aibadge{font-size:.66rem;padding:1px 8px;background:transparent}
+main{padding-top:14px}
+.view{gap:16px}
+h2,h3{letter-spacing:.03em}
+.card{border-radius:10px;box-shadow:0 1px 0 rgba(27,36,48,.03),0 8px 24px -16px rgba(27,36,48,.18)}
+.label{letter-spacing:.1em;font-weight:500}
+.label::before{content:"";display:inline-block;width:14px;height:1px;background:currentColor;opacity:.55;vertical-align:middle;margin-right:8px;position:relative;top:-1px}
+.stat .label{letter-spacing:.04em}
+.stat .label::before,.field .label::before,label.label::before{display:none}
+.row:has(>.sosin){flex-wrap:nowrap}
+.sosin{flex:none}
+.hero{border-radius:12px;padding:20px 18px 18px}
+.hero>*{position:relative;z-index:1}
+.hero::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='.16'%3E%3Ccircle cx='22' cy='22' r='22'/%3E%3Ccircle cx='0' cy='0' r='22'/%3E%3Ccircle cx='44' cy='0' r='22'/%3E%3Ccircle cx='0' cy='44' r='22'/%3E%3Ccircle cx='44' cy='44' r='22'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image:linear-gradient(115deg,transparent 40%,#000 100%);mask-image:linear-gradient(115deg,transparent 40%,#000 100%)}
+.hero .when{font-weight:600;letter-spacing:.03em}
+.hero .count{padding:3px 12px;font-weight:500}
+.nextcard{border-radius:10px}
+.btn{border-radius:8px;letter-spacing:.05em}
+.btn.ghost{border-color:var(--line);box-shadow:inset 0 0 0 1px var(--ai-soft)}
+.lesson{border-radius:10px;box-shadow:none;border-color:var(--line)}
+.lesson b{font-family:var(--display);font-size:1.02rem;letter-spacing:.03em}
+.status{background:transparent;font-size:.7rem}
+.todo button,.stepchk button,.ojt button,.opt{border-radius:8px}
+.todo button,.ojt button{background:transparent}
+.box{border-radius:50%;border-width:1.5px}
+.stat,button.stat{border-radius:10px;background:transparent}
+.stat .num{font-weight:600}
+textarea,.field input,.field select{background:var(--surface);border-radius:8px}
+.composer{border-radius:12px}
+.msg{border-radius:12px}
+.msg.me{border-bottom-right-radius:3px}.msg.bot{border-bottom-left-radius:3px;box-shadow:none}
+.suggest button,.picker button{box-shadow:none;background:transparent}
+.picker button[aria-pressed="true"]{background:var(--ai)}
+.scale button{border-radius:8px}
+.fcard{border-radius:10px;box-shadow:none}
+.fcard .front{letter-spacing:.06em}
+.out{border-radius:8px}
+.tag{background:transparent}
+.tag.risk{background:var(--warn-soft)}.tag.ok{background:var(--moss-soft)}
+nav.tabs{box-shadow:none;border-top:1px solid var(--line)}
+nav.tabs button{letter-spacing:.06em}
+nav.tabs button .ic{font-size:1.1rem}
+nav.tabs button[aria-current="page"] .ic{background:var(--ai);color:var(--surface)}
+.sos{width:50px;height:50px;padding:0;justify-content:center;font-size:0;border:2px solid var(--surface);box-shadow:0 6px 18px rgba(27,36,48,.22)}
+.sos::before{width:auto;height:auto;background:none;color:var(--surface);font-family:var(--display);font-size:1.35rem;line-height:1}
+html.big .brand h1{font-size:1rem}
+@media (max-width:359px){.brand h1{font-size:1rem;letter-spacing:.02em}.bar .role button{padding:4px 9px}}
 </style>
 
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>宿のはじめて帳</h1><span class="row" style="gap:6px"><span class="aibadge" id="livebadge">この端末だけ</span><span class="aibadge" id="aibadge">見本モード</span></span></div>
-    <div class="demo-note"><span id="innnote"></span><span class="row" style="gap:14px"><button class="linkbtn" id="tourbtn">デモの案内</button><button class="linkbtn" id="bigtxt">文字を大きく</button><button class="linkbtn" id="reset">最初に戻す</button></span></div>
-    <div class="role" role="group" aria-label="画面の切り替え">
-      <button id="role-new" aria-pressed="true">新人スタッフの画面</button>
-      <button id="role-admin" aria-pressed="false">女将・管理者の画面</button>
+    <div class="bar">
+      <div class="brand"><h1>宿のはじめて帳</h1></div>
+      <div class="role" role="group" aria-label="画面の切り替え">
+        <button id="role-new" aria-pressed="true" aria-label="新人スタッフの画面">新人</button>
+        <button id="role-admin" aria-pressed="false" aria-label="女将・管理者の画面">管理者</button>
+      </div>
+      <button class="morebtn" id="morebtn" aria-label="そのほかのメニュー" aria-expanded="false" aria-controls="moremenu"><i></i><i></i><i></i></button>
+      <div class="moremenu" id="moremenu" hidden>
+        <button id="tourbtn">デモの案内</button>
+        <button id="bigtxt">文字を大きく</button>
+        <button id="reset">最初に戻す</button>
+      </div>
     </div>
+    <div class="subline"><span id="innnote"></span><span class="badges"><span class="aibadge" id="livebadge">この端末だけ</span><span class="aibadge" id="aibadge">見本モード</span></span></div>
   </header>
   <main id="main"></main>
 </div>
 <nav class="tabs" aria-label="メニュー"><div class="inner" id="tabs"></div></nav>
-<button class="sos" id="sosbtn" hidden>困ったら</button>
+<button class="sos" id="sosbtn" title="困ったら" hidden>困ったら</button>
 <div class="toast" id="toast" hidden></div>
 <div id="modal" hidden></div>
 
@@ -1662,6 +1743,10 @@ if(PROD){
   const rbox=document.querySelector(".role"); if(rbox) rbox.hidden=true;
   RT.ready.then(info=>{ ROLE = info.role || "staff"; if(rbox) rbox.hidden = !canAdmin(); if(canAdmin() && info.startAdmin) setRole("admin"); else render(); }).catch(()=>{});
 }
+{ const mb=$("#morebtn"), mm=$("#moremenu"), shut=()=>{ mm.hidden=true; mb.setAttribute("aria-expanded","false"); };
+  mb.onclick=e=>{ e.stopPropagation(); const open=mm.hidden; mm.hidden=!open; mb.setAttribute("aria-expanded",String(open)); };
+  mm.addEventListener("click",shut); document.addEventListener("click",e=>{ if(!mm.hidden && !mm.contains(e.target)) shut(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !mm.hidden){ shut(); mb.focus(); } }); }
 $("#tourbtn").onclick=()=>setTour(0);
 $("#sosbtn").onclick=()=>openSOS();
 $("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };
