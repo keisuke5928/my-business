@@ -442,6 +442,15 @@ nav.tabs button[aria-current="page"] .ic{background:var(--ai);color:var(--surfac
 .bav{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .bav span{display:flex;flex-direction:column;font-size:.95rem}
 .bav small{font-size:.7rem;color:var(--muted)}
+.kbar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 8px 8px 14px;margin-bottom:12px;font-weight:700}
+.kstart{align-items:stretch;text-align:center;gap:14px}
+.kstart .picker{flex-wrap:wrap;overflow:visible;justify-content:center}
+.kpin{font-family:var(--display);font-size:2.4rem;letter-spacing:.4em;text-align:center;border:1px solid var(--line);border-radius:10px;padding:10px 0 10px .4em;background:var(--surface);color:var(--ink);width:100%;min-height:72px;font-variant-numeric:tabular-nums}
+.pin{font-family:var(--display);font-size:1.5rem;letter-spacing:.2em;color:var(--ai);font-variant-numeric:tabular-nums}
+.agrow{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding:12px 0}
+.agrow:first-child{border-top:0;padding-top:0}
+.agrow .sub{font-size:.82rem;color:var(--muted)}
+body.kiosk .role,body.kiosk #tourbtn,body.kiosk #reset,body.kiosk #agdemo{display:none!important}
 .needs{display:flex;flex-direction:column}
 #orderform .field{min-width:0}
 #orderform input{min-width:0;max-width:100%}
@@ -469,6 +478,7 @@ html.big .brand h1{font-size:1rem}
       <div class="moremenu" id="moremenu" hidden>
         <button id="tourbtn">デモの案内</button>
         <button id="bigtxt">文字を大きく</button>
+        <button id="agdemo">派遣会社の画面（見本）</button>
         <button id="reset">最初に戻す</button>
       </div>
     </div>
@@ -491,7 +501,7 @@ const MARKET = /*__MARKET__*/null || {};
 const RT = window.YADO_RUNTIME || null;
 const PROD = !!RT;
 let ROLE = PROD ? "staff" : "demo";   /* staff | admin | operator | demo。本番では起動時に決まる */
-const canAdmin = () => ROLE !== "staff";
+const canAdmin = () => ROLE !== "staff" && ROLE !== "agency";
 const isOperator = () => ROLE === "operator" || ROLE === "demo";
 const INN = D.name, HOST = D.host, SOURCE = D.source || "";
 const staff = D.staff, terms = D.terms, FLOORS = D.floors || null, baseLessons = D.lessons, kb = D.kb;
@@ -510,6 +520,18 @@ function parseStart(t){ const m=String(t||"").match(/(\d{1,2})月(\d{1,2})日/);
   return `${y}-${String(mo).padStart(2,"0")}-${String(+m[2]).padStart(2,"0")}`; }
 function dayLabel(iso){ if(!iso) return "初日は未定"; const d=new Date(iso+"T00:00:00"), n=Math.round((d-TODAY)/86400000);
   return n>0?`着任まであと${n}日`:(n===0?"今日が初日":`着任${1-n}日目`); }
+/* 共有タブレットの入口と、新しく足した知らせの文。新人が読む所なので、教材と同じ7つの言葉で持つ。 */
+const KTEXT = {
+  title:{ja:"番号を入れてください", en:"Enter your number", vi:"Hãy nhập số của bạn", id:"Masukkan nomor Anda", ne:"आफ्नो नम्बर हाल्नुहोस्", zh:"请输入您的号码", my:"သင့်နံပါတ်ကို ထည့်ပါ"},
+  hint:{ja:"4けたの番号は、受け入れ担当の人に聞いてください。", en:"Ask the person in charge for your 4-digit number.", vi:"Hãy hỏi người phụ trách để biết số gồm 4 chữ số.", id:"Tanyakan nomor 4 digit kepada penanggung jawab.", ne:"४ अंकको नम्बर जिम्मेवार व्यक्तिलाई सोध्नुहोस्।", zh:"4位号码请向负责人询问。", my:"ဂဏန်း ၄ လုံး နံပါတ်ကို တာဝန်ခံထံ မေးပါ။"},
+  enter:{ja:"入る", en:"Enter", vi:"Vào", id:"Masuk", ne:"भित्र जानुहोस्", zh:"进入", my:"ဝင်မည်"},
+  exit:{ja:"終わる", en:"Finish", vi:"Kết thúc", id:"Selesai", ne:"सकियो", zh:"结束", my:"ပြီးပါပြီ"},
+  wrong:{ja:"番号が違います。", en:"That number is not correct.", vi:"Số không đúng.", id:"Nomornya salah.", ne:"नम्बर मिलेन।", zh:"号码不正确。", my:"နံပါတ် မှားနေပါသည်။"},
+  shared:{ja:"みんなで使うタブレットです。終わったら「終わる」を押してください。3分さわらないと、自動で最初の画面に戻ります。", en:"This tablet is shared. Tap “Finish” when you are done. It goes back to the first screen after 3 minutes without use.", vi:"Đây là máy tính bảng dùng chung. Khi xong, hãy bấm “Kết thúc”. Sau 3 phút không dùng, máy sẽ tự quay về màn hình đầu.", id:"Tablet ini dipakai bersama. Tekan “Selesai” jika sudah. Setelah 3 menit tidak dipakai, layar kembali ke awal.", ne:"यो ट्याब्लेट सबैले प्रयोग गर्छन्। सकिएपछि “सकियो” थिच्नुहोस्। ३ मिनेट नचलाए आफैँ पहिलो स्क्रिनमा फर्किन्छ।", zh:"这是大家共用的平板。用完请按“结束”。3分钟不操作会自动回到开始画面。", my:"ဤတက်ဘလက်ကို အားလုံး မျှသုံးပါသည်။ ပြီးလျှင် “ပြီးပါပြီ” ကို နှိပ်ပါ။ ၃ မိနစ် မသုံးလျှင် ပထမစာမျက်နှာသို့ အလိုအလျောက် ပြန်သွားပါမည်။"},
+  nolink:{ja:"これは見本の初日シートです。受け入れ担当の人から、あなたあてのリンクが届くと、あなたの初日シートが出ます。", en:"This is a sample first-day sheet. When the person in charge sends you your own link, your sheet will appear.", vi:"Đây là bảng ngày đầu mẫu. Khi người phụ trách gửi đường link riêng cho bạn, bảng của bạn sẽ hiện ra.", id:"Ini contoh lembar hari pertama. Setelah penanggung jawab mengirim tautan khusus untuk Anda, lembar Anda akan muncul.", ne:"यो पहिलो दिनको नमुना पाना हो। जिम्मेवार व्यक्तिले तपाईंको आफ्नै लिंक पठाएपछि तपाईंको पाना देखिन्छ।", zh:"这是第一天说明的样本。负责人发给您专用链接后，会显示您自己的说明。", my:"ဤသည်မှာ ပထမနေ့ စာရွက် နမူနာဖြစ်သည်။ တာဝန်ခံက သင့်အတွက် လင့်ခ်ပို့လျှင် သင့်စာရွက် ပေါ်လာပါမည်။"},
+  agency:{ja:"派遣会社（{a}）には、教材を見終わった本数と、テストを終えた本数だけが伝わります。質問やふりかえりの内容は伝わりません。", en:"Your agency ({a}) can only see how many lessons you finished and how many tests you completed. They cannot see your questions or check-ins.", vi:"Công ty phái cử ({a}) chỉ thấy số bài học bạn đã xem xong và số bài kiểm tra đã làm xong. Họ không thấy câu hỏi hay phần nhìn lại của bạn.", id:"Perusahaan penyalur ({a}) hanya dapat melihat jumlah materi yang selesai Anda lihat dan jumlah tes yang selesai. Pertanyaan dan refleksi Anda tidak terlihat.", ne:"पठाउने कम्पनी ({a}) ले तपाईंले सकेका पाठको संख्या र सकेका परीक्षाको संख्या मात्र देख्छ। तपाईंका प्रश्न र समीक्षा देख्दैन।", zh:"派遣公司（{a}）只能看到您看完的教材数量和完成的测验数量，看不到您的提问和回顾内容。", my:"အလုပ်သမားပို့ကုမ္ပဏီ ({a}) သည် သင်ကြည့်ပြီးသော သင်ခန်းစာအရေအတွက်နှင့် ပြီးသော စာမေးပွဲအရေအတွက်ကိုသာ မြင်ရသည်။ သင့်မေးခွန်းနှင့် ပြန်လည်သုံးသပ်ချက်များကို မမြင်ရပါ။"}
+};
+const KT = k => (KTEXT[k]||{})[state.lang] || (KTEXT[k]||{}).ja || "";
 const CARD_CATS = [["all","すべて"],["kan","館内"],["food","料理と飲み物"],["word","言葉"]];
 const BUILTIN_CARDS = (D.cards || []).concat(terms.map(([t,d],i)=>({id:"t"+i, cat:"word", front:t, back:d})));
 const checkQs = ["体の調子","仕事の量","質問のしやすさ","生活のこと","このまま続けられそう"];
@@ -535,7 +557,7 @@ let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[], liveLearn=[], liveWork=[];
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[], liveLearn=[], liveWork=[], liveProgress={}, unsubMe=null;
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
@@ -547,6 +569,28 @@ const needs = () => (live ? (liveNeeds && liveNeeds.needs) : state.needs) || {};
 const orders = () => live ? liveOrders : (state.orders||[]);
 /* 学習の記録。だれの記録かは残さない（名前も番号もつけない）。教材を直すためと、成果を数えるためだけに使う。
    t は done（教材を見終わった）、quiz（テストに答えた）、card（覚えるカード）。 */
+/* 本番のスタッフは、受け入れ一覧のうち自分につながった1人分だけを読む。本人あてのリンクか、共有タブレットの番号でつながる。 */
+function syncMe(){
+  const p = PROD && RT.person ? livePeople.find(x=>x.id===RT.person) : null; if(!p) return;
+  const sh=p.sheet||{};
+  state.profile={name:p.name, type:p.type||"", job:p.job||"", date:sh.date||p.start||"", time:sh.time||"", meet:sh.meet||D.profile.meet, host:sh.host||p.host||HOST,
+    schedule:sh.schedule, bring:sh.bring, welcome:sh.welcome, agencyName:p.agencyName||""};
+}
+function watchMe(){
+  if(unsubMe){ try{ unsubMe(); }catch(e){} unsubMe=null; }
+  livePeople=[];
+  if(!db || !PROD || !RT.person) return;
+  const pid=RT.person;
+  unsubMe = db.doc("people/"+pid).onSnapshot(snap=>{ livePeople = snap.exists ? [{id:snap.id, ...snap.data()}] : []; syncMe(); rerender(); }, ()=>{});
+  db.doc("progress/"+pid).get().then(sn=>{ if(!sn.exists || RT.person!==pid) return; const d=sn.data()||{};
+    (d.done||[]).forEach(id=>{ state.done[id]=true; }); (d.quiz||[]).forEach(id=>{ (state.qdone ||= {})[id]=true; }); render(); }).catch(()=>{});
+}
+/* 教材の進み具合を、本人の分として残す。入れるのは、見終わった教材と、終えたテストの番号だけ（点数は入れない）。 */
+function pushProgress(){
+  if(!PROD || !db || !RT.person) return;
+  const ids=lessons().map(l=>l.id);
+  try{ db.doc("progress/"+RT.person).update({done:ids.filter(id=>state.done[id]), quiz:ids.filter(id=>state.qdone&&state.qdone[id]), at:Date.now()}).catch(()=>{}); }catch(e){}
+}
 /* 効果の数字（導入前の基準値、導入後の手入力、費用の設定）。本番では管理者と運営者だけが読み書きする。 */
 let liveMetrics={};
 const mget = id => (live ? liveMetrics[id] : (state.metrics||{})[id]) || {};
@@ -605,18 +649,19 @@ async function patchPerson(id, patch){
 }
 async function upsertPerson(rec){
   const ex=people().find(p=>p.name===rec.name);
-  if(ex) return patchPerson(ex.id, {type:rec.type, job:rec.job, start:rec.start, startISO:rec.startISO, host:rec.host, prep:{sheet:true}});
+  if(ex) return patchPerson(ex.id, {type:rec.type, job:rec.job, start:rec.start, startISO:rec.startISO, host:rec.host, prep:{sheet:true}, ...(rec.sheet?{sheet:rec.sheet}:{})});
   const doc={...rec, prep:{sheet:true}, ojt:{}, note:"", at:Date.now()};
   if(live){ try{ await db.collection("people").add(doc); }catch(e){ toast(dbMsg(e)); } return; }
   state.people.push({id:"p"+Date.now(), ...doc});
 }
 const meLessonProg = () => Math.round(baseLessons.concat(state.custom).filter(l=>state.done[l.id]).length/(baseLessons.length+state.custom.length)*100);
 function personView(p){
-  const me = p.name===state.profile.name;
+  const me = PROD && RT.role==="staff" ? p.id===RT.person : p.name===state.profile.name;
+  const pr = liveProgress[p.id], nLes = lessons().length;
   const items = ojtFor(p.job), done = items.filter(([k])=>p.ojt&&p.ojt[k]&&p.ojt[k].done).length;
   const prepN = PREP.filter(([k])=>p.prep&&p.prep[k]).length;
   const checkin = me ? (state.checkin.sent?{day:3, vals:state.checkin.vals, text:(state.checkin.text&&state.checkin.to==="outside")?"（書いた内容は、本人の希望で外部の相談窓口に送られました）":(state.checkin.anon&&state.checkin.text?"（名前を伏せた声として届いています）":state.checkin.text)}:null) : (p.checkin||null);
-  return {...p, me, prog: me?meLessonProg():(p.prog||0), ojtDone:done, ojtAll:items.length, prepN, checkin, day:dayLabel(p.startISO),
+  return {...p, me, prog: me?meLessonProg():(pr&&nLes?Math.round((pr.done||[]).length/nLes*100):(p.prog||0)), ojtDone:done, ojtAll:items.length, prepN, checkin, day:dayLabel(p.startISO),
     alert: !!(checkin&&checkin.vals.some(v=>v>0&&v<=2))};
 }
 const peopleAlerts = () => people().map(personView).filter(v=>v.alert);
@@ -647,6 +692,9 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
 (async()=>{
   try{ db = await window.claude?.use?.("db") ?? null; }catch(e){ db = null; }
   if(!db) return;
+  if(PROD && RT.role==="agency"){ live=true; liveErr=""; setLiveBadge();
+    db.collection("progress").where("agency","==",RT.agency.id).onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>{ m[d.id]=d.data(); }); liveProgress=m; rerender(); }, ()=>{});
+    return; }
   live = true; liveErr = "読み込み中"; setLiveBadge();
   const timer = setTimeout(()=>{ if(liveErr){ liveErr="データにまだつながりません"; setLiveBadge(); rerender(); } }, 10000);
   const fail = ()=>{ clearTimeout(timer); liveErr="データを読めませんでした"; setLiveBadge(); rerender(); };
@@ -665,7 +713,11 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   db.collection("proposals").onSnapshot(snap=>{ liveProps = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.doc("settings/dorm").onSnapshot(snap=>{ liveDorm = snap.exists ? snap.data() : null; rerender(); }, fail);
   db.collection("cards").onSnapshot(snap=>{ liveCards = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
-  db.collection("people").onSnapshot(snap=>{ livePeople = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+  if(PROD && RT.role==="staff") watchMe();
+  else {
+    db.collection("people").onSnapshot(snap=>{ livePeople = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
+    db.collection("progress").onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>{ m[d.id]=d.data(); }); liveProgress=m; rerender(); }, ()=>{});
+  }
   db.collection("notices").orderBy("at","desc").limit(20).onSnapshot(snap=>{ liveNotices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, fail);
   db.collection("innvoices").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveInnVoices = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("relays").orderBy("at","desc").limit(50).onSnapshot(snap=>{ liveRelays = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
@@ -736,9 +788,12 @@ const meAlert = () => state.checkin.sent && state.checkin.vals.some(v=>v>0&&v<=2
 
 const TABS = {
   new:[["sheet","初","初日"],["learn","学","教材"],["ask","問","質問"],["quiz","試","テスト"],["checkin","心","ふりかえり"]],
+  agency:[["agency","派","新人の準備"]],
   admin:[["dash","状","新人"],["queue","答","質問"],["make","作","初日シート"],["author","撮","教材づくり"],["effect","効","効果"],["memo","聞","メモ"]]
 };
 function renderTabs(){
+  if(PROD && ROLE==="agency") state.role="agency";
+  else if(state.role==="agency" && PROD) state.role="new";
   if(state.role==="admin" && !canAdmin()) state.role="new";
   const tabs = TABS[state.role].filter(([id])=>!(PROD && !isOperator() && id==="memo"));
   if(!tabs.some(([id])=>id===state.tab)) state.tab = tabs[0][0];
@@ -752,11 +807,14 @@ function render(){
   const kept={}, act=document.activeElement, focusId = act && main.contains(act) && act.id ? act.id : null;
   let caret=null; try{ if(focusId && typeof act.selectionStart==="number") caret=[act.selectionStart, act.selectionEnd]; }catch(e){}
   main.querySelectorAll("input[id],textarea[id]").forEach(el=>{ if(el.type!=="checkbox"&&el.type!=="file"&&!el.readOnly&&el.value&&el.value!==el.defaultValue) kept[el.id]=el.value; });
+  document.body.classList.toggle("kiosk", KIOSK());
+  if(KIOSK() && !kioskIn()){ stopVideo(); $("#tabs").innerHTML=""; $("#sosbtn").hidden=true; main.innerHTML=`<div class="view">${kioskStart()}</div>`; bindKiosk(); return; }
+  if(KIOSK()) state.role="new";
   { const sb=$("#sosbtn"); if(sb){ sb.hidden = state.role!=="new" || state.tab==="ask"; } }
   stopVideo();
   renderTabs();
-  const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
-  main.innerHTML = `${tourBar()}<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
+  const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo,agency:agencyView};
+  main.innerHTML = `${kioskBar()}${tourBar()}<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
   for(const id in kept){ const el=document.getElementById(id); if(el && main.contains(el) && !el.readOnly && el.value===el.defaultValue) el.value=kept[id]; }
   bind(); save();
   if(focusId){ const el=document.getElementById(focusId); if(el && main.contains(el) && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)){ try{ el.focus({preventScroll:true}); if(caret && typeof el.setSelectionRange==="function") el.setSelectionRange(caret[0], caret[1]); }catch(e){} } }
@@ -804,6 +862,77 @@ function todaySummary(alertN){
 function go(tab){ state.tab=tab; state.lesson=null; state.newbieView=null; render(); window.scrollTo(0,0); }
 
 /* ======================= 新人：初日 ======================= */
+/* ---- 休憩室の共有タブレット。番号で入り、終わるか3分さわらないと、その人の分を端末から消して最初の画面に戻る。 ---- */
+const KIOSK = () => PROD ? !!RT.kiosk : !!state.kiosk;
+const kioskIn = () => PROD ? !!RT.person : !!state.kioskPerson;
+const PERSONAL = ["steps","done","quiz","scores","qdone","chat","checkin","mine","drafts","known","notified","lesson","tr","open","prep"];
+function clearPersonal(){ const f=fresh(); PERSONAL.forEach(k=>{ state[k]=f[k]; }); state.tab="sheet"; state.role="new"; state.cardIdx=0; state.cardShow=false; }
+let idleT=null;
+function kioskPoke(){ clearTimeout(idleT); if(KIOSK() && kioskIn()) idleT=setTimeout(()=>kioskExit(), 180000); }
+async function kioskEnterPin(pin){
+  if(PROD){ await RT.kioskEnter(pin); clearPersonal(); watchMe(); }
+  else { const p=people().find(x=>x.pin===pin && !x.end); if(!p) throw new Error(KT("wrong")); clearPersonal(); state.kioskPerson=p.id;
+    state.profile={...D.profile, name:p.name, type:p.type, job:p.job, date:p.start||"", host:p.host||HOST}; }
+  kioskPoke(); render(); window.scrollTo(0,0);
+}
+async function kioskExit(){
+  clearTimeout(idleT); clearPersonal(); const m=$("#modal"); if(m){ m.hidden=true; m.innerHTML=""; }
+  if(PROD){ await RT.kioskLeave(); watchMe(); state.profile={...D.profile, name:""}; } else { state.kioskPerson=null; state.profile=fresh().profile; }
+  save(); render(); window.scrollTo(0,0);
+}
+function kioskBar(){ return KIOSK() && kioskIn() ? `<div class="kbar"><span>${esc(state.profile.name||"")}</span><button class="btn small" id="kexit">${KT("exit")}</button></div>` : ""; }
+function kioskStart(){
+  return `<section class="card kstart"><span class="label">${esc(INN)}</span><h2>${KT("title")}</h2>
+    <div class="picker" role="group" aria-label="ことば">${LANGS.map(([c,n])=>`<button data-klang="${c}" aria-pressed="${state.lang===c}">${n}</button>`).join("")}</div>
+    <p class="empty">${KT("hint")}</p>
+    <input id="kpin" class="kpin" inputmode="numeric" autocomplete="off" maxlength="4" aria-label="${KT("title")}" placeholder="0000">
+    <button class="btn" id="kenter">${KT("enter")}</button>
+    <p class="err" id="kerr" hidden></p>
+    <p class="note">${KT("shared")}</p>
+    ${PROD?"":`<div class="row"><button class="back" id="kdemooff">共有モードをやめる（デモ）</button></div>`}
+  </section>`;
+}
+function bindKiosk(){
+  document.querySelectorAll("[data-klang]").forEach(b=>b.onclick=()=>{ state.lang=b.dataset.klang; save(); render(); });
+  const pin=$("#kpin"), go=async()=>{ const v=(pin.value||"").replace(/\D/g,""), er=$("#kerr"); if(v.length!==4){ er.textContent=KT("wrong"); er.hidden=false; return; }
+    $("#kenter").disabled=true;
+    try{ await kioskEnterPin(v); }catch(e){ const b=$("#kenter"); if(b) b.disabled=false; const er2=$("#kerr"); if(er2){ er2.textContent=/10分/.test(e.message||"")?e.message:KT("wrong"); er2.hidden=false; } } };
+  $("#kenter").onclick=go; pin.onkeydown=e=>{ if(e.key==="Enter") go(); };
+  const off=$("#kdemooff"); if(off) off.onclick=()=>{ state.kiosk=false; state.kioskPerson=null; state.profile=fresh().profile; save(); render(); };
+}
+["pointerdown","keydown","scroll"].forEach(ev=>addEventListener(ev, ()=>kioskPoke(), {passive:true, capture:true}));
+function kioskAdminCard(){
+  return `<section class="card"><span class="label">スマホを見られない職場に</span><h3>休憩室のタブレット</h3>
+    <p class="empty">1台のタブレットを、みんなで使えます。新人は4けたの番号で入ります。終わるか、3分さわらないと、その人の質問やふりかえりは画面から消えます。</p>
+    ${PROD ? (state.kurl ? `<p class="say" style="overflow-wrap:anywhere">${esc(state.kurl)}</p><div class="row"><button class="btn small" id="kcopy">リンクをコピー</button></div><p class="note">タブレットでこのリンクを開くと、共有のタブレットになります。番号は、新人ごとの画面で出せます。</p>`
+      : `<div class="row"><button class="btn small" id="kmake">タブレット用のリンクを作る</button></div>`)
+    : `<div class="row"><button class="btn small" id="kdemo">この端末で、共有モードを試す</button></div><p class="note">番号は、新人ごとの画面の「本人に渡すもの」で出せます。</p>`}
+  </section>`;
+}
+/* ---- 派遣会社の画面。見えるのは、自社から送った人の「見終わった教材」と「終えたテスト」の本数だけ。 ---- */
+function agencyRows(){
+  const tot=lessons().length, qt=lessons().filter(l=>l.quiz&&l.quiz.length).length;
+  if(PROD) return Object.entries(liveProgress).map(([id,p])=>({id, name:p.name||"", done:(p.done||[]).length, quiz:(p.quiz||[]).length, tot, qt})).sort((a,b)=>a.name.localeCompare(b.name,"ja"));
+  return people().filter(p=>p.type==="派遣"&&!p.end).map(personView).map(p=>({id:p.id, name:p.name, done:Math.round(p.prog/100*tot), quiz:p.me?Object.keys(state.qdone||{}).length:0, tot, qt}));
+}
+function agencyView(){
+  const rows=agencyRows(), links=state.aglinks||{};
+  return `<section class="card"><span class="label">${PROD&&RT.agency?esc(RT.agency.name):"派遣会社の画面（見本）"}</span><h2>着任前の準備</h2>
+    <p class="empty">${esc(INN)}に送る方に、着任の前から初日シートと教材を見てもらえます。</p>
+    <p class="note">この画面で見えるのは、教材を見終わった本数と、テストを終えた本数だけです。点数、質問、ふりかえり、相談の内容は見えません。</p></section>
+  <section class="card"><h3>送る人を足す</h3>
+    <label class="field">名前<input id="ag-name" autocomplete="off" placeholder="例：山田 花子"></label>
+    <div class="grid2"><label class="field">仕事<select id="ag-job">${Object.keys(JOBS).map(j=>`<option>${esc(j)}</option>`).join("")}</select></label>
+      <label class="field">着任日<input id="ag-start" type="date"></label></div>
+    <div class="row"><button class="btn small" id="ag-add">足して、招待リンクを作る</button></div>
+    <p class="note">できたリンクを、本人に送ってください。開くと、その人の初日シートが出ます。アプリのダウンロードはいりません。</p></section>
+  <section class="card"><h3>送った人 ${rows.length}名</h3>
+    ${rows.length?`<div class="nlist">${rows.map(r=>`<div class="agrow"><b>${esc(r.name)}</b>
+      <span class="sub">教材 ${r.done} / ${r.tot}本 ・ テスト ${r.quiz} / ${r.qt}本</span><div class="prog" aria-hidden="true"><i style="width:${r.tot?r.done/r.tot*100:0}%"></i></div>
+      ${links[r.id]?`<p class="say" style="overflow-wrap:anywhere">${esc(links[r.id])}</p>`:""}
+      <div class="row"><button class="btn ghost small" data-aglink="${esc(r.id)}">${links[r.id]?"リンクをコピー":"招待リンクを出す"}</button></div></div>`).join("")}</div>`
+    :`<p class="empty">まだいません。上で足すと、ここに出ます。</p>`}</section>`;
+}
 function sheet(){
   const p = state.profile;
   const prepItems = [
@@ -816,8 +945,10 @@ function sheet(){
   const ns = notices().slice(0,3);
   return `
   ${ns.length?`<section class="card notice"><span class="label">今日の連絡</span>${ns.map(n=>`<div class="nitem"><span>${esc(n.text)}</span><span class="note">${esc(n.when||"")}</span></div>`).join("")}</section>`:""}
+  ${PROD && !p.name ? `<section class="card"><p class="note">${KT("nolink")}</p></section>` : ""}
+  ${p.agencyName ? `<section class="card"><p class="note">${KT("agency").replace("{a}", esc(p.agencyName))}</p></section>` : ""}
   <section class="card hero">
-    <div class="hero-top"><div><span class="label">${esc(p.name)}さんの初日シート</span>
+    <div class="hero-top"><div><span class="label">${p.name?esc(p.name)+"さんの初日シート":"初日シート（見本）"}</span>
       <div class="when">${esc(p.date)} ${esc(p.time)}</div></div>
       <div class="ring" role="img" aria-label="準備 ${prepItems.length-left} / ${prepItems.length}"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pg" cx="30" cy="30" r="25" stroke-dasharray="${(prepItems.length-left)/prepItems.length*157} 157"/></svg><b>${prepItems.length-left}/${prepItems.length}</b></div></div>
     <dl class="hero-meta"><dt>集合場所</dt><dd>${esc(p.meet)}</dd><dt>迎え</dt><dd>${esc(p.host)}</dd></dl>
@@ -960,7 +1091,7 @@ function playVideo(L){
     $("#vtime").textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")} / ${L.time}`;
     $("#vsub").textContent = L.steps[Math.min(L.steps.length-1, Math.floor(r*L.steps.length))];
     if(r>=1){ stopVideo(); $("#playicon").textContent="↻"; $("#vsub").textContent="見終わりました。手順を押して確認しましょう";
-      if(!state.done[L.id]){ state.done[L.id]=true; logLearn({t:"done", l:L.id}); save(); toast("見終わった記録を残しました"); const b=$("#markdone"); if(b){b.disabled=true;b.textContent="見終わりました";} } }
+      if(!state.done[L.id]){ state.done[L.id]=true; logLearn({t:"done", l:L.id}); pushProgress(); save(); toast("見終わった記録を残しました"); const b=$("#markdone"); if(b){b.disabled=true;b.textContent="見終わりました";} } }
   },100);
 }
 
@@ -1193,6 +1324,7 @@ function checkin(){
 }
 
 /* ======================= 管理：受け入れ（新人の状況） ======================= */
+const pinOf = n => PROD ? (state.ppins||{})[n.id] : n.pin;
 function lineText(p){
   return `${p.name}さん
 ${INN}の${p.job}でお待ちしています。
@@ -1203,7 +1335,7 @@ ${INN}の${p.job}でお待ちしています。
 ${dormInfo().address?`寮：${dormInfo().address}
 地図：${mapUrl(dormInfo().address)}
 `:""}着任前に、このアプリで教材を見ておいてください（1本3分ほどです）。
-${(RT && RT.inviteUrl) || APP_URL}`;
+${(state.plinks||{})[p.id] || (RT && RT.inviteUrl) || APP_URL}`;
 }
 function dash(){
   const all = people().map(personView);
@@ -1228,6 +1360,13 @@ function dash(){
       <label class="field">教えた人<select id="ojtby">${staff.map(s=>`<option ${state.ojtBy===s.name?"selected":""}>${s.name}</option>`).join("")}</select></label>
       <div class="ojt">${items.map(([k,t])=>{const o=n.ojt&&n.ojt[k]; const on=o&&o.done; return `<button data-oj="${k}" class="${on?"done":""}" aria-pressed="${!!on}"><span class="box ${on?"on":""}" aria-hidden="true">${on?"✓":""}</span><span>${esc(t)}${on?`<span class="who">${esc(o.at||"")} ${esc(o.by||"")}</span>`:""}</span></button>`;}).join("")}</div>
       ${n.ojtDone===n.ojtAll?`<p class="tag ok" style="align-self:flex-start">一人立ちできます。シフトに一人で入れられます</p>`:`<p class="note">あと${n.ojtAll-n.ojtDone}つで一人立ちです。</p>`}
+    </section>
+    <section class="card"><h3>本人に渡すもの</h3>
+      ${n.agencyName?`<p class="note">派遣会社：${esc(n.agencyName)}</p>`:""}
+      <p class="empty">本人あてのリンクから入ると、この人の初日シートが出ます。教材の進み具合も、ここに届きます。</p>
+      ${PROD ? ((state.plinks||{})[n.id] ? `<p class="say" style="overflow-wrap:anywhere">${esc(state.plinks[n.id])}</p><div class="row"><button class="btn small" id="plcopy">リンクをコピー</button></div>`
+        : `<div class="row"><button class="btn small" id="plmake">本人あてのリンクを作る</button></div>`) : `<p class="note">本番では、ここで本人あてのリンクを作れます。</p>`}
+      <div class="row" style="justify-content:space-between"><span>休憩室のタブレットで入る番号</span>${pinOf(n)?`<b class="pin">${esc(pinOf(n))}</b>`:`<button class="btn ghost small" id="pinmake">番号を出す</button>`}</div>
     </section>
     <section class="card"><h3>着任の終わり</h3>
       ${n.end?`<p>${n.end.kind==="quit"?"途中で辞めた":"満了した"}（${esc(mdText(n.end.iso))}）</p><div class="row"><button class="btn ghost small" id="endundo">記録を取り消す</button></div>`
@@ -1275,6 +1414,7 @@ function dash(){
       <span>${n.end?'<span class="tag">終了</span>':n.alert?'<span class="tag risk">声かけを</span>':(n.ojtDone===n.ojtAll?'<span class="tag ok">一人立ち</span>':(n.prepN<PREP.length?'<span class="tag">準備中</span>':""))}</span></button>`).join("")}</div>
     <p class="note">初日シートを「公開して本人に送る」と、ここに加わります。</p>
   </section>
+  ${kioskAdminCard()}
   ${skillCard(all)}
   ${staffingCard(all)}
   <section class="card"><span class="label">女将や支配人への報告に</span><h3>今週のまとめ</h3>
@@ -1867,6 +2007,10 @@ function operatorCard(){
     <label class="field">メールアドレス<input id="op-email" type="email" autocomplete="off" placeholder="例：kanri@example.jp"></label>
     <div class="row"><button class="btn small" id="op-grant">管理者にする</button></div>
     <p class="note">スタッフ用の招待リンク：<span id="op-invite">${esc((RT&&RT.inviteUrl)||"作っています…")}</span></p>
+    <h3>派遣会社の担当者を追加</h3>
+    <p class="empty">派遣会社の人は、自社から送った人の、教材の進み具合だけを見られます。</p>
+    <div class="grid2"><label class="field">会社の名前<input id="op-agname" autocomplete="off"></label><label class="field">メールアドレス<input id="op-agmail" type="email" autocomplete="off"></label></div>
+    <div class="row"><button class="btn small" id="op-aggrant">派遣会社の担当者にする</button></div>
     <div class="row"><button class="btn ghost small" id="op-rotate">招待リンクを作り直す（前のリンクは使えなくなります）</button></div>
   </section>`;
 }
@@ -1936,7 +2080,7 @@ function bind(){
   const pl=$("#play"); if(pl&&L) pl.onclick=()=>playVideo(L);
   if(L && state.lang!=="ja" && !state.tr[L.id+":"+state.lang] && aiOK() && !trBusy) translateLesson(L);
   document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{const a=(state.steps[L.id] ||= []); a[+b.dataset.step]=!a[+b.dataset.step]; render()});
-  const md=$("#markdone"); if(md) md.onclick=()=>{ if(!state.done[state.lesson]) logLearn({t:"done", l:state.lesson}); state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
+  const md=$("#markdone"); if(md) md.onclick=()=>{ if(!state.done[state.lesson]) logLearn({t:"done", l:state.lesson}); state.done[state.lesson]=true; pushProgress();toast("見終わった記録を残しました");render()};
   const tq=$("#toquiz"); if(tq) tq.onclick=()=>{state.quizLesson=state.lesson; go("quiz")};
   document.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>say(b.dataset.say));
   const f=$("#composer"); if(f) f.onsubmit=e=>{e.preventDefault();const inp=$("#askinput"), v=inp.value.trim(); if(!v||askCtl) return; inp.value=""; say(v)};
@@ -1949,7 +2093,7 @@ function bind(){
     if(Object.keys(ans).length===Lq.quiz.length){ state.scores[id]=`${Lq.quiz.filter((q,i)=>ans[i]===q.a).length}/${Lq.quiz.length}`; }
     render()});
   const qd=$("#qdone"); if(qd) qd.onclick=()=>{
-    const id=state.quizLesson; (state.qdone ||= {})[id]=true; state.done[id]=true;
+    const id=state.quizLesson; (state.qdone ||= {})[id]=true; state.done[id]=true; pushProgress();
     const withQuiz=lessons().filter(l=>l.quiz&&l.quiz.length);
     const next=withQuiz.find(l=>!(state.qdone[l.id]));
     if(next){ state.quizLesson=next.id; toast("完了しました。次は「"+next.title+"」のテストです"); render(); window.scrollTo(0,0); }
@@ -1962,7 +2106,9 @@ function bind(){
   const ca=$("#canon"); if(ca) ca.onchange=()=>{ state.checkin.anon=ca.checked; save(); };
   const cs=$("#csend"); if(cs) cs.onclick=async()=>{ state.checkin.text=$("#ctext").value; cs.disabled=true;
     const ok=await sendVoice(state.checkin); if(!ok){ cs.disabled=false; return; }
-    state.checkin.sent=true; render(); toast(state.checkin.to==="outside"&&state.checkin.text.trim()?"外部の相談窓口に送りました":"教育担当に送りました"); };
+    const sentMsg=state.checkin.to==="outside"&&state.checkin.text.trim()?"外部の相談窓口に送りました":"教育担当に送りました";
+    if(KIOSK()){ state.checkin=fresh().checkin; ["#ctext"].forEach(sel=>{ const el=$(sel); if(el) el.value=""; }); } else state.checkin.sent=true;
+    render(); toast(sentMsg); };
   document.querySelectorAll("[data-relay]").forEach(b=>b.onclick=async()=>{ const i=b.dataset.relay, v=voicesOut()[+i]; if(!v) return;
     const t=document.getElementById("relay-"+i).value.trim(); if(!t){ toast("施設に伝える文を入れてください"); return; }
     const rec={text:t, urgent:!!v.urgent, at:Date.now(), when:todayText()};
@@ -2069,6 +2215,25 @@ function bind(){
     if(k==="lessons") return go("learn"); if(k==="quiz") return go("quiz");
     const t = k==="sheet" ? ($("#daysheet")&&$("#daysheet").closest(".card")) : $("#bringcard"); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  { const kx=$("#kexit"); if(kx) kx.onclick=()=>kioskExit();
+    const kd=$("#kdemo"); if(kd) kd.onclick=()=>{ state.kiosk=true; state.kioskPerson=null; save(); render(); window.scrollTo(0,0); };
+    const km=$("#kmake"); if(km) km.onclick=async()=>{ km.disabled=true; try{ state.kurl=await RT.kioskUrl(); render(); }catch(e){ toast(e.message||"できませんでした"); km.disabled=false; } };
+    const copy=async(t,msg)=>{ try{ await navigator.clipboard.writeText(t); toast(msg||"コピーしました"); }catch(e){ toast("コピーできませんでした。文を長押しして選んでください"); } };
+    const kc=$("#kcopy"); if(kc) kc.onclick=()=>copy(state.kurl);
+    const pm=$("#plmake"); if(pm) pm.onclick=async()=>{ const id=state.newbieView; pm.disabled=true; try{ (state.plinks ||= {})[id]=await RT.personInvite(id); render(); }catch(e){ toast(e.message||"できませんでした"); pm.disabled=false; } };
+    const pc=$("#plcopy"); if(pc) pc.onclick=()=>copy((state.plinks||{})[state.newbieView], "コピーしました。本人に送ってください");
+    const pn=$("#pinmake"); if(pn) pn.onclick=async()=>{ const id=state.newbieView; pn.disabled=true;
+      if(PROD){ try{ (state.ppins ||= {})[id]=await RT.personPin(id); render(); }catch(e){ toast(e.message||"できませんでした"); pn.disabled=false; } return; }
+      const used=new Set(people().map(x=>x.pin).filter(Boolean)); let v; do{ v=String(1000+Math.floor(Math.random()*9000)); }while(used.has(v)); patchPerson(id,{pin:v}); };
+    const aa=$("#ag-add"); if(aa) aa.onclick=async()=>{ const nm=$("#ag-name").value.trim(); if(!nm){ toast("名前を入れてください"); return; }
+      if(!PROD){ toast("本番では、ここで招待リンクができます"); return; }
+      aa.disabled=true; try{ const r=await RT.agencyInvite(nm, $("#ag-job").value, $("#ag-start").value); (state.aglinks ||= {})[r.person]=r.url; $("#ag-name").value=""; toast("足しました。リンクを本人に送ってください"); render(); }catch(e){ toast(e.message||"できませんでした"); aa.disabled=false; } };
+    document.querySelectorAll("[data-aglink]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.aglink, have=(state.aglinks||{})[id];
+      if(have) return copy(have, "コピーしました。本人に送ってください");
+      if(!PROD){ toast("本番では、ここで招待リンクができます"); return; }
+      b.disabled=true; try{ (state.aglinks ||= {})[id]=await RT.personInvite(id); render(); }catch(e){ toast(e.message||"できませんでした"); b.disabled=false; } });
+    const ag=$("#op-aggrant"); if(ag) ag.onclick=async()=>{ const nm=$("#op-agname").value.trim(), em=$("#op-agmail").value.trim(); if(!nm||!em){ toast("会社の名前とメールアドレスを入れてください"); return; }
+      ag.disabled=true; try{ await RT.grantAgency(em, nm); $("#op-agname").value=""; $("#op-agmail").value=""; toast("追加しました。その人は、ログインの画面から入れます"); }catch(e){ toast(e.message||"できませんでした"); } ag.disabled=false; }; }
   const og=$("#op-grant"); if(og) og.onclick=async()=>{ const em=$("#op-email").value.trim(); if(!em){ toast("メールアドレスを入れてください"); return; }
     og.disabled=true; try{ await RT.grantAdmin(em); toast("管理者にしました"); $("#op-email").value=""; }catch(e){ toast(e.message||"できませんでした"); } og.disabled=false; };
   const orot=$("#op-rotate"); if(orot) orot.onclick=async()=>{ orot.disabled=true; try{ await RT.rotateInvite(); toast("招待リンクを作り直しました"); render(); }catch(e){ toast(e.message||"できませんでした"); } orot.disabled=false; };
@@ -2077,7 +2242,8 @@ function bind(){
   const pb=$("#publish"); if(pb) pb.onclick=()=>{
     const gg=state.gen;
     state.profile={name:gg.name,type:gg.type,job:gg.job,date:gg.date,time:gg.time,meet:D.profile.meet,host:gg.host,schedule:gg.schedule,bring:gg.bring,welcome:gg.welcome};
-    upsertPerson({name:gg.name, type:gg.type, job:gg.job, start:gg.date, startISO:parseStart(gg.date), host:gg.host});
+    upsertPerson({name:gg.name, type:gg.type, job:gg.job, start:gg.date, startISO:parseStart(gg.date), host:gg.host,
+      sheet:JSON.parse(JSON.stringify({date:gg.date, time:gg.time, meet:D.profile.meet, host:gg.host, schedule:gg.schedule, bring:gg.bring, welcome:gg.welcome}))});
     state.gen=null; setRole("new"); toast(`${gg.name}さんに初日シートを送りました`)};
   const ml=$("#mklesson"); if(ml) ml.onclick=makeLesson;
   document.querySelectorAll("[data-qm]").forEach(b=>b.onclick=()=>{ state.quizMode=b.dataset.qm; render(); });
@@ -2115,18 +2281,22 @@ function bind(){
   document.querySelectorAll("[data-memotext]").forEach(t=>t.oninput=()=>{const i=t.dataset.memotext; const m=(state.memo[i] ||= {ok:false,text:""}); m.text=t.value; save()});
   const sn=$("#seenew"); if(sn) sn.onclick=()=>{setRole("new"); go("learn")};
 }
-function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
+function setRole(r){state.role=r;state.tab=r==="new"?"sheet":r==="agency"?"agency":"dash";state.lesson=null;state.newbieView=null;
   $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
 $("#innnote").textContent = PROD ? INN : (D.note || "");
 if(PROD){
-  ["#tourbtn","#reset"].forEach(sel=>{ const el=$(sel); if(el) el.hidden=true; });
+  ["#tourbtn","#reset","#agdemo"].forEach(sel=>{ const el=$(sel); if(el) el.hidden=true; });
   const rbox=document.querySelector(".role"); if(rbox) rbox.hidden=true;
-  RT.ready.then(info=>{ ROLE = info.role || "staff"; if(rbox) rbox.hidden = !canAdmin(); if(canAdmin() && info.startAdmin) setRole("admin"); else render(); }).catch(()=>{});
+  RT.ready.then(info=>{ ROLE = info.role || "staff"; if(rbox) rbox.hidden = !canAdmin();
+    if(ROLE==="agency"){ state.role="agency"; state.tab="agency"; }
+    if(ROLE==="staff" && !RT.person) state.profile={...D.profile, name:""};
+    kioskPoke(); if(canAdmin() && info.startAdmin) setRole("admin"); else render(); }).catch(()=>{});
 }
 { const mb=$("#morebtn"), mm=$("#moremenu"), shut=()=>{ mm.hidden=true; mb.setAttribute("aria-expanded","false"); };
   mb.onclick=e=>{ e.stopPropagation(); const open=mm.hidden; mm.hidden=!open; mb.setAttribute("aria-expanded",String(open)); };
   mm.addEventListener("click",shut); document.addEventListener("click",e=>{ if(!mm.hidden && !mm.contains(e.target)) shut(); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !mm.hidden){ shut(); mb.focus(); } }); }
+$("#agdemo").onclick=()=>{ setRole("agency"); };
 $("#tourbtn").onclick=()=>setTour(0);
 $("#sosbtn").onclick=()=>openSOS();
 $("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };

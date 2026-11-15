@@ -104,11 +104,12 @@ async function boot() {
   let user = auth.currentUser || (await currentUser());
   if (!user) user = (await signInAnonymously(auth)).user;
 
-  // 招待リンク（#join-合言葉）
-  const m = location.hash.match(/^#join-([A-Za-z0-9_-]{8,40})$/);
+  // 招待リンク。#join-（宿のスタッフ全員用）、#p-（本人あて）、#kiosk-（休憩室の共有タブレット用）
+  const m = location.hash.match(/^#(join|p|kiosk)-([A-Za-z0-9_-]{8,40})$/);
   if (m) {
     try {
-      const r = await call("join")({ inn: INN, code: m[1] });
+      const key = { join: "code", p: "pcode", kiosk: "kcode" }[m[1]];
+      const r = await call("join")({ inn: INN, [key]: m[2] });
       if (r.data && r.data.refresh) await user.getIdToken(true);
       history.replaceState(null, "", here());
     } catch (e) {
@@ -132,12 +133,15 @@ async function boot() {
   const inn = t.claims.inn || null;
   let r = null;
   if (role === "operator") r = "operator";
-  else if (inn === INN && (role === "admin" || role === "staff")) r = role;
+  else if (inn === INN && (role === "admin" || role === "staff" || role === "agency")) r = role;
+  RT.person = (r === "staff" && t.claims.person) || null;
+  RT.kiosk = r === "staff" && !!t.claims.kiosk;
+  RT.agency = r === "agency" ? { id: t.claims.agency, name: t.claims.agencyName || "" } : null;
   if (!r) {
     showNotMember(user.isAnonymous ? null : "このメールアドレスは、まだこの宿の管理者として登録されていません。運営者に連絡してください。");
     return { role: null };
   }
-  if (r !== "staff") {
+  if (r === "admin" || r === "operator") {
     try {
       const v = await call("invite")({ inn: INN });
       RT.inviteUrl = here() + "#join-" + v.data.code;
@@ -147,7 +151,8 @@ async function boot() {
   closeOverlay();
   STATE.uid = user.uid;
   STATE.role = r;
-  return { role: r, startAdmin: r !== "staff" };
+  RT.role = r;
+  return { role: r, startAdmin: r === "admin" || r === "operator" };
 }
 
 const STATE = { uid: null, role: null };
@@ -158,6 +163,44 @@ const RT = {
   async grantAdmin(email) {
     try { await call("grantAdmin")({ inn: INN, email }); }
     catch (e) { throw new Error(msgOf(e, "管理者にできませんでした")); }
+  },
+  role: null,
+  person: null,   // スタッフの端末がつながっている、受け入れ一覧の人
+  kiosk: false,   // 休憩室の共有タブレット
+  agency: null,   // 派遣会社の担当者のとき { id, name }
+  // 本人あての招待リンク
+  async personInvite(person) {
+    try { const v = await call("personInvite")({ inn: INN, person }); return here() + "#p-" + v.data.code; }
+    catch (e) { throw new Error(msgOf(e, "リンクを作れませんでした")); }
+  },
+  // 共有タブレットで入るための、その人の4けたの番号
+  async personPin(person) {
+    try { const v = await call("personPin")({ inn: INN, person }); return v.data.pin; }
+    catch (e) { throw new Error(msgOf(e, "番号を作れませんでした")); }
+  },
+  async kioskUrl(rotate) {
+    try { const v = await call("kioskInvite")({ inn: INN, rotate: !!rotate }); return here() + "#kiosk-" + v.data.code; }
+    catch (e) { throw new Error(msgOf(e, "リンクを作れませんでした")); }
+  },
+  async kioskEnter(pin) {
+    try {
+      const v = await call("kioskEnter")({ inn: INN, pin });
+      await auth.currentUser.getIdToken(true);
+      RT.person = v.data.person;
+      return v.data.person;
+    } catch (e) { throw new Error(msgOf(e, "入れませんでした")); }
+  },
+  async kioskLeave() {
+    RT.person = null;
+    try { await call("kioskLeave")({ inn: INN }); await auth.currentUser.getIdToken(true); } catch (e) { /* 次に入るときに上書きされる */ }
+  },
+  async grantAgency(email, name) {
+    try { await call("grantAgency")({ inn: INN, email, name }); }
+    catch (e) { throw new Error(msgOf(e, "追加できませんでした")); }
+  },
+  async agencyInvite(name, job, startISO) {
+    try { const v = await call("agencyInvite")({ inn: INN, name, job, startISO: startISO || "" }); return { person: v.data.person, url: here() + "#p-" + v.data.code }; }
+    catch (e) { throw new Error(msgOf(e, "追加できませんでした")); }
   },
   async rotateInvite() {
     try { const v = await call("invite")({ inn: INN, rotate: true }); RT.inviteUrl = here() + "#join-" + v.data.code; }

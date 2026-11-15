@@ -4,6 +4,8 @@ rules_version = '2';
 //   staff    : その宿の新人スタッフ。招待リンクから入る（名前のないアカウント）
 //   admin    : その宿の管理者。運営者がメールアドレスで追加する
 //   operator : 運営者（吉田）。すべての宿
+//   agency   : 派遣会社の担当者。自社から送った人の、教材の進み具合だけを読める
+// スタッフの印には、person（受け入れ一覧のどの人か）と kiosk（休憩室の共有タブレット）が付くことがある。
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -32,7 +34,7 @@ service cloud.firestore {
 
       // 管理者が書いて、スタッフが読むもの
       match /{coll}/{id} {
-        allow read: if member(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings', 'relays'];
+        allow read: if member(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'settings', 'relays'];
         allow write: if admin(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings'];
       }
       // 運営者の作業時間：運営者だけ
@@ -56,6 +58,20 @@ service cloud.firestore {
       }
       match /orders/{id} {
         allow read, write: if admin(inn);
+      }
+      // 受け入れ一覧：管理者が読み書きする。スタッフが読めるのは、自分につながった1人分だけ
+      match /people/{id} {
+        allow read: if admin(inn) || (member(inn) && request.auth.token.get('person', '') == id);
+      }
+      // 教材の進み具合（見終わった教材と、終えたテストの番号だけ。点数は入れない）
+      // 本人は自分の分を直せる。派遣会社は、自社から送った人の分だけ読める
+      match /progress/{pid} {
+        allow read: if admin(inn)
+          || (member(inn) && request.auth.token.get('person', '') == pid)
+          || (role() == 'agency' && request.auth.token.get('inn', '') == inn && resource.data.agency == request.auth.token.get('agency', '-'));
+        allow update: if member(inn) && request.auth.token.get('person', '') == pid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['done', 'quiz', 'at']);
+        allow delete: if admin(inn);
       }
       // 外部の相談窓口から施設へ伝える文は、運営者だけが書く
       match /relays/{id} {
