@@ -529,6 +529,30 @@ body.scrolling .sos{transform:translateY(24px) scale(.6);opacity:0;pointer-event
 @keyframes pop{0%{transform:scale(.8)}55%{transform:scale(1.12)}100%{transform:none}}
 @keyframes draw{from{stroke-dashoffset:1}}
 @keyframes dots{0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0 0 0)}}
+
+/* ---- v15 の見直し（別のモデルによるデザインの点検から、色の役割に合うものだけ） ---- */
+.hanamaru{color:var(--moss)}
+:root:not([data-theme="dark"]) .hanamaru{mix-blend-mode:multiply}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hanamaru{mix-blend-mode:normal}}
+.linkish{border:0;background:none;color:var(--ai);padding:0;font-size:.86rem;font-weight:700;text-decoration:underline;text-underline-offset:4px;text-align:left;min-height:32px}
+/* 効果の結果は、初日シートと同じ藍のカードに */
+.effresult{background:var(--hero);color:var(--hero-ink);border:0;position:relative;overflow:hidden}
+.effresult .label{color:var(--hero-soft)}
+.effresult .stat{background:rgba(255,255,255,.07);border-color:var(--hero-line)}
+.effresult .stat .label{color:var(--hero-soft)}
+.effresult .stat .num{color:var(--hero-ink)}
+.effresult .stat .num small,.effresult .note,.effresult .empty,.effresult dl.kv dt{color:var(--hero-soft)}
+.effresult .delta{color:color-mix(in srgb,var(--hero-ink) 80%,var(--moss))}
+/* ことばの選び方は、静かな下線だけ */
+.langrow select{appearance:none;-webkit-appearance:none;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%237a7f86' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 4px center;padding:8px 24px 8px 0;min-height:44px}
+/* 動画の枠に、初日シートと同じ地紋 */
+.player::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='.14'%3E%3Ccircle cx='22' cy='22' r='22'/%3E%3Ccircle cx='0' cy='0' r='22'/%3E%3Ccircle cx='44' cy='0' r='22'/%3E%3Ccircle cx='0' cy='44' r='22'/%3E%3Ccircle cx='44' cy='44' r='22'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image:linear-gradient(200deg,#000,transparent 60%);mask-image:linear-gradient(200deg,#000,transparent 60%)}
+.player>*{z-index:1}
+/* 質問係の答え：藍の細い線（担当者に回す答えは、これまでどおり赤茶の線） */
+.msg.bot:not(.esc):not(.wait){border-left:2px solid var(--ai);border-radius:4px 14px 14px 14px}
+.composer{margin-bottom:6px}
 </style>
 
 <div class="app">
@@ -589,12 +613,12 @@ function dayLabel(iso){ if(!iso) return "初日は未定"; const d=new Date(iso+
 const KTEXT = {
   title:{ja:"番号を入れてください", en:"Enter your number", vi:"Hãy nhập số của bạn", id:"Masukkan nomor Anda", ne:"आफ्नो नम्बर हाल्नुहोस्", zh:"请输入您的号码", my:"သင့်နံပါတ်ကို ထည့်ပါ"},
   hint:{ja:"4けたの番号は、受け入れ担当の人に聞いてください。", en:"Ask the person in charge for your 4-digit number.", vi:"Hãy hỏi người phụ trách để biết số gồm 4 chữ số.", id:"Tanyakan nomor 4 digit kepada penanggung jawab.", ne:"४ अंकको नम्बर जिम्मेवार व्यक्तिलाई सोध्नुहोस्।", zh:"4位号码请向负责人询问。", my:"ဂဏန်း ၄ လုံး နံပါတ်ကို တာဝန်ခံထံ မေးပါ။"},
-  enter:{ja:"入る", en:"Enter", vi:"Vào", id:"Masuk", ne:"भित्र जानुहोस्", zh:"进入", my:"ဝင်မည်"},
+  enter:{ja:"入る", en:"Enter", vi:"Vào", id:"Masuk", ne:"प्रवेश गर्नुहोस्", zh:"进入", my:"ဝင်မည်"},
   exit:{ja:"終わる", en:"Finish", vi:"Kết thúc", id:"Selesai", ne:"सकियो", zh:"结束", my:"ပြီးပါပြီ"},
   wrong:{ja:"番号が違います。", en:"That number is not correct.", vi:"Số không đúng.", id:"Nomornya salah.", ne:"नम्बर मिलेन।", zh:"号码不正确。", my:"နံပါတ် မှားနေပါသည်။"},
-  shared:{ja:"みんなで使うタブレットです。終わったら「終わる」を押してください。3分さわらないと、自動で最初の画面に戻ります。", en:"This tablet is shared. Tap “Finish” when you are done. It goes back to the first screen after 3 minutes without use.", vi:"Đây là máy tính bảng dùng chung. Khi xong, hãy bấm “Kết thúc”. Sau 3 phút không dùng, máy sẽ tự quay về màn hình đầu.", id:"Tablet ini dipakai bersama. Tekan “Selesai” jika sudah. Setelah 3 menit tidak dipakai, layar kembali ke awal.", ne:"यो ट्याब्लेट सबैले प्रयोग गर्छन्। सकिएपछि “सकियो” थिच्नुहोस्। ३ मिनेट नचलाए आफैँ पहिलो स्क्रिनमा फर्किन्छ।", zh:"这是大家共用的平板。用完请按“结束”。3分钟不操作会自动回到开始画面。", my:"ဤတက်ဘလက်ကို အားလုံး မျှသုံးပါသည်။ ပြီးလျှင် “ပြီးပါပြီ” ကို နှိပ်ပါ။ ၃ မိနစ် မသုံးလျှင် ပထမစာမျက်နှာသို့ အလိုအလျောက် ပြန်သွားပါမည်။"},
-  nolink:{ja:"これは見本の初日シートです。受け入れ担当の人から、あなたあてのリンクが届くと、あなたの初日シートが出ます。", en:"This is a sample first-day sheet. When the person in charge sends you your own link, your sheet will appear.", vi:"Đây là bảng ngày đầu mẫu. Khi người phụ trách gửi đường link riêng cho bạn, bảng của bạn sẽ hiện ra.", id:"Ini contoh lembar hari pertama. Setelah penanggung jawab mengirim tautan khusus untuk Anda, lembar Anda akan muncul.", ne:"यो पहिलो दिनको नमुना पाना हो। जिम्मेवार व्यक्तिले तपाईंको आफ्नै लिंक पठाएपछि तपाईंको पाना देखिन्छ।", zh:"这是第一天说明的样本。负责人发给您专用链接后，会显示您自己的说明。", my:"ဤသည်မှာ ပထမနေ့ စာရွက် နမူနာဖြစ်သည်။ တာဝန်ခံက သင့်အတွက် လင့်ခ်ပို့လျှင် သင့်စာရွက် ပေါ်လာပါမည်။"},
-  agency:{ja:"派遣会社（{a}）には、教材を見終わった本数と、テストを終えた本数だけが伝わります。質問やふりかえりの内容は伝わりません。", en:"Your agency ({a}) can only see how many lessons you finished and how many tests you completed. They cannot see your questions or check-ins.", vi:"Công ty phái cử ({a}) chỉ thấy số bài học bạn đã xem xong và số bài kiểm tra đã làm xong. Họ không thấy câu hỏi hay phần nhìn lại của bạn.", id:"Perusahaan penyalur ({a}) hanya dapat melihat jumlah materi yang selesai Anda lihat dan jumlah tes yang selesai. Pertanyaan dan refleksi Anda tidak terlihat.", ne:"पठाउने कम्पनी ({a}) ले तपाईंले सकेका पाठको संख्या र सकेका परीक्षाको संख्या मात्र देख्छ। तपाईंका प्रश्न र समीक्षा देख्दैन।", zh:"派遣公司（{a}）只能看到您看完的教材数量和完成的测验数量，看不到您的提问和回顾内容。", my:"အလုပ်သမားပို့ကုမ္ပဏီ ({a}) သည် သင်ကြည့်ပြီးသော သင်ခန်းစာအရေအတွက်နှင့် ပြီးသော စာမေးပွဲအရေအတွက်ကိုသာ မြင်ရသည်။ သင့်မေးခွန်းနှင့် ပြန်လည်သုံးသပ်ချက်များကို မမြင်ရပါ။"}
+  shared:{ja:"みんなで使うタブレットです。終わったら「終わる」を押してください。3分さわらないと、自動で最初の画面に戻ります。", en:"This tablet is shared. Tap “Finish” when you are done. It automatically goes back to the first screen after 3 minutes without use.", vi:"Đây là máy tính bảng dùng chung. Khi xong, hãy bấm “Kết thúc”. Sau 3 phút không dùng, máy sẽ tự quay về màn hình đầu.", id:"Tablet ini dipakai bersama. Tekan “Selesai” jika sudah. Setelah 3 menit tidak dipakai, layar otomatis kembali ke awal.", ne:"यो ट्याब्लेट सबैले प्रयोग गर्छन्। सकिएपछि “सकियो” थिच्नुहोस्। ३ मिनेट नचलाए आफैँ पहिलो स्क्रिनमा फर्किन्छ।", zh:"这是大家共用的平板。用完请按“结束”。3分钟不操作会自动回到开始画面。", my:"ဤတက်ဘလက်ကို အားလုံး မျှသုံးပါသည်။ ပြီးလျှင် “ပြီးပါပြီ” ကို နှိပ်ပါ။ ၃ မိနစ် မသုံးလျှင် ပထမစာမျက်နှာသို့ အလိုအလျောက် ပြန်သွားပါမည်။"},
+  nolink:{ja:"これは見本の初日シートです。受け入れ担当の人から、あなたあてのリンクが届くと、あなたの初日シートが出ます。", en:"This is a sample first-day sheet. When the person in charge sends you your own link, your sheet will appear.", vi:"Đây là bản mẫu của trang hướng dẫn ngày đầu. Khi người phụ trách gửi đường link riêng cho bạn, trang của bạn sẽ hiện ra.", id:"Ini contoh lembar hari pertama. Setelah penanggung jawab mengirim tautan khusus untuk Anda, lembar Anda akan muncul.", ne:"यो पहिलो दिनको नमुना पाना हो। जिम्मेवार व्यक्तिले तपाईंको आफ्नै लिंक पठाएपछि तपाईंको पाना देखिन्छ।", zh:"这是第一天说明表的示例。负责人发给您专用链接后，会显示您自己的说明表。", my:"ဤသည်မှာ ပထမနေ့ စာရွက် နမူနာဖြစ်သည်။ တာဝန်ခံက သင့်အတွက် လင့်ခ်ပို့လျှင် သင့်စာရွက် ပေါ်လာပါမည်။"},
+  agency:{ja:"派遣会社（{a}）には、教材を見終わった本数と、テストを終えた本数だけが伝わります。質問やふりかえりの内容は伝わりません。", en:"Your agency ({a}) is told only how many lessons you finished and how many tests you completed. What you write in questions and check-ins is not shared with them.", vi:"Công ty phái cử ({a}) chỉ thấy số bài học bạn đã xem xong và số bài kiểm tra đã làm xong. Họ không thấy nội dung câu hỏi và phần tự nhìn lại của bạn.", id:"Perusahaan penyalur ({a}) hanya dapat melihat jumlah materi yang selesai Anda lihat dan jumlah tes yang selesai. Pertanyaan dan refleksi Anda tidak terlihat.", ne:"कामदार पठाउने कम्पनी ({a}) ले तपाईंले सकेका पाठको संख्या र सकेका परीक्षाको संख्या मात्र देख्छ। तपाईंका प्रश्न र समीक्षा देख्दैन।", zh:"派遣公司（{a}）只能看到您看完的教材数量和完成的测验数量，看不到您的提问和回顾内容。", my:"အလုပ်သမားပို့ကုမ္ပဏီ ({a}) သည် သင်ကြည့်ပြီးသော သင်ခန်းစာအရေအတွက်နှင့် ပြီးသော စာမေးပွဲအရေအတွက်ကိုသာ မြင်ရပါသည်။ သင့်မေးခွန်းနှင့် ပြန်လည်သုံးသပ်ချက်များကို မမြင်ရပါ။"}
 };
 const KT = k => (KTEXT[k]||{})[state.lang] || (KTEXT[k]||{}).ja || "";
 const CARD_CATS = [["all","すべて"],["kan","館内"],["food","料理と飲み物"],["word","言葉"]];
@@ -1108,7 +1132,7 @@ function learn(){
     <section class="card">
       <span class="label">${L.kind==="共通"?"どの旅館でも共通の教材":INN+"だけの手順"}</span>
       <h2>${esc(L.title)}</h2>
-      <label class="field">ことばを選ぶ（外国人スタッフ向け）<select id="lang">${LANGS.map(([v,n])=>`<option value="${v}" ${state.lang===v?"selected":""}>${n}</option>`).join("")}</select></label>
+      <label class="field langrow">ことばを選ぶ（外国人スタッフ向け）<select id="lang">${LANGS.map(([v,n])=>`<option value="${v}" ${state.lang===v?"selected":""}>${n}</option>`).join("")}</select></label>
       ${trBlock(L)}
       <button class="player" id="play" aria-label="見本の動画を再生">
         <span class="meta"><span>見本の動画</span><span id="vtime">0:00 / ${esc(L.time)}</span></span>
@@ -1932,7 +1956,7 @@ function effect(){
     <span class="label">その場で伺って計算します</span>
     <h2>教える時間が、どれだけ戻るか</h2>
     <p class="empty">担当の方に4つ伺って、数字を入れます。結果はすぐ下に出ます。</p>
-    <div class="row"><button class="btn ghost small" id="effhint">分からないとき：同じ説明を「教える時間の3割」で入れる</button></div>
+    <div><button class="linkish" id="effhint">分からないときは、同じ説明を「教える時間の3割」で入れる</button></div>
   </section>
   <section class="card">
     <span class="label">溜まった質問から</span>
@@ -1942,7 +1966,7 @@ function effect(){
   <section class="card">
     ${EFF.map(f=>`<label class="field">${f.t}（${f.u}）<input id="eff-${f.k}" data-eff="${f.k}" inputmode="decimal" placeholder="${f.ph}" value="${esc(state.eff[f.k]??"")}">${f.note?`<span class="note">${f.note}</span>`:""}</label>`).join("")}
   </section>
-  <section class="card"><h3>結果</h3><div id="effout">${effCalc()}</div>
+  <section class="card effresult"><span class="label">結果</span><div id="effout">${effCalc()}</div>
     <p class="note">教える時間には、先輩が新人につきっきりになっている時間を入れます。</p></section>
   ${beforeAfterCard()}
   ${costCard()}`;
