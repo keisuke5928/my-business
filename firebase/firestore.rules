@@ -1,0 +1,61 @@
+rules_version = '2';
+// 宿のはじめて帳 本番のアクセスルール
+// 役割は、ログインしたときのカスタムクレーム（role と inn）で決まる。
+//   staff    : その宿の新人スタッフ。招待リンクから入る（名前のないアカウント）
+//   admin    : その宿の管理者。運営者がメールアドレスで追加する
+//   operator : 運営者（吉田）。すべての宿
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function role() { return signedIn() ? request.auth.token.get('role', '') : ''; }
+    function isOperator() { return role() == 'operator'; }
+    function member(inn) { return isOperator() || (signedIn() && request.auth.token.get('inn', '') == inn && role() in ['staff', 'admin']); }
+    function admin(inn) { return isOperator() || (signedIn() && request.auth.token.get('inn', '') == inn && role() == 'admin'); }
+
+    // 宿の中のデータ
+    match /inns/{inn} {
+
+      // スタッフが書くもの：質問、施設あての声
+      match /questions/{id} {
+        allow read: if member(inn);
+        allow create: if member(inn);
+        // スタッフは「違う」の評価だけ。回答や対応済みは管理者
+        allow update: if admin(inn)
+          || (member(inn) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'fb']));
+        allow delete: if admin(inn);
+      }
+      match /innvoices/{id} {
+        allow create: if member(inn);
+        allow read, delete: if admin(inn);
+      }
+
+      // 管理者が書いて、スタッフが読むもの
+      match /{coll}/{id} {
+        allow read: if member(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings', 'relays'];
+        allow write: if admin(inn) && coll in ['learned', 'proposals', 'cards', 'notices', 'people', 'settings'];
+      }
+      // 外部の相談窓口から施設へ伝える文は、運営者だけが書く
+      match /relays/{id} {
+        allow write: if isOperator();
+      }
+
+      // 外部の相談窓口の声：書けるのは本人、読めるのは本人と運営者だけ（施設の管理者も読めない）
+      match /voices/{uid} {
+        allow read: if isOperator() || (member(inn) && request.auth.uid == uid);
+        allow create, update: if member(inn) && request.auth.uid == uid;
+        allow update, delete: if isOperator();
+      }
+
+      // 招待の合言葉と、AIの使用回数はサーバーだけが扱う
+      match /private/{id} {
+        allow read, write: if false;
+      }
+    }
+
+    // それ以外は、すべて禁止
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

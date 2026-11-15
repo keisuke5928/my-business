@@ -1,0 +1,10 @@
+{
+  "_説明": "本番用の設定のひな形。config.json にコピーして、Firebase のコンソールの「プロジェクトの設定」にあるウェブアプリの値を入れる。これらの値は公開されても問題ない種類のもの（APIキーという名前だが、秘密の鍵ではない）。",
+  "config": {
+    "apiKey": "",
+    "authDomain": "<プロジェクトID>.firebaseapp.com",
+    "projectId": "<プロジェクトID>",
+    "appId": ""
+  },
+  "inns": ["entaiji"]
+}

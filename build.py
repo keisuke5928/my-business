@@ -5,13 +5,15 @@
 1つのHTMLにまとめる。
 
 使い方:
-  python3 build.py            すべての宿を dist/<id>.html に出す
+  python3 build.py            すべての宿を dist/<id>.html に出す（デモ用。Claudeのアーティファクトやファイルで開く）
   python3 build.py entaiji    その宿だけ出す
+  python3 build.py --firebase firebase/config.json
+                              本番用。firebase/public/<id>/index.html とつなぎの部品（runtime.js）を作る
 
 公開用の index.html と live.html は、PUBLISH に書いた宿から同じ内容で作る。
 どちらも手で直さず、src/app.html か inns/<id>.json を直してからビルドする。
 """
-import json, pathlib, sys
+import json, pathlib, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
 APP = ROOT / "src" / "app.html"
@@ -49,17 +51,61 @@ def check(inn, path):
             sys.exit(f"{path.name}: {key} の教材 id「{inn[key]}」が lessons にありません")
 
 
-def render(app, inn, title):
+def render(app, inn, title, runtime=""):
     data = json.dumps(inn, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    if app.count("<!--__RUNTIME__-->") != 1:
+        sys.exit("src/app.html に <!--__RUNTIME__--> がちょうど1つ必要です")
+    app = app.replace("<!--__RUNTIME__-->", runtime)
     for mark in ("/*__INN_DATA__*/null", "/*__TITLE__*/"):
         if app.count(mark) != 1:
             sys.exit(f"src/app.html に {mark} がちょうど1つ必要です")
     return app.replace("/*__INN_DATA__*/null", data).replace("/*__TITLE__*/", title)
 
 
+FIREBASE = ROOT / "firebase"
+
+
+def build_firebase(cfg_path, inns, app):
+    cfg = json.loads(pathlib.Path(cfg_path).read_text(encoding="utf-8"))
+    for k in ("config", "inns"):
+        if k not in cfg:
+            sys.exit(f"{cfg_path}: 「{k}」がありません（firebase/config.example.json を見てください）")
+    rt = FIREBASE / "runtime"
+    if not (rt / "node_modules").exists():
+        subprocess.run(["npm", "install", "--no-audit", "--no-fund"], cwd=rt, check=True)
+    subprocess.run(["npm", "run", "build", "--silent"], cwd=rt, check=True)
+    pub = FIREBASE / "public"
+    pub.mkdir(exist_ok=True)
+    for iid in cfg["inns"]:
+        if iid not in inns:
+            sys.exit(f"inns/{iid}.json がありません")
+        inn = dict(inns[iid])
+        inn.pop("appUrl", None)
+        boot = {"config": cfg["config"], "inn": iid, "name": inn["name"]}
+        if cfg.get("emulator"):
+            boot["emulator"] = cfg["emulator"]
+        runtime = ("<script>window.YADO_FIREBASE=" + json.dumps(boot, ensure_ascii=False).replace("</", "<\\/")
+                   + ";</script>\n<script src=\"../runtime.js\"></script>")
+        out = pub / iid
+        out.mkdir(exist_ok=True)
+        (out / "index.html").write_text(render(app, inn, f"宿のはじめて帳 {inn['name']}", runtime), encoding="utf-8")
+        print(f"firebase/public/{iid}/index.html を作りました（{inn['name']}）")
+    (pub / "index.html").write_text(
+        "<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">"
+        "<title>宿のはじめて帳</title><body style=\"font-family:system-ui,sans-serif;padding:24px;line-height:1.7\">"
+        "<h1 style=\"font-size:1.3rem\">宿のはじめて帳</h1><p>旅館から届いたリンクを開いてください。</p></body>",
+        encoding="utf-8")
+
+
 def main():
     app = APP.read_text(encoding="utf-8")
-    want = sys.argv[1:]
+    args = sys.argv[1:]
+    fb = None
+    if args and args[0] == "--firebase":
+        if len(args) < 2:
+            sys.exit("使い方: python3 build.py --firebase firebase/config.json")
+        fb, args = args[1], []
+    want = args
     paths = sorted(INNS.glob("*.json"))
     inns = {}
     for p in paths:
@@ -68,6 +114,9 @@ def main():
         if inn["id"] != p.stem:
             sys.exit(f"{p.name}: id は ファイル名と同じ「{p.stem}」にしてください")
         inns[inn["id"]] = inn
+    if fb:
+        build_firebase(fb, inns, app)
+        return
     for w in want:
         if w not in inns:
             sys.exit(f"inns/{w}.json がありません")

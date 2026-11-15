@@ -1,1 +1,8 @@
 dist/
+node_modules/
+firebase/public/
+firebase/config.json
+firebase/functions/.env*
+firebase/*.log
+firebase/.firebase/
+firebase/functions/.secret.local

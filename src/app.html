@@ -354,10 +354,17 @@ html.big .ring{width:66px;height:66px}
 <div class="toast" id="toast" hidden></div>
 <div id="modal" hidden></div>
 
+<!--__RUNTIME__-->
 <script>
 /* ======================= データ ======================= */
 /* 宿ごとのデータは inns/<id>.json にある。build.py がここに埋め込む。アプリ本体には宿の事実を書かない。 */
 const D = /*__INN_DATA__*/null;
+/* 本番（Firebase）で動くときは、つなぎの部品が window.YADO_RUNTIME を用意する。デモ（Claudeのアーティファクトやファイル）では null。 */
+const RT = window.YADO_RUNTIME || null;
+const PROD = !!RT;
+let ROLE = PROD ? "staff" : "demo";   /* staff | admin | operator | demo。本番では起動時に決まる */
+const canAdmin = () => ROLE !== "staff";
+const isOperator = () => ROLE === "operator" || ROLE === "demo";
 const INN = D.name, HOST = D.host, SOURCE = D.source || "";
 const staff = D.staff, terms = D.terms, FLOORS = D.floors || null, baseLessons = D.lessons, kb = D.kb;
 const APP_URL = D.appUrl || "";
@@ -475,14 +482,17 @@ function dbMsg(e){ const c=e?.code;
   if(c==="invalid_argument") return "この共有のしかたでは保存できません。編集できる人に共有してもらってください。";
   return "保存できませんでした。少しおいて、もう一度試してください。"; }
 let rrPending=false;
+/* 共有データが届いたときの描き直し。入力中は待ち、入力欄から離れたあとに少し遅らせて描き直す
+   （送るボタンを押した瞬間に描き直すと、押した操作と入力した文が消えるため）。描き直しても、入力途中の文は残す。 */
+const renderKeep = () => render();
+const typing = () => { const a=document.activeElement; return !!(a&&main.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
 function rerender(){
   if(vTimer) return;
-  const a=document.activeElement;
-  if(a&&main.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){
-    if(!rrPending){ rrPending=true; a.addEventListener("blur",()=>{ rrPending=false; render(); },{once:true}); }
+  if(typing()){
+    if(!rrPending){ rrPending=true; const wait=()=>{ if(typing()) return setTimeout(wait,400); rrPending=false; renderKeep(); }; setTimeout(wait,400); }
     return;
   }
-  render();
+  renderKeep();
 }
 function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   if(live){ b.textContent = liveErr ? "データ確認中" : "データ共有中"; b.classList.toggle("on", !liveErr); } else { b.textContent="この端末だけ"; b.classList.remove("on"); } }
@@ -576,18 +586,27 @@ const TABS = {
   admin:[["dash","状","新人"],["queue","答","質問"],["make","作","初日シート"],["author","撮","教材づくり"],["effect","効","効果"],["memo","聞","メモ"]]
 };
 function renderTabs(){
-  $("#tabs").innerHTML = TABS[state.role].map(([id,ic,l]) => {
+  if(state.role==="admin" && !canAdmin()) state.role="new";
+  const tabs = TABS[state.role].filter(([id])=>!(PROD && !isOperator() && (id==="effect"||id==="memo")));
+  if(!tabs.some(([id])=>id===state.tab)) state.tab = tabs[0][0];
+  $("#tabs").innerHTML = tabs.map(([id,ic,l]) => {
     let dot=""; if(id==="queue"&&openQueue()) dot=`<span class="dot">${openQueue()}</span>`;
     if(id==="dash"){ const n=peopleAlerts().length; if(n) dot=`<span class="dot">${n}</span>`; }
     return `<button data-tab="${id}" ${state.tab===id?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${dot}</button>`}).join("");
 }
+/* 描き直しても、入力途中の文と、入力中の場所（フォーカス）は残す。送ったときに消すのは、それぞれの送る処理で行う。 */
 function render(){
+  const kept={}, act=document.activeElement, focusId = act && main.contains(act) && act.id ? act.id : null;
+  let caret=null; try{ if(focusId && typeof act.selectionStart==="number") caret=[act.selectionStart, act.selectionEnd]; }catch(e){}
+  main.querySelectorAll("input[id],textarea[id]").forEach(el=>{ if(el.type!=="checkbox"&&el.type!=="file"&&!el.readOnly&&el.value&&el.value!==el.defaultValue) kept[el.id]=el.value; });
   { const sb=$("#sosbtn"); if(sb){ sb.hidden = state.role!=="new" || state.tab==="ask"; } }
   stopVideo();
   renderTabs();
   const views = {sheet,learn,ask,quizView,checkin,dash,queue,make,author,effect,memo};
   main.innerHTML = `${tourBar()}<div class="view">${views[state.tab==="quiz"?"quizView":state.tab]()}</div>`;
+  for(const id in kept){ const el=document.getElementById(id); if(el && main.contains(el) && !el.readOnly && el.value===el.defaultValue) el.value=kept[id]; }
   bind(); save();
+  if(focusId){ const el=document.getElementById(focusId); if(el && main.contains(el) && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)){ try{ el.focus({preventScroll:true}); if(caret && typeof el.setSelectionRange==="function") el.setSelectionRange(caret[0], caret[1]); }catch(e){} } }
 }
 const TOUR = [
   ["new","sheet",null,"新人の初日シート","着任が決まった人のスマホに届く画面です。集合、持ち物、館内、寮までの道が1つにまとまっています。いちばん上に「次にやること」が出ます。「すぐ探す」に言葉を入れると、その場で答えが出ます。困ったときは右下の「困ったら」を押します。"],
@@ -1026,7 +1045,7 @@ ${INN}の${p.job}でお待ちしています。
 ${dormInfo().address?`寮：${dormInfo().address}
 地図：${mapUrl(dormInfo().address)}
 `:""}着任前に、このアプリで教材を見ておいてください（1本3分ほどです）。
-${APP_URL}`;
+${(RT && RT.inviteUrl) || APP_URL}`;
 }
 function dash(){
   const all = people().map(personView);
@@ -1240,7 +1259,7 @@ function queue(){
     </div>`).join(""):`<p class="empty">いまは回答待ちの質問はありません。</p>`}</section>
   ${propCard()}
   ${done.length?`<section class="card"><h3>回答済み（宿の資料に追加）</h3>${done.map(q=>`<div class="qitem"><b>${esc(q.q)}</b><span class="empty">${esc(q.reply||q.answer||"本人に直接対応")}</span></div>`).join("")}</section>`:""}
-  ${live?`<section class="card"><span class="label">デモ用</span><p class="empty">訪問ごとに、溜めたデータを空にできます。</p><div class="row"><button class="btn ghost small" id="wipe">溜めた質問と案をすべて消す</button></div></section>`:""}`;
+  ${live&&!PROD?`<section class="card"><span class="label">デモ用</span><p class="empty">訪問ごとに、溜めたデータを空にできます。</p><div class="row"><button class="btn ghost small" id="wipe">溜めた質問と案をすべて消す</button></div></section>`:""}`;
 }
 function keywords(q){
   const k = q.replace(/[？?。、！!「」]/g," ").split(/\s+/).filter(w=>w.length>=2);
@@ -1428,9 +1447,18 @@ function effect(){
 }
 
 /* ======================= 管理：ヒアリングメモ ======================= */
+function operatorCard(){
+  return `<section class="card"><span class="label">運営者だけの画面</span><h2>旅館の管理者を追加</h2>
+    <p class="empty">管理者になる人のメールアドレスを入れます。その人は、ログインの画面から同じメールアドレスで入ると、この宿の管理画面を使えます。</p>
+    <label class="field">メールアドレス<input id="op-email" type="email" autocomplete="off" placeholder="例：kanri@example.jp"></label>
+    <div class="row"><button class="btn small" id="op-grant">管理者にする</button></div>
+    <p class="note">スタッフ用の招待リンク：<span id="op-invite">${esc((RT&&RT.inviteUrl)||"作っています…")}</span></p>
+    <div class="row"><button class="btn ghost small" id="op-rotate">招待リンクを作り直す（前のリンクは使えなくなります）</button></div>
+  </section>`;
+}
 function memo(){
   const m=state.memo, done=memoQs.filter((_,i)=>m[i]&&m[i].ok).length;
-  return `${windowCard()}
+  return `${windowCard()}${PROD && isOperator() ? operatorCard() : ""}
   <section class="card">
     <span class="label">訪問時に確認すること</span>
     <h2>ヒアリングメモ ${done} / ${memoQs.length}</h2>
@@ -1483,7 +1511,7 @@ function bind(){
   const md=$("#markdone"); if(md) md.onclick=()=>{state.done[state.lesson]=true;toast("見終わった記録を残しました");render()};
   const tq=$("#toquiz"); if(tq) tq.onclick=()=>{state.quizLesson=state.lesson; go("quiz")};
   document.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>say(b.dataset.say));
-  const f=$("#composer"); if(f) f.onsubmit=e=>{e.preventDefault();const v=$("#askinput").value.trim();if(v)say(v)};
+  const f=$("#composer"); if(f) f.onsubmit=e=>{e.preventDefault();const inp=$("#askinput"), v=inp.value.trim(); if(!v||askCtl) return; inp.value=""; say(v)};
   if(askCtl){ const sb=$("#sendbtn"); if(sb) sb.disabled=true; }
   document.querySelectorAll("[data-ql]").forEach(b=>b.onclick=()=>{state.quizLesson=b.dataset.ql;render()});
   document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
@@ -1533,8 +1561,8 @@ function bind(){
   const cl=$("#copyline"); if(cl) cl.onclick=async()=>{ const t=$("#linetext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました。LINEに貼りつけてください"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
   const ns=$("#nsend"); if(ns) ns.onclick=async()=>{ const t=$("#ntext").value.trim(); if(!t){ toast("連絡を入力してください"); return; }
     const rec={text:t, at:Date.now(), when:todayText()+" "+new Date().toTimeString().slice(0,5)};
-    if(live){ try{ await db.collection("notices").add(rec); toast("新人の画面に出しました"); }catch(e){ toast(dbMsg(e)); } return; }
-    state.notices.unshift({id:"n"+Date.now(), ...rec}); toast("新人の画面に出しました"); render(); };
+    if(live){ try{ await db.collection("notices").add(rec); const nt=$("#ntext"); if(nt) nt.value=""; toast("新人の画面に出しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    $("#ntext").value=""; state.notices.unshift({id:"n"+Date.now(), ...rec}); toast("新人の画面に出しました"); render(); };
   document.querySelectorAll("[data-ndel]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.ndel;
     if(live){ try{ await db.doc("notices/"+id).delete(); }catch(e){ toast(dbMsg(e)); } return; }
     state.notices=state.notices.filter(n=>n.id!==id); render(); });
@@ -1595,6 +1623,9 @@ function bind(){
     if(k==="lessons") return go("learn"); if(k==="quiz") return go("quiz");
     const t = k==="sheet" ? ($("#daysheet")&&$("#daysheet").closest(".card")) : $("#bringcard"); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  const og=$("#op-grant"); if(og) og.onclick=async()=>{ const em=$("#op-email").value.trim(); if(!em){ toast("メールアドレスを入れてください"); return; }
+    og.disabled=true; try{ await RT.grantAdmin(em); toast("管理者にしました"); $("#op-email").value=""; }catch(e){ toast(e.message||"できませんでした"); } og.disabled=false; };
+  const orot=$("#op-rotate"); if(orot) orot.onclick=async()=>{ orot.disabled=true; try{ await RT.rotateInvite(); toast("招待リンクを作り直しました"); render(); }catch(e){ toast(e.message||"できませんでした"); } orot.disabled=false; };
   const g=$("#gen"); if(g) g.onclick=generate;
   const rg=$("#regen"); if(rg) rg.onclick=()=>{state.gen=null;render()};
   const pb=$("#publish"); if(pb) pb.onclick=()=>{
@@ -1612,8 +1643,9 @@ function bind(){
   const crs=$("#creset"); if(crs) crs.onclick=()=>{ allCards().filter(c=>state.cardCat==="all"||c.cat===state.cardCat).forEach(c=>delete state.known[c.id]); state.cardIdx=0; render(); };
   const ac=$("#addcard"); if(ac) ac.onclick=async()=>{ const f=$("#c-front").value.trim(), bk=$("#c-back").value.trim(); if(!f||!bk){ toast("表と裏の両方を入れてください"); return; }
     const rec={front:f, back:bk, cat:$("#c-cat").value, at:Date.now()};
-    if(live){ try{ await db.collection("cards").add(rec); toast("カードを足しました"); }catch(e){ toast(dbMsg(e)); } return; }
-    state.cards.push({id:"c"+Date.now(), ...rec}); toast("カードを足しました"); render(); };
+    const clearCard=()=>{ ["#c-front","#c-back"].forEach(x=>{ const el=$(x); if(el) el.value=""; }); };
+    if(live){ try{ await db.collection("cards").add(rec); clearCard(); toast("カードを足しました"); }catch(e){ toast(dbMsg(e)); } return; }
+    clearCard(); state.cards.push({id:"c"+Date.now(), ...rec}); toast("カードを足しました"); render(); };
   document.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.cdel;
     if(live){ try{ await db.doc("cards/"+id).delete(); }catch(e){ toast(dbMsg(e)); } return; }
     state.cards=state.cards.filter(c=>c.id!==id); render(); });
@@ -1624,7 +1656,12 @@ function bind(){
 }
 function setRole(r){state.role=r;state.tab=r==="new"?"sheet":"dash";state.lesson=null;state.newbieView=null;
   $("#role-new").setAttribute("aria-pressed",r==="new");$("#role-admin").setAttribute("aria-pressed",r==="admin");render();window.scrollTo(0,0)}
-$("#innnote").textContent = D.note || "";
+$("#innnote").textContent = PROD ? INN : (D.note || "");
+if(PROD){
+  ["#tourbtn","#reset"].forEach(sel=>{ const el=$(sel); if(el) el.hidden=true; });
+  const rbox=document.querySelector(".role"); if(rbox) rbox.hidden=true;
+  RT.ready.then(info=>{ ROLE = info.role || "staff"; if(rbox) rbox.hidden = !canAdmin(); if(canAdmin() && info.startAdmin) setRole("admin"); else render(); }).catch(()=>{});
+}
 $("#tourbtn").onclick=()=>setTour(0);
 $("#sosbtn").onclick=()=>openSOS();
 $("#bigtxt").onclick=()=>{ state.big=!state.big; applyBig(); save(); render(); };

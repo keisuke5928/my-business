@@ -37,7 +37,14 @@
 6. 端末に残る状態のキーは `yado-hajimete-<宿のid>-v3`。分ける前のキーの内容は読まない。
 7. まだ分けていないもの。教材は、共通の教材と宿だけの教材が、どちらも宿のデータの中にある。共通の教材を別ファイル（全館共通）にするのは次の作業。「困ったら」の文、とっさの一言、危ない言葉の一覧、一人立ち以外のチェック項目は、アプリ本体にある全館共通のもの。
 8. 下の2章の「現在の状態」に出てくる index.html と live.html の説明は、分ける前の経緯。機能の中身は今も同じ。
-9. 本番の置き場所の方針は `docs/hosting-plan.md`（Firebase の東京リージョンと Claude API。11月15日の案で、圭佑の確認待ち）。
+9. 本番の置き場所の方針は `docs/hosting-plan.md`（Firebase の東京リージョンと Claude API。11月15日に圭佑が了承。モデルは Claude Opus 5.5。11月中に実際のスタッフで試す）。
+10. 本番の作り（`firebase/`）。
+    1. `firebase/runtime/` は、アプリの `window.claude.use("db"|"user"|"sample")` を Firebase で動かす部品。アプリ本体は同じ1ファイルのまま。`window.YADO_RUNTIME` があると本番モード（PROD）になる。
+    2. 役割は3つ。スタッフ（招待リンク `#join-合言葉` で入る。名前の登録なし）、管理者（運営者がメールアドレスで追加。メールのリンクでログイン）、運営者（`OPERATOR_EMAIL`）。効果とメモ、外部窓口の声、「すべて消す」は運営者だけ。
+    3. `firebase/functions/` はサーバー側（whoami、join、grantAdmin、invite、ai）。APIキーはサーバーの secret にだけ置く。AIは宿ごとに1日の上限（`AI_DAILY_LIMIT`、初期300回）。
+    4. `firebase/firestore.rules` で、宿のデータは `inns/<宿のid>/` の下に分け、他の宿から読めない。
+    5. ビルドは `python3 build.py --firebase firebase/config.json`（`firebase/config.example.json` を写して本物の設定を入れる。config.json はコミットしない）。
+    6. テストは、エミュレーターを `firebase emulators:start --project demo-yado --only auth,firestore,functions,hosting`（functions/.env.local に `AI_FAKE=1`）で動かし、`python3 build.py --firebase firebase/config.emulator.json` のあと `cd firebase && node tests/e2e.js`。
 
 ## 1. 目的と期限
 1. 旅館の新人教育（派遣・パート・アルバイト・新人社員）をAIで仕組み化するサービスの営業デモを作っている。

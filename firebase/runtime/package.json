@@ -1,0 +1,13 @@
+{
+  "name": "yado-hajimete-runtime",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/runtime.js --bundle --format=iife --minify --target=es2020 --outfile=../public/runtime.js"
+  },
+  "dependencies": {
+    "firebase": "13.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0"
+  }
+}
