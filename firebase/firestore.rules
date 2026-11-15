@@ -79,10 +79,11 @@ service cloud.firestore {
       }
 
       // 外部の相談窓口の声：書けるのは本人、読めるのは本人と運営者だけ（施設の管理者も読めない）
-      match /voices/{uid} {
-        allow read: if isOperator() || (member(inn) && request.auth.uid == uid);
-        allow create, update: if member(inn) && request.auth.uid == uid;
-        allow update, delete: if isOperator();
+      // 1つの声が1つの文書（id は「送った人の番号_時刻」）。スタッフは書くだけで、読み返せない（共有タブレットで前の人の声が見えないように）
+      match /voices/{vid} {
+        allow read, update, delete: if isOperator();
+        allow create: if member(inn) && vid.matches(request.auth.uid + '_[0-9]+')
+          && request.resource.data.uid == request.auth.uid && request.resource.data.keys().hasOnly(['uid', 'items']);
       }
 
       // 招待の合言葉と、AIの使用回数はサーバーだけが扱う

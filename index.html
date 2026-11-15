@@ -704,6 +704,8 @@ async function sendVoice(c){
   try{
     if(rec.to==="inn"){ await db.collection("innvoices").add(rec); return true; }
     if(!me){ toast("外部の窓口に送るには、サインインが必要です"); return false; }
+    // 本番では、1つの声を1つの文書にして、送った人も読み返せないようにする（共有タブレットでは、前の人の声が同じ端末に残るため）
+    if(PROD){ await db.doc("voices/"+me+"_"+rec.at).set({uid:me, items:[rec]}); return true; }
     const ref=db.doc("voices/"+me), snap=await ref.get(), items=(snap.exists&&(snap.data()||{}).items)||[];
     await ref.set({items: items.concat([rec]).slice(-50)}); return true;
   }catch(e){ toast(dbMsg(e)); return false; }

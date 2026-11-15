@@ -158,6 +158,18 @@ const tryDb = (page, kind, path, data) => page.evaluate(async ([kind, path, data
   await k.waitForTimeout(500);
   ok("終わったあとは、その人の分を読めない", (await tryDb(k, "getDoc", "people/" + idA)) === "denied");
 
+  // 6b. 外部の相談窓口：送った本人も読み返せず、運営者だけが読める
+  await a.click('#tabs [data-tab="checkin"]');
+  for (let i = 0; i < 5; i++) await a.click(`[data-cv="${i}:4"]`);
+  await a.fill("#ctext", "外部窓口のテストです");
+  await a.click('[data-to="outside"]'); await a.click("#csend"); await toastHas(a, "外部の相談窓口に送りました");
+  ok("送った本人は、外部窓口の声を読み返せない", (await tryDb(a, "list", "voices")) === "denied");
+  ok("ほかの人の番号で、外部窓口の声を書けない", (await tryDb(a, "set", "voices/someoneelse_1", { uid: "someoneelse", items: [] })) === "denied");
+  await op.click('#tabs [data-tab="dash"]'); await op.click('#tabs [data-tab="memo"]');
+  await op.waitForFunction(() => /外部窓口のテストです/.test(document.querySelector(".view").textContent), null, { timeout: 30000 });
+  ok("運営者は、外部窓口の声を読める", true);
+  ok("管理者は、外部窓口の声を読めない", (await tryDb(adm, "list", "voices")) === "denied");
+
   // 7. 宿の全員用のリンクで入った新人（だれにもつながっていない）
   const g = await newPage();
   await g.goto(BASE + "#join-testcode1234"); await appReady(g);
