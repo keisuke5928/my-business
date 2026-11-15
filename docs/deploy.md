@@ -38,7 +38,7 @@
 
 1. https://shell.cloud.google.com/ を開く（手順1と同じGoogleのアカウント）。
 2. このリポジトリを Cloud Shell に入れる。どちらかの方法で。
-   1. Claude から受け取った zip を、Cloud Shell の画面右上の「︙」→「アップロード」で入れ、`unzip my-business.zip -d my-business` で開く。
+   1. Claude から受け取った zip を、Cloud Shell の画面右上の「︙」→「アップロード」で入れ、`unzip my-business.zip` で開く。
    2. または `git clone https://github.com/keisuke5928/my-business`（非公開のリポジトリなので、GitHub のログインを求められます）。
 3. 設定ファイルを作る。
 
