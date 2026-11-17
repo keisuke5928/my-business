@@ -451,17 +451,6 @@ nav.tabs button[aria-current="page"] .ic{background:var(--ai);color:var(--surfac
 .agrow:first-child{border-top:0;padding-top:0}
 .agrow .sub{font-size:.82rem;color:var(--muted)}
 body.kiosk .role,body.kiosk #tourbtn,body.kiosk #reset,body.kiosk #agdemo{display:none!important}
-.needs{display:flex;flex-direction:column}
-#orderform .field{min-width:0}
-#orderform input{min-width:0;max-width:100%}
-#orderform input[type="date"]{padding-inline:8px;font-size:.86rem}
-.needrow{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;border-top:1px solid var(--line);padding:10px 0}
-.needrow:first-child{border-top:0;padding-top:0}
-.needrow b{display:block}
-.needrow .tag{justify-self:start}
-.needrow .btn{justify-self:end}
-.needin{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
-.needin input{width:4em;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--ink);font:inherit;text-align:right;font-variant-numeric:tabular-nums}
 html.big .brand h1{font-size:1rem}
 @media (max-width:359px){.brand h1{font-size:1rem;letter-spacing:.02em}.bar .role button{padding:4px 9px}}
 
@@ -646,7 +635,7 @@ let state = fresh();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && s.profile) state = Object.assign(fresh(), s); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 /* ======================= 質問のデータ（共有、または端末の中） ======================= */
-let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[], liveNeeds=null, liveOrders=[], liveLearn=[], liveWork=[], liveProgress={}, unsubMe=null;
+let db=null, live=false, liveErr="", liveQs=[], liveLearned=[], liveProps=[], livePeople=[], liveNotices=[], liveCards=[], liveDorm=null, firstQs=true, me=null, isOwnerV=false, liveVoices=[], liveInnVoices=[], liveRelays=[],  liveLearn=[], liveWork=[], liveProgress={}, unsubMe=null;
 const allQs = () => live ? liveQs : state.log;
 const openQs = () => live ? liveQs.filter(q=>q.status==="open") : state.queue.filter(q=>!q.answered);
 const doneQs = () => live ? liveQs.filter(q=>q.status==="answered"||q.status==="handled") : state.queue.filter(q=>q.answered);
@@ -654,8 +643,6 @@ const props = () => live ? liveProps : state.props;
 const voicesOut = () => (live ? liveVoices : (state.voices||[])).slice().sort((a,b)=>(b.at||0)-(a.at||0));
 const innVoices = () => live ? liveInnVoices : (state.innvoices||[]);
 const relays = () => live ? liveRelays : (state.relays||[]);
-const needs = () => (live ? (liveNeeds && liveNeeds.needs) : state.needs) || {};
-const orders = () => live ? liveOrders : (state.orders||[]);
 /* 学習の記録。だれの記録かは残さない（名前も番号もつけない）。教材を直すためと、成果を数えるためだけに使う。
    t は done（教材を見終わった）、quiz（テストに答えた）、card（覚えるカード）。 */
 /* 本番のスタッフは、受け入れ一覧のうち自分につながった1人分だけを読む。本人あてのリンクか、共有タブレットの番号でつながる。 */
@@ -815,8 +802,6 @@ function setLiveBadge(){ const b=$("#livebadge"); if(!b) return;
   db.collection("learnlog").orderBy("at","desc").limit(600).onSnapshot(snap=>{ liveLearn = snap.docs.map(d=>d.data()); rerender(); }, ()=>{});
   db.collection("worklog").onSnapshot(snap=>{ liveWork = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   db.collection("metrics").onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>{ m[d.id]=d.data(); }); liveMetrics=m; rerender(); }, ()=>{});
-  db.doc("staffing/needs").onSnapshot(snap=>{ liveNeeds = snap.exists ? snap.data() : null; rerender(); }, ()=>{});
-  db.collection("orders").orderBy("at","desc").limit(30).onSnapshot(snap=>{ liveOrders = snap.docs.map(d=>({id:d.id, ...d.data()})); rerender(); }, ()=>{});
   try{ const u = await window.claude?.use?.("user"); if(u){ me = await u.id(); isOwnerV = !!(await u.isOwner()); } }catch(e){}
   if(isOwnerV) db.collection("voices").onSnapshot(snap=>{ liveVoices = snap.docs.flatMap(d=>((d.data()||{}).items||[]).map(it=>({...it, uid:d.id}))); rerender(); }, ()=>{});
 })();
@@ -1523,7 +1508,6 @@ function dash(){
   </section>
   ${kioskAdminCard()}
   ${skillCard(all)}
-  ${staffingCard(all)}
   <section class="card"><span class="label">女将や支配人への報告に</span><h3>今週のまとめ</h3>
     <p class="empty">新人、質問、先輩の時間、声かけが必要な人を、1つの文にまとめます。LINEやメールに貼って送れます。</p>
     ${state.weekly?`<textarea id="weeklytext" readonly style="min-height:220px">${esc(weeklyText(all))}</textarea><div class="row"><button class="btn small" id="copyweekly">コピー</button><button class="btn ghost small" id="closeweekly">閉じる</button></div>`:`<div class="row"><button class="btn small" id="mkweekly">今週のまとめを作る</button></div>`}
@@ -1543,48 +1527,7 @@ function skillCard(all){
       return `<div class="lb"><span><b>${esc(job)}</b></span><span class="v">一人で入れる ${ok} / ${ns.length}名</span><div style="grid-column:1/-1" class="note">${ns.map(n=>`${esc(n.name)}（${n.ojtDone}/${n.ojtAll}）`).join("、")}</div></div>`; }).join("")}</div>
     <p class="note">一人立ちチェックがすべて終わった人を「一人で入れる」としています。</p></section>`;
 }
-/* 人手の見通しと、人材の依頼。職種ごとに「必要な人数」を入れると、足りない人数が出る。
-   依頼文は決まった形で作り（AIは使わない）、コピーするか、運営者に送る。運営者は「メモ」の画面で受け取る。 */
 function mdText(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); return m ? `${+m[2]}月${+m[3]}日` : ""; }
-function orderText(o){
-  const j=JOBS[o.job]||{}, bring=(j.bring||D.bring||[]).join("、"), les=(j.lessons||[]).join("、");
-  const term = o.from ? (o.to ? `${mdText(o.from)}から${mdText(o.to)}まで` : `${mdText(o.from)}から`) : "相談して決めたい";
-  const L=[`【人材のご依頼】${INN}`, `1. 職種：${o.job}`, `2. 人数：${o.n}名`, `3. 期間：${term}`];
-  if(o.hours) L.push(`${L.length}. 勤務の時間：${o.hours}`);
-  if(bring) L.push(`${L.length}. 持ち物：${bring}`);
-  if(les) L.push(`${L.length}. 着任の前に見てもらう教材：${les}`);
-  if(o.note) L.push(`${L.length}. 伝えたいこと：${o.note}`);
-  L.push("", "着任が決まったら、お名前と着任日を教えてください。初日シートを本人に送ります。");
-  return L.join("\n");
-}
-function staffingCard(all){
-  const jobs=Object.keys(JOBS); if(!jobs.length) return "";
-  const nd=needs(), od=state.order, sent=orders();
-  const rows=jobs.map(job=>{ const ns=all.filter(n=>n.job===job&&!n.end), ok=ns.filter(n=>n.ojtAll&&n.ojtDone===n.ojtAll).length, need=+nd[job]||0, lack=Math.max(0, need-ns.length);
-    return `<div class="needrow"><div><b>${esc(job)}</b><span class="note">いま ${ns.length}名（一人で入れる ${ok}名）</span></div>
-      <label class="needin">必要<input type="number" min="0" max="99" inputmode="numeric" data-need="${esc(job)}" value="${need||""}" placeholder="0" aria-label="${esc(job)}に必要な人数">名</label>
-      ${lack?`<span class="tag risk">あと${lack}名</span><button class="btn small" data-order="${esc(job)}" data-lack="${lack}">依頼文を作る</button>`:`<span class="tag ${need?"ok":""}">${need?"足りている":"未入力"}</span>`}</div>`; }).join("");
-  const form = od ? `<div class="out" id="orderform"><b>${esc(od.job)}の依頼</b>
-      <div class="grid2"><label class="field">人数<input id="od-n" type="number" min="1" max="99" inputmode="numeric" value="${od.n}"></label><label class="field">勤務の時間<input id="od-hours" placeholder="例：5:30〜10:30" value="${esc(od.hours||"")}"></label></div>
-      <div class="grid2"><label class="field">いつから<input id="od-from" type="date" value="${esc(od.from||"")}"></label><label class="field">いつまで（任意）<input id="od-to" type="date" value="${esc(od.to||"")}"></label></div>
-      <label class="field">伝えたいこと（任意）<input id="od-note" placeholder="例：朝食の経験がある人だと助かります" value="${esc(od.note||"")}"></label>
-      <label class="field">依頼文（直せます）<textarea id="od-text" style="min-height:230px">${esc(orderText(od))}</textarea></label>
-      <div class="row"><button class="btn small" id="od-send">担当（宿のはじめて帳）に送る</button><button class="btn ghost small" id="od-copy">コピー</button><button class="btn ghost small" id="od-close">閉じる</button></div>
-      <p class="note">コピーして、いま取引のある人材会社にそのまま送ることもできます。</p></div>` : "";
-  return `<section class="card"><span class="label">人が足りないときに</span><h3>人手の見通し</h3>
-    <p class="empty">仕事ごとに必要な人数を入れると、足りない人数が出ます。足りない仕事は、依頼文をその場で作れます。</p>
-    <div class="needs">${rows}</div>${form}
-    ${sent.length?`<div class="faq">${sent.slice(0,5).map(o=>`<div><b>${esc(o.job)} ${esc(String(o.n))}名</b><span class="note">${mdText(new Date(o.at).toISOString().slice(0,10))}に送りました ・ ${o.status==="handled"?"対応中":"受付待ち"}</span></div>`).join("")}</div>`:""}
-  </section>`;
-}
-function ordersCard(){
-  const list=orders(); if(!list.length) return "";
-  return `<section class="card"><span class="label">運営者だけの画面</span><h2>届いた人材の依頼 ${list.filter(o=>o.status!=="handled").length}件</h2>
-    ${list.map(o=>`<div class="voice"><div class="row"><b>${esc(o.job)} ${esc(String(o.n))}名</b><span class="tag ${o.status==="handled"?"ok":"risk"}">${o.status==="handled"?"対応した":"新しい依頼"}</span></div>
-      <p class="say" style="white-space:pre-line">${esc(o.text||"")}</p>
-      <div class="row"><button class="btn ghost small" data-ocopy="${esc(o.id)}">コピー</button>${o.status==="handled"?"":`<button class="btn small" data-odone="${esc(o.id)}">対応した</button>`}</div></div>`).join("")}
-  </section>`;
-}
 function weeklyText(all){
   const now=Date.now(), wk=allQs().filter(q=>(q.at||0)>=now-7*86400000);
   const auto=wk.filter(q=>q.result==="answer").length, staffN=wk.length-auto, risk=wk.filter(q=>q.risk).length;
@@ -2137,7 +2080,7 @@ function workCard(){
 }
 function memo(){
   const m=state.memo, done=memoQs.filter((_,i)=>m[i]&&m[i].ok).length;
-  return `${windowCard()}${isOperator() ? ordersCard() : ""}${isOperator() ? workCard() : ""}${PROD && isOperator() ? operatorCard() : ""}
+  return `${windowCard()}${isOperator() ? workCard() : ""}${PROD && isOperator() ? operatorCard() : ""}
   <section class="card">
     <span class="label">訪問時に確認すること</span>
     <h2>ヒアリングメモ ${done} / ${memoQs.length}</h2>
@@ -2291,22 +2234,6 @@ function bind(){
     if(live){ const q=liveQs.find(x=>x.key===m.fbKey); if(q){ try{ await db.doc("questions/"+q.id).update({status:"open", fb:"bad"}); state.mine[q.id]=1; save(); }catch(e){ toast(dbMsg(e)); } } return; }
     const lg=state.log.find(x=>x.key===m.fbKey); if(lg){ lg.status="open"; lg.fb="bad"; }
     state.queue.unshift({id:Date.now(), q:m.q, by:state.profile.name+"さん", risk:false, answered:false, reply:"", fb:"bad", answer:m.text}); save(); render(); });
-  document.querySelectorAll("[data-need]").forEach(i=>i.onchange=async()=>{ const nd={...needs()}, v=Math.max(0, Math.min(99, parseInt(i.value,10)||0)); if((+nd[i.dataset.need]||0)===v) return; nd[i.dataset.need]=v;
-    if(live){ try{ await db.doc("staffing/needs").set({needs:nd, at:Date.now()}); }catch(e){ toast(dbMsg(e)); } return; }
-    state.needs=nd; save(); setTimeout(render,0); });
-  document.querySelectorAll("[data-order]").forEach(b=>b.onclick=()=>{ state.order={job:b.dataset.order, n:+b.dataset.lack||1, hours:"", from:"", to:"", note:""}; render(); const f=$("#orderform"); if(f) f.scrollIntoView({block:"center"}); });
-  { const sync=()=>{ const od=state.order; if(!od) return; od.n=Math.max(1, parseInt($("#od-n").value,10)||1); od.hours=$("#od-hours").value.trim(); od.from=$("#od-from").value; od.to=$("#od-to").value; od.note=$("#od-note").value.trim(); $("#od-text").value=orderText(od); save(); };
-    ["#od-n","#od-hours","#od-from","#od-to","#od-note"].forEach(sel=>{ const i=$(sel); if(i) i.oninput=sync; });
-    const oc=$("#od-close"); if(oc) oc.onclick=()=>{ state.order=null; render(); };
-    const ocp=$("#od-copy"); if(ocp) ocp.onclick=async()=>{ const t=$("#od-text"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };
-    const os=$("#od-send"); if(os) os.onclick=async()=>{ const od=state.order; if(!od) return; const rec={job:od.job, n:od.n, from:od.from||"", to:od.to||"", hours:od.hours||"", note:od.note||"", text:$("#od-text").value, at:Date.now(), status:"new"};
-      if(live){ try{ await db.collection("orders").add(rec); }catch(e){ toast(dbMsg(e)); return; } }
-      else { (state.orders ||= []).unshift({id:"o"+Date.now(), ...rec}); }
-      state.order=null; save(); toast("依頼を送りました。担当から連絡します"); render(); }; }
-  document.querySelectorAll("[data-ocopy]").forEach(b=>b.onclick=async()=>{ const o=orders().find(x=>x.id===b.dataset.ocopy); if(!o) return; try{ await navigator.clipboard.writeText(o.text||""); toast("コピーしました"); }catch(e){ toast("コピーできませんでした。文を長押しして選んでください"); } });
-  document.querySelectorAll("[data-odone]").forEach(b=>b.onclick=async()=>{ const id=b.dataset.odone;
-    if(live){ try{ await db.doc("orders/"+id).update({status:"handled"}); }catch(e){ toast(dbMsg(e)); } return; }
-    const o=(state.orders||[]).find(x=>x.id===id); if(o) o.status="handled"; save(); render(); });
   const mw=$("#mkweekly"); if(mw) mw.onclick=()=>{ state.weekly=true; render(); };
   const cw=$("#closeweekly"); if(cw) cw.onclick=()=>{ state.weekly=false; render(); };
   const cpw=$("#copyweekly"); if(cpw) cpw.onclick=async()=>{ const t=$("#weeklytext"); try{ await navigator.clipboard.writeText(t.value); toast("コピーしました"); }catch(e){ t.focus(); t.select(); toast("文章を選びました。長押しでコピーしてください"); } };

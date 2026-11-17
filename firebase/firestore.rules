@@ -52,13 +52,6 @@ service cloud.firestore {
           && request.resource.data.t in ['done', 'quiz', 'card'];
         allow read, delete: if admin(inn);
       }
-      // 人手の見通しと人材の依頼：管理者と運営者だけ。スタッフは読めない
-      match /staffing/{id} {
-        allow read, write: if admin(inn);
-      }
-      match /orders/{id} {
-        allow read, write: if admin(inn);
-      }
       // 受け入れ一覧：管理者が読み書きする。スタッフが読めるのは、自分につながった1人分だけ
       match /people/{id} {
         allow read: if admin(inn) || (member(inn) && request.auth.token.get('person', '') == id);
