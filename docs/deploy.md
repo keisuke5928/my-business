@@ -17,9 +17,11 @@
 1. 左のメニュー「Firestore Database」→「データベースを作成」。
    1. 場所は **asia-northeast1（東京）** を選ぶ。**あとから変えられません。**
    2. 「本番環境モード」で作る（読み書きの決まりは、手順5で入ります）。
-2. 左のメニュー「Authentication」→「始める」→「Sign-in method」で、次の2つを有効にする。
+2. 左のメニュー「Authentication」→「始める」→「Sign-in method」で、次の3つを有効にする。
    1. 「メール/パスワード」を開き、「メールリンク（パスワードなしでログイン）」をオンにする。
    2. 「匿名」をオンにする。
+   3. 「Google」をオンにする（新人向けアプリで、機種を変えても続けられるように紐づけるため）。
+3. 左のメニュー「Storage」→「始める」。場所は **asia-northeast1（東京）**。新人向けアプリの写真を置く場所です。
 
 ### 手順3 AnthropicのAPIキーを作る
 1. https://console.anthropic.com/ でアカウントを作り、支払い方法を登録する。
@@ -28,7 +30,7 @@
 
 ### 手順4 ウェブアプリの設定を写す
 1. Firebase のプロジェクトの「プロジェクトの設定」（歯車）→「マイアプリ」→「</>」（ウェブ）でアプリを足す。名前は何でもよい。Hosting のチェックは入れなくてよい。
-2. 出てきた `firebaseConfig` の中の `apiKey`、`authDomain`、`projectId`、`appId` の4つを控える。
+2. 出てきた `firebaseConfig` の中の `apiKey`、`authDomain`、`projectId`、`appId`、`storageBucket` の5つを控える。
    1. この4つは、公開されても問題ない種類の値です（APIキーという名前ですが、秘密の鍵ではありません）。チャットに貼っても大丈夫です。
 
 ## 2. 公開する
@@ -47,7 +49,7 @@ cd my-business
 cp firebase/config.example.json firebase/config.json
 ```
 
-4. `firebase/config.json` を開いて（Cloud Shell の「エディタを開く」）、手順4の4つの値を入れる。`"_説明"` の行は消してもそのままでもよい。
+4. `firebase/config.json` を開いて（Cloud Shell の「エディタを開く」）、手順4の5つの値を入れる。`"_説明"` の行は消してもそのままでもよい。
 5. 公開の命令を動かす。`yado-hajimete-1a2b3` は手順1のプロジェクトIDに変える。
 
 ```bash
@@ -59,7 +61,8 @@ bash scripts/deploy.sh yado-hajimete-1a2b3
    2. 運営者のメールアドレス。
    3. AnthropicのAPIキー（手順3）。貼りつけても画面には出ません。
    4. Google Cloud の機能を有効にしてよいか、と聞かれたら「Y」。
-7. 最後に「公開しました。」と、ホームページとログインのURLが出たら終わりです。
+7. 最後に「公開しました。」と、ホームページ、新人向けアプリ、管理者ページ、ログインのURLが出たら終わりです。
+8. 新人向けアプリのAIは、旅館向けアプリと同じAPIキーを使います。モデルは `apps/note/config/ai.json`（初めは claude-haiku-5-5）。
 
 ## 3. 公開したあとにすること
 

@@ -50,17 +50,21 @@ if ! "${FB[@]}" functions:secrets:access ANTHROPIC_API_KEY --project "$PROJECT" 
   "${FB[@]}" functions:secrets:set ANTHROPIC_API_KEY --project "$PROJECT"
 fi
 
-# 5. 本番用のページを作る
+# 5. 本番用のページを作る（旅館向けアプリとホームページ、そのあと新人向けアプリ）
 python3 build.py --firebase "$CFG"
 (cd firebase/functions && npm ci --omit=dev --no-audit --no-fund)
+(cd firebase/functions-note && npm ci --no-audit --no-fund && npm run build)
+(cd apps/note && npm ci --no-audit --no-fund && NOTE_CONFIG="$ROOT/$CFG" npm run build)
 
 # 6. 公開する（読み書きの決まり、サーバー側の処理、ページ）
 cd firebase
-"${FB[@]}" deploy --project "$PROJECT" --only firestore,functions,hosting --non-interactive
+"${FB[@]}" deploy --project "$PROJECT" --only firestore,functions,hosting,storage --non-interactive
 
 echo
 echo "公開しました。"
 echo "  ホームページ        https://$PROJECT.web.app/"
+echo "  新人向けアプリ      https://$PROJECT.web.app/note/"
+echo "  管理者ページ        https://$PROJECT.web.app/note/#admin"
 for INN in $(python3 -c "import json;print(' '.join(json.load(open('$ROOT/$CFG'))['inns']))"); do
   echo "  運営者のログイン    https://$PROJECT.web.app/$INN/#login"
 done
