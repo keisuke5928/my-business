@@ -20,6 +20,7 @@ const num = (v: number | null | undefined, d = 1) => (v === null || v === undefi
 const DOW = ["日", "月", "火", "水", "木", "金", "土"];
 
 async function checkRole(): Promise<void> {
+  if (__DEMO__) { role = "operator"; return; }   // 見本版は、この端末の持ち主が運営者
   const u = auth.currentUser; if (!u || u.isAnonymous) { role = null; return; }
   checking = true;
   try { await call("whoami", {}); await u.getIdToken(true); } catch (e) { /* 役割の確認に失敗しても、手元の情報で続ける */ }

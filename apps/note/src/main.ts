@@ -16,22 +16,38 @@ import { finishEmailLink, loginSheet, meScreen } from "./screens/me";
 
 captureUtm();
 const main = $("#main")!, nav = $("#nav")!;
+// 見本版（Claudeのアプリで開く版）だけの帯。データはこの端末の中だけ
+function demoBar(): void {
+  if (!__DEMO__) return;
+  const top = document.querySelector(".top")!;
+  let bar = document.getElementById("demobar");
+  if (!bar) { bar = h("div", { id: "demobar", class: "demobar" }); top.appendChild(bar); }
+  const mode = (window as unknown as { __noteAiMode?: string }).__noteAiMode;
+  bar.textContent = "";
+  bar.append(h("span", null, `見本版：データはこの端末の中だけ。AI：${mode === "claude" ? "Claude" : mode === "fake" ? "見本の整え方" : "確かめています"}`),
+    h("span", { class: "row" },
+      adminMode ? h("button", { class: "link", onclick: () => { location.hash = ""; } }, "新人の画面へ") : h("button", { class: "link", id: "toadmin", onclick: () => { location.hash = "admin"; } }, "管理者ページ"),
+      h("button", { class: "link", id: "demoreset", onclick: () => { if (bar!.dataset.sure !== "1") { bar!.dataset.sure = "1"; toast("もう一度押すと、この端末の見本のデータを消して最初に戻します"); return; }
+        try { Object.keys(localStorage).filter((k) => k.startsWith("note-")).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* なし */ } location.hash = ""; location.reload(); } }, "最初に戻す")));
+}
+addEventListener("note-ai-mode", () => demoBar());
 const TABS: [typeof S.tab, string, string][] = [["note", "帳", "ノート"], ["cards", "札", "カード"], ["pdf", "刷", "PDF"], ["me", "私", "わたし"]];
 let lastKey = "", composing = false, pending = false, opened = false, adminMode = location.hash === "#admin";
 addEventListener("compositionstart", () => { composing = true; }, true);
 addEventListener("compositionend", () => { composing = false; if (pending) { pending = false; render(); } }, true);
-addEventListener("hashchange", () => { adminMode = location.hash === "#admin"; render(); });
+addEventListener("hashchange", () => { const was = adminMode; adminMode = location.hash === "#admin"; if (was && !adminMode && S.uid) watchUser(S.uid); render(); });
 
 function body(): HTMLElement {
   if (!S.uid || !S.loaded) return h("div", { class: "view" }, h("p", { class: "empty center" }, "読み込んでいます…"));
   const u = S.user;
   if (!u || !u.consent || u.consent.version !== copy.consent.version)
-    return h("div", null, consentScreen(), h("p", { class: "note center" }, h("button", { class: "link", id: "olduser", onclick: loginSheet }, "前に使っていた人は、こちらから入る")));
+    return h("div", null, consentScreen(), __DEMO__ ? null : h("p", { class: "note center" }, h("button", { class: "link", id: "olduser", onclick: loginSheet }, "前に使っていた人は、こちらから入る")));
   if (!u.workplaceId || S.changingPlace) return placeScreen();
   if (!opened) { opened = true; track("open", {}); }
   return S.tab === "cards" ? cardsScreen() : S.tab === "pdf" ? pdfScreen() : S.tab === "me" ? meScreen() : notesScreen();
 }
 function render(): void {
+  demoBar();
   if (adminMode) { void import("./admin/admin").then((m) => m.renderAdmin(main, nav)); return; }
   if (composing) { pending = true; return; }
   const a = document.activeElement as HTMLInputElement | null, fid = a && main.contains(a) && a.id ? a.id : "";

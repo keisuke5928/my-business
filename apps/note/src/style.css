@@ -159,3 +159,7 @@ nav.tabs button[aria-current="page"] .ic{background:var(--ai);color:var(--surfac
 .cal{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
 .cal .dot{aspect-ratio:1;border-radius:3px;background:var(--bg);border:1px solid var(--line)}
 .cal .dot.on{background:var(--moss);border-color:var(--moss)}
+
+.demobar{margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:.76rem;color:var(--muted);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;background:var(--surface)}
+.demobar .row{gap:12px}
+.demobar .link{font-size:.78rem;padding:2px 0}

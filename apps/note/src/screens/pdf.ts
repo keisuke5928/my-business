@@ -60,7 +60,12 @@ async function build(): Promise<void> {
       }
     }
     flush();
-    pdf.save(`わたしのマニュアル_${deptName(pdept || S.user?.dept || "")}_${sz.name.replace(/[^\wぁ-んァ-ヶ一-龥]/g, "")}.pdf`);
+    const fname = `わたしのマニュアル_${deptName(pdept || S.user?.dept || "")}_${sz.name.replace(/[^\wぁ-んァ-ヶ一-龥]/g, "")}.pdf`;
+    // Claudeのアプリで開いているときは、アプリの「保存」を使う（ページから直接は保存できないため）
+    const w = window as unknown as { claude?: { use?: (n: string) => Promise<{ save: (r: { filename: string; data: Blob }) => Promise<unknown> } | null> } };
+    const dl = w.claude?.use ? await w.claude.use("downloads").catch(() => null) : null;
+    if (dl) { try { await dl.save({ filename: fname, data: pdf.output("blob") }); } catch (e) { const c = (e as { code?: string }).code; if (c !== "declined") toast("保存できませんでした"); } }
+    else pdf.save(fname);
     track("pdf_export", { size, pages: page, heads: heads.size, dept: pdept });
     toast(`${page}ページのPDFを作りました`);
   } catch (e) { toast("PDFを作れませんでした"); }

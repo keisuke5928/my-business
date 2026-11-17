@@ -63,7 +63,8 @@ export function meScreen(): HTMLElement {
       h("button", { class: "btn ghost small", id: "chgplace", onclick: () => { S.changingPlace = true; resetPlace(); rerender(); scrollTo(0, 0); } }, "職場や部署を変える"),
       (u.places || []).length > 1 ? h("p", { class: "note" }, "前の職場のメモも、職場を選び直すと見られます。") : null),
     h("section", { class: "card" }, h("span", { class: "label" }, "機種を変えても続けるために"), h("h2", null, S.anonymous ? "アカウントを紐づける" : "紐づけ済みです"),
-      S.anonymous ? [h("p", { class: "empty" }, "いまは、このスマホの中だけで使っています。紐づけると、スマホを変えても、メモやカードが残ります。"),
+      __DEMO__ ? h("p", { class: "empty" }, "見本版では、紐づけはできません。本番では、Googleかメールで紐づけると、スマホを変えてもメモやカードが残ります。")
+      : S.anonymous ? [h("p", { class: "empty" }, "いまは、このスマホの中だけで使っています。紐づけると、スマホを変えても、メモやカードが残ります。"),
         h("div", { class: "row" }, h("button", { class: "btn ghost small", id: "lgoogle", onclick: linkGoogle }, "Googleで紐づける"), h("button", { class: "btn ghost small", id: "lmailbtn", onclick: () => mailSheet("link") }, "メールで紐づける"))]
         : h("p", { class: "empty" }, "ほかのスマホでも、同じ方法で入れば続きから使えます。")),
     h("section", { class: "card" }, h("span", { class: "label" }, "同意した内容"), h("ol", { class: "plain" }, copy.consent.points.map((p) => h("li", null, p))),

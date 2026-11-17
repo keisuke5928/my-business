@@ -16,8 +16,8 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
 import { placeKey, similarNorm } from "./shared/normalize";
 import { dangerKind } from "./shared/danger";
-import { findPii } from "./shared/pii";
 import { jstDay } from "./shared/dates";
+import { SYSTEM_CARDS, SYSTEM_ORGANIZE, cleanCards, cleanOrganized, fakeCards, fakeOrganize, parseJsonText } from "./shared/ai";
 import { buildStats } from "./stats";
 import limits from "./config/limits.json";
 import aiCfg from "./config/ai.json";
@@ -69,54 +69,8 @@ async function spend(uid: string, field: "ai" | "photos", limit: number): Promis
 }
 
 // ---------- AI ----------
-interface Organized { refuse: boolean; heading: string; title: string; steps: string[]; tags: string[]; pii: string[]; }
-interface Card { front: string; back: string; kind: string; }
-
-const SYSTEM_ORGANIZE = `あなたは、旅館やホテルで働きはじめた新人が書いた仕事のメモを、あとで見返しやすい形に整える係です。
-決まり：
-1. メモに書かれていないことは、足さない。推測で手順を作らない。
-2. やさしい日本語で、短い文にする。
-3. 見出しは次のどれか1つを選ぶ。flow（1日の流れ）、steps（手順）、dont（やってはいけないこと）、here（この職場だけのこと）、words（用語・お品書き）、places（館内の場所）。
-4. アレルギー、けが、体調、お金（給料、手当）、お客様とのトラブル、ハラスメント、災害についてのメモなら、手順を作らず refuse を true にする。
-5. お客様の名前、電話番号、暗証番号や金庫の番号らしきものがあれば、その文字列をそのまま pii に入れる。
-6. tags には、どの宿でも通じる仕事の言葉を2〜3個入れる（例：シーツ、配膳、チェックイン）。宿の名前や人の名前は入れない。
-答えは、次の形のJSONだけを返す。ほかの文は書かない。
-{"refuse":false,"heading":"steps","title":"20字以内の題","steps":["1つ目","2つ目"],"tags":["言葉"],"pii":[]}`;
-
-const SYSTEM_CARDS = `あなたは、旅館やホテルで働きはじめた新人のメモから、覚えるためのカードを作る係です。
-決まり：
-1. メモに書かれていることだけを使う。足さない。
-2. 表は短い問い、裏は短い答え。やさしい日本語。
-3. kind は word（用語）、menu（お品書き）、place（館内の場所）、order（手順の順番）のどれか。
-4. アレルギー、けが、体調、お金、お客様とのトラブル、ハラスメント、災害についてのカードは作らない。
-5. お客様の名前や番号は入れない。多くても12枚。
-答えは、次の形のJSONだけを返す。
-{"cards":[{"front":"リネンとは？","back":"シーツやタオルのこと","kind":"word"}]}`;
-
-function parseJson(text: string): unknown {
-  const t = text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
-  try { return JSON.parse(t); } catch (e) {
-    const a = t.indexOf("{"), b = t.lastIndexOf("}");
-    if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e2) { /* 下へ */ } }
-    throw new HttpsError("internal", "AIの答えを読み取れませんでした");
-  }
-}
 const str = (v: unknown, max: number): string => (typeof v === "string" ? v.trim().slice(0, max) : "");
-const strs = (v: unknown, n: number, max: number): string[] => (Array.isArray(v) ? v.map((x) => str(x, max)).filter(Boolean).slice(0, n) : []);
-
-// テスト用（エミュレーターで AI_FAKE=1 のとき）。本物のAIは呼ばない
-function fakeOrganize(text: string): Organized {
-  const lines = text.split(/[\n。]/).map((x) => x.replace(/^\s*\d+[.)、 ]\s*/, "").trim()).filter(Boolean);
-  const heading = /してはいけない|しない|だめ|禁止/.test(text) ? "dont" : /とは|：|:/.test(text) ? "words" : /階|奥|となり|場所/.test(text) ? "places" : /\d{1,2}[:時]/.test(text) ? "flow" : "steps";
-  return { refuse: false, heading, title: (lines[0] || "メモ").slice(0, 20), steps: lines.slice(0, 12), tags: ["テスト"], pii: findPii(text).map((h) => h.match) };
-}
-function fakeCards(notes: string): Card[] {
-  const out: Card[] = [];
-  for (const line of notes.split(/\n/)) { const m = /^(.{1,20})[：:](.{1,60})$/.exec(line.trim()); if (m) out.push({ front: m[1] + "とは？", back: m[2].trim(), kind: "word" }); }
-  if (!out.length) out.push({ front: "最初にすることは？", back: (notes.split(/[\n。]/).find((x) => x.trim()) || "").trim().slice(0, 60), kind: "order" });
-  return out.slice(0, 12);
-}
-
+// 指示と、答えの整え方は apps/note/src/lib/ai.ts（見本版と同じもの）
 async function callClaude(system: string, user: string, uid: string): Promise<string> {
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
@@ -141,17 +95,9 @@ export const noteAi = onCall({ secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 60,
   if (kind === "organize" && dangerKind(text)) return { refuse: true };
   await spend(uid, "ai", limits.aiPerDay);
   const fake = process.env.AI_FAKE === "1";
-  if (kind === "organize") {
-    const raw = fake ? fakeOrganize(text) : (parseJson(await callClaude(SYSTEM_ORGANIZE, text, uid)) as Record<string, unknown>);
-    const r = raw as Record<string, unknown>;
-    if (r.refuse === true) return { refuse: true };
-    const out: Organized = { refuse: false, heading: HEADINGS.includes(str(r.heading, 20)) ? str(r.heading, 20) : "steps", title: str(r.title, 40),
-      steps: strs(r.steps, 30, 300), tags: strs(r.tags, 3, 20), pii: strs(r.pii, 10, 60) };
-    return out;
-  }
-  const cards = fake ? fakeCards(text) : (((parseJson(await callClaude(SYSTEM_CARDS, text, uid)) as { cards?: unknown }).cards || []) as Card[]);
-  return { cards: (Array.isArray(cards) ? cards : []).map((c) => ({ front: str(c.front, 80), back: str(c.back, 200), kind: ["word", "menu", "place", "order"].includes(c.kind) ? c.kind : "word" }))
-    .filter((c) => c.front && c.back && !dangerKind(c.front + c.back)).slice(0, 12) };
+  const parse = (t: string) => { try { return parseJsonText(t); } catch (e) { throw new HttpsError("internal", "AIの答えを読み取れませんでした"); } };
+  if (kind === "organize") return cleanOrganized(fake ? fakeOrganize(text) : parse(await callClaude(SYSTEM_ORGANIZE, text, uid)));
+  return { cards: cleanCards(fake ? { cards: fakeCards(text) } : parse(await callClaude(SYSTEM_CARDS, text, uid))) };
 });
 
 // ---------- 写真 ----------

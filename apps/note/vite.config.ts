@@ -7,7 +7,7 @@ const cfgPath = process.env.NOTE_CONFIG ? resolve(process.env.NOTE_CONFIG) : res
 const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
 export default defineConfig({
   base: "/note/",
-  define: { __FB__: JSON.stringify({ config: cfg.config, emulator: cfg.emulator || null }) },
+  define: { __FB__: JSON.stringify({ config: cfg.config, emulator: cfg.emulator || null }), __DEMO__: "false" },
   build: { outDir: "../../firebase/public/note", emptyOutDir: true, target: "es2022" },
   test: { include: ["tests/**/*.test.ts"] },
 });

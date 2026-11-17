@@ -52,7 +52,14 @@
 4. 通しのテスト：`cd firebase && node tests/note-e2e.js`（28項目。CLAUDE.md の7章の3〜6と、管理者ページ）。`SHOTS=<フォルダ>` を付けると画面の写真を残す。
 5. 旅館向けアプリのテスト（e2e.js、e2e-roles.js）も、同じエミュレーターで通る。
 
-## 5. まだのこと
+## 5. 見本版（Claudeのアプリで開く版）
+1. 公開先は https://claude.ai/artifact/9fRdiQTMWxoskeGgPHZd37 （capabilities は sample と downloads）。Firebase なしで、新人の画面と管理者ページを試せる。
+2. `apps/note/demo/` が Firebase の代わり（データはこの端末の中）。サーバーの処理（AI、上限、職場、集計、メモの中身を見る記録）は、本番と同じ決まりでこの端末の中で動く。集計は本番と同じ `buildStats` を使う。
+3. AIは、Claudeのアプリの sample で本物のClaudeを使う。使えないときは、決まった形で整える（画面の上の帯に「AI：Claude」か「AI：見本の整え方」と出る）。AIへの指示は `apps/note/src/lib/ai.ts` で、本番と同じもの。
+4. PDFは、Claudeのアプリの「保存」（downloads）で保存する。アカウントの紐づけとメールのログインは、見本版ではできない。
+5. 作り方：`cd firebase/functions-note && npm run build`（集計の処理を写すため）のあと、`cd apps/note && npx vite build --config vite.demo.config.ts`。できた `dist-demo/` の index.html から、doctype や head を外したページを作って公開する（ファイル名が変わるので、assets も一緒に）。
+
+## 6. まだのこと
 1. 第2段階：音声メモ、確認テストの自動作成、6言語、職場の教育担当に見せる紹介ページ（`intro_link` のイベントは用意済み）、どの宿でも使える基本教材。
 2. 利用規約とプライバシーポリシーの本文（`copy.json` の準備中の文を差し替える）。
 3. 本番への公開（`bash scripts/deploy.sh <プロジェクトID>`。手順は docs/deploy.md）。
