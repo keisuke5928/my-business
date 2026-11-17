@@ -31,3 +31,10 @@ export function similarNorm(a: string, b: string): boolean {
   if (short.length >= 2 && long.includes(short)) return true;
   return short.length >= 4 && editDistance(a, b) <= 1;
 }
+
+// 職場を見分けるための鍵。宿の名前に温泉地や市町村の名前が入っていれば外す（「宇奈月温泉 延対寺荘」と「延対寺荘」を同じにする）。
+export function placeKey(name: string, area: string): string {
+  const n = normName(name), a = normName(area);
+  if (a.length >= 2 && n.includes(a) && n.split(a).join("").length >= 2) return n.split(a).join("");
+  return n;
+}

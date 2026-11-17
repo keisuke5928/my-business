@@ -14,7 +14,7 @@ import { defineSecret, defineString } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
-import { normName } from "./shared/normalize";
+import { placeKey, similarNorm } from "./shared/normalize";
 import { dangerKind } from "./shared/danger";
 import { findPii } from "./shared/pii";
 import { jstDay } from "./shared/dates";
@@ -167,16 +167,22 @@ export const notePhotoSlot = onCall(async (req) => {
 // ---------- 職場 ----------
 export const noteWorkplaceAdd = onCall(async (req) => {
   const uid = uidOf(req);
-  const { name, area } = (req.data || {}) as { name?: string; area?: string };
+  const { name, area, force } = (req.data || {}) as { name?: string; area?: string; force?: boolean };
   const nm = str(name, 40), ar = str(area, 30);
   need(nm.length >= 2, "invalid-argument", "宿の名前を入れてください");
   need(ar.length >= 2, "invalid-argument", "温泉地か、市町村を入れてください");
-  const norm = normName(nm);
+  const norm = placeKey(nm, ar);
   need(norm.length >= 2, "invalid-argument", "宿の名前をもう少しくわしく入れてください");
   const same = await db().collection("workplaces").where("norm", "==", norm).limit(5).get();
   for (const d of same.docs) {
     const p = await resolvePlace(d.id);
     if (p) { const s = await db().doc(`workplaces/${p.id}`).get(); return { id: p.id, name: s.get("name"), area: s.get("area"), existed: true }; }
+  }
+  // 似た名前の宿があれば、足す前に「この宿ではありませんか」と返す（本人が「ちがう宿」と言えば足す）
+  if (!force) {
+    const all = await db().collection("workplaces").where("mergedInto", "==", "").limit(2000).get();
+    const cands = all.docs.filter((d) => similarNorm(String(d.get("norm") || ""), norm)).slice(0, 5).map((d) => ({ id: d.id, name: d.get("name"), area: d.get("area") }));
+    if (cands.length) return { candidates: cands };
   }
   // 1人が1日に足せる数を小さくしておく（いたずらで増やされないように）
   const ref = db().doc(`usage/${uid}_${jstDay(Date.now())}`);

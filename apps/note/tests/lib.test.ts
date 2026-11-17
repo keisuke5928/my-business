@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normName, similarNorm } from "../src/lib/normalize";
+import { normName, placeKey, similarNorm } from "../src/lib/normalize";
 import { findPii, removePii } from "../src/lib/pii";
 import { dangerKind } from "../src/lib/danger";
 import { daysSince, jstDay, weekStart } from "../src/lib/dates";
@@ -12,6 +12,7 @@ describe("職場の名前をそろえる", () => {
     expect(b).toBe(c);
     expect(d).toBe("entaiji");
   });
+  it("温泉地の名前が入っていても、同じ鍵になる", () => { expect(placeKey("宇奈月温泉 延対寺荘", "宇奈月温泉")).toBe(placeKey("延対寺荘", "宇奈月")); });
   it("カタカナとひらがなをそろえる", () => { expect(normName("みずなら亭")).toBe(normName("ミズナラ亭")); });
   it("1文字ちがいは候補に出す。別の宿は出さない", () => {
     expect(similarNorm(normName("延対寺荘"), normName("延対寺壮"))).toBe(true);

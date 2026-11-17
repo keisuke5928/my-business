@@ -5,7 +5,7 @@ import { DEPTS } from "../config";
 import { normName, similarNorm } from "../lib/normalize";
 import { track } from "../events";
 import { S, rerender, type Place } from "../state";
-import { h, toast } from "../ui";
+import { h, sheet, toast } from "../ui";
 
 let all: Place[] | null = null, picked: Place | null = null, q = "", area = "", dept = "";
 async function load(): Promise<void> {
@@ -22,6 +22,22 @@ async function choose(p: Place, d: string): Promise<void> {
   S.changingPlace = false; resetPlace();
 }
 
+interface AddResult { id?: string; name?: string; area?: string; existed?: boolean; candidates?: { id: string; name: string; area: string }[]; }
+async function addPlace(force: boolean): Promise<void> {
+  try {
+    const r = await call<{ name: string; area: string; force: boolean }, AddResult>("noteWorkplaceAdd", { name: q.trim(), area: area.trim(), force });
+    if (r.candidates) {
+      const cands = r.candidates;
+      sheet((close) => h("div", { class: "stack", id: "samesheet" }, h("h2", null, "この宿ではありませんか"), h("p", null, "似た名前の宿が、もう登録されています。同じ宿なら選んでください。"),
+        cands.map((c) => h("button", { class: "rowbtn", "data-same": c.id, onclick: () => { close(); picked = { id: c.id, name: c.name, area: c.area, norm: normName(c.name), mergedInto: "", adopted: false }; rerender(); } }, h("b", null, c.name), h("span", { class: "sub" }, c.area))),
+        h("button", { class: "btn ghost", id: "notsame", onclick: () => { close(); void addPlace(true); } }, "ちがう宿として足す")));
+      return;
+    }
+    picked = { id: r.id || "", name: r.name || "", area: r.area || "", norm: normName(r.name || ""), mergedInto: "", adopted: false };
+    if (r.existed) toast("同じ宿が見つかったので、そちらを選びました");
+    rerender();
+  } catch (e) { toast((e as Error).message || "足せませんでした"); }
+}
 export function placeScreen(): HTMLElement {
   if (all === null) { void load(); return h("div", { class: "view" }, h("p", { class: "empty" }, "読み込んでいます…")); }
   const nq = normName(q);
@@ -39,9 +55,7 @@ export function placeScreen(): HTMLElement {
   const addBtn = h("button", { class: "btn ghost", id: "padd", onclick: async () => {
     if (normName(q).length < 2 || area.trim().length < 2) { toast("宿の名前と、温泉地か市町村を入れてください"); return; }
     addBtn.disabled = true;
-    try { const r = await call<{ name: string; area: string }, { id: string; name: string; area: string; existed: boolean }>("noteWorkplaceAdd", { name: q.trim(), area: area.trim() });
-      picked = { id: r.id, name: r.name, area: r.area, norm: normName(r.name), mergedInto: "", adopted: false }; if (r.existed) toast("同じ宿が見つかったので、そちらを選びました"); rerender(); }
-    catch (e) { toast((e as Error).message === "limit" ? "今日はこれ以上、職場を足せません" : ((e as Error).message || "足せませんでした")); addBtn.disabled = false; }
+    await addPlace(false); addBtn.disabled = false;
   } }, "この宿を足す");
   void cands;
   const view = h("div", { class: "view" },

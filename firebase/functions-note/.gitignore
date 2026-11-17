@@ -2,3 +2,5 @@ lib/
 src/shared/
 src/config/
 node_modules/
+.secret.local
+.env*
