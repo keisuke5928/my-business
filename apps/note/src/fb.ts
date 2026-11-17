@@ -24,6 +24,6 @@ export function call<T, R>(name: string, data: T): Promise<R> {
 }
 // サーバーの「上限に達した」を見分ける
 export function isLimit(e: unknown): boolean {
-  const x = e as { code?: string; message?: string };
-  return !!x && String(x.code || "").includes("resource-exhausted") && x.message === "limit";
+  const x = e as { code?: string; message?: string; details?: { limit?: string } };
+  return !!x && String(x.code || "").includes("resource-exhausted") && (!!(x.details && x.details.limit) || /\blimit\b/.test(String(x.message || "")));
 }

@@ -11,7 +11,7 @@ export interface Note {
   id: string; wid: string; dept: string; heading: string; title: string; text: string; steps: string[];
   photos: string[]; photoBytes: number; ai: boolean; aiEdited: boolean; tags: string[]; createdAt: number; updatedAt: number;
 }
-export interface Card { id: string; front: string; back: string; kind: string; heading: string; known: boolean | null; practiced: number; createdAt: number; }
+export interface Card { id: string; wid: string; dept: string; front: string; back: string; kind: string; heading: string; known: boolean | null; practiced: number; createdAt: number; }
 export interface Place { id: string; name: string; area: string; norm: string; mergedInto: string; adopted: boolean; }
 
 export const S = {
