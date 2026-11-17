@@ -4,7 +4,10 @@
     "apiKey": "",
     "authDomain": "<プロジェクトID>.firebaseapp.com",
     "projectId": "<プロジェクトID>",
-    "appId": ""
+    "appId": "",
+    "storageBucket": "<プロジェクトID>.firebasestorage.app"
   },
-  "inns": ["entaiji"]
+  "inns": [
+    "entaiji"
+  ]
 }

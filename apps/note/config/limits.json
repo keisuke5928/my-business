@@ -1,0 +1,9 @@
+{
+  "_説明": "使いすぎを防ぐ上限。1人1日あたり。日本時間0時にリセット。職場が「導入済み」なら上限なし。",
+  "aiPerDay": 30,
+  "photosPerDay": 20,
+  "photoMaxEdge": 1280,
+  "photoQuality": 0.72,
+  "photoMaxBytes": 1500000,
+  "noteMaxChars": 4000
+}

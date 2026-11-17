@@ -1,6 +1,21 @@
 {
   "_説明": "エミュレーター（練習用の環境）で試すための設定。本物のプロジェクトにはつながらない。",
-  "config": { "apiKey": "demo-key", "authDomain": "demo-yado.firebaseapp.com", "projectId": "demo-yado", "appId": "demo" },
-  "inns": ["entaiji", "mizunara"],
-  "emulator": { "host": "127.0.0.1", "auth": 9099, "firestore": 8080, "functions": 5001 }
+  "config": {
+    "apiKey": "demo-key",
+    "authDomain": "demo-yado.firebaseapp.com",
+    "projectId": "demo-yado",
+    "appId": "demo",
+    "storageBucket": "demo-yado.appspot.com"
+  },
+  "inns": [
+    "entaiji",
+    "mizunara"
+  ],
+  "emulator": {
+    "host": "127.0.0.1",
+    "auth": 9099,
+    "firestore": 8080,
+    "functions": 5001,
+    "storage": 9199
+  }
 }

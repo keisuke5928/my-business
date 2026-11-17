@@ -1,0 +1,23 @@
+{
+  "_説明": "計測するイベントの種類。ここにない種類は、決まり（firestore.rules）で受け付けない。足すときは rules も直す。",
+  "types": [
+    "signup",
+    "consent",
+    "place_select",
+    "dept_select",
+    "open",
+    "note_save",
+    "ai_organize",
+    "ai_edit",
+    "card_make",
+    "card_practice",
+    "pdf_export",
+    "limit_hit",
+    "limit_dismiss",
+    "intro_link",
+    "account_link",
+    "pii_found",
+    "pii_removed",
+    "ai_refuse"
+  ]
+}

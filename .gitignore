@@ -6,3 +6,6 @@ firebase/functions/.env*
 firebase/*.log
 firebase/.firebase/
 firebase/functions/.secret.local
+firebase/functions-note/.env*
+firebase/functions-note/lib/
+apps/note/node_modules/

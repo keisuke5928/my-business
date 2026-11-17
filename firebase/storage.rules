@@ -1,0 +1,14 @@
+rules_version = '2';
+// 宿のはじめて帳 写真の置き場所の決まり（新人向けアプリ）
+// 写真は本人だけが読める。送れるのは、サーバーが出した枠（users/{uid}/slots/{id}）があるときだけ（1日の枚数を守るため）。
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/photos/{id} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 1500000
+        && request.resource.contentType == 'image/jpeg'
+        && firestore.exists(/databases/(default)/documents/users/$(uid)/slots/$(id));
+    }
+  }
+}

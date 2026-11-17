@@ -85,6 +85,45 @@ service cloud.firestore {
       }
     }
 
+    // ================= 新人向けアプリ（apps/note） =================
+    // 本人のデータは、本人だけが読み書きする。運営者は、利用者の登録の情報（名前やメールは入っていない）だけを読める。
+    // メモの中身は、運営者も直接は読めない。サーバーの関数（noteAdminNotes）を通し、見た記録を必ず残す。
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isOperator());
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['createdAt', 'consent', 'utm', 'device', 'workplaceId', 'dept', 'places', 'linked', 'lastAt'])
+        && (resource == null || request.resource.data.createdAt == resource.data.createdAt);
+      match /notes/{id} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+      match /cards/{id} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+      // 写真を送ってよい枠。サーバーだけが作る
+      match /slots/{id} {
+        allow read, write: if false;
+      }
+    }
+    // 職場の名前の一覧。読むのはだれでも（ログインした人）。足す、まとめる、導入済みにするのはサーバーだけ
+    match /workplaces/{id} {
+      allow read: if signedIn();
+    }
+    // 計測のイベント。本人が足すだけ。名前やメールは入れない。種類は apps/note/config/events.json と同じ
+    match /events/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'type', 'ts', 'wid', 'dept', 'device', 'meta'])
+        && request.resource.data.ts is number
+        && request.resource.data.type in ['signup', 'consent', 'place_select', 'dept_select', 'open', 'note_save', 'ai_organize', 'ai_edit', 'card_make', 'card_practice', 'pdf_export', 'limit_hit', 'limit_dismiss', 'intro_link', 'account_link', 'pii_found', 'pii_removed', 'ai_refuse'];
+      allow read: if isOperator();
+    }
+    // 夜に作る集計と、メモの中身を見た記録。運営者だけが読む。書くのはサーバーだけ
+    match /stats/{id} {
+      allow read: if isOperator();
+    }
+    match /auditLogs/{id} {
+      allow read: if isOperator();
+    }
+
     // それ以外は、すべて禁止
     match /{document=**} {
       allow read, write: if false;

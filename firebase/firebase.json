@@ -1,15 +1,42 @@
 {
   "hosting": {
     "public": "public",
-    "ignore": ["**/.*"],
+    "ignore": [
+      "**/.*"
+    ],
     "cleanUrls": true,
-    "rewrites": [{ "source": "/api/contact", "function": { "functionId": "contact", "region": "asia-northeast1" } }],
+    "rewrites": [
+      {
+        "source": "/api/contact",
+        "function": {
+          "functionId": "contact",
+          "region": "asia-northeast1"
+        }
+      }
+    ],
     "headers": [
-      { "source": "**/*.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-      { "source": "**", "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "no-referrer" }
-      ] }
+      {
+        "source": "**/*.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "no-referrer"
+          }
+        ]
+      }
     ]
   },
   "firestore": {
@@ -18,14 +45,42 @@
     "location": "asia-northeast1"
   },
   "functions": [
-    { "source": "functions", "codebase": "default", "runtime": "nodejs22" }
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs22"
+    },
+    {
+      "source": "functions-note",
+      "codebase": "note",
+      "runtime": "nodejs22",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
   ],
   "emulators": {
     "singleProjectMode": true,
-    "auth": { "port": 9099 },
-    "firestore": { "port": 8080 },
-    "functions": { "port": 5001 },
-    "hosting": { "port": 5000 },
-    "ui": { "enabled": false }
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "enabled": false
+    },
+    "storage": {
+      "port": 9199
+    }
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }

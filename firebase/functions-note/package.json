@@ -1,0 +1,17 @@
+{
+  "name": "yado-hajimete-note-functions",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": { "node": "22" },
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "build": "node scripts/sync.mjs && tsc",
+    "typecheck": "node scripts/sync.mjs && tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0",
+    "firebase-admin": "14.5.1",
+    "firebase-functions": "7.4.0"
+  },
+  "devDependencies": { "typescript": "5.6.3" }
+}

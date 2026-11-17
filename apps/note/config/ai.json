@@ -1,0 +1,9 @@
+{
+  "_説明": "AIの設定。モデル名と、費用の目安を出すための単価（100万トークンあたりのドル）と為替。単価は目安なので、Anthropic の料金表で確かめて直す。",
+  "model": "claude-haiku-5-5",
+  "maxTokens": 2000,
+  "usdPerMTokIn": 1.0,
+  "usdPerMTokOut": 5.0,
+  "yenPerUsd": 155,
+  "monthlyBudgetYen": 5000
+}
